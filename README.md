@@ -4,6 +4,33 @@
 
 This is a Django-based web application for peer assessment, allowing professors to create courses, form student teams, and conduct peer evaluations.
 
+## Development Environment
+
+This project uses a Python virtual environment with the following versions:
+
+- Python: 
+- Django: 
+- google-auth-oauthlib: 
+
+To ensure compatibility, please make sure your virtual environment matches these versions.
+
+### Setting up your environment
+
+1. Clone the repository
+2. Create a virtual environment: `python -m venv venv`
+3. Activate the virtual environment:
+   - Windows: `venv\Scripts\activate`
+   - macOS/Linux: `source venv/bin/activate`
+4. Install dependencies: `pip install django google-auth-oauthlib`
+5. check for Python, Django, google-auth-oauthlib versions
+    - `python --version`
+    - `django --version`
+    - `pip show google-auth-oauthlib`
+6. run migrations: `python manage.py migrate`
+7. start the development server: `python manage.py runserver`
+
+  
+
 ## Project Structure
 
 ### PeerAssess (Project Directory)
@@ -12,11 +39,9 @@ This is a Django-based web application for peer assessment, allowing professors 
 
 - **settings.py** - Project configuration (database, apps, middleware, etc.)
 - **urls.py** - URL declarations for the project
-- **wsgi.py** - Entry point for WSGI-compatible web servers
-- **asgi.py** - Entry point for ASGI-compatible web servers
 - **__init__.py** - Empty file that marks this directory as a Python package
 
-### App Structure
+### App Structure (To be created)
 
 #### users
 Handles user authentication and profile management:
@@ -45,22 +70,6 @@ Each app is a self-contained module implementing specific functionality:
 - **courses app**: Course and team organization
 - **assessments app**: Peer assessment functionality
 
-## Getting Started
-
-1. Clone the repository
-2. Create a virtual environment: `python -m venv venv`
-3. Activate the virtual environment:
-   - Windows: `venv\Scripts\activate`
-   - macOS/Linux: `source venv/bin/activate`
-4. Install dependencies: `pip install django google-auth-oauthlib`
-5. Create necessary apps:
-   - `python manage.py startapp users`
-   - `python manage.py startapp courses`
-   - (assessments app already exists)
-6. Update settings.py to include new apps
-7. Run migrations: `python manage.py migrate`
-8. Start the development server: `python manage.py runserver`
-
 ## Key Features
 
 - BC-restricted Google OAuth login
@@ -70,3 +79,4 @@ Each app is a self-contained module implementing specific functionality:
 - Automated email notifications
 - Anonymous feedback display
 - Assessment result visualization
+
