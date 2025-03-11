@@ -8,9 +8,9 @@ This is a Django-based web application for peer assessment, allowing professors 
 
 This project uses a Python virtual environment with the following versions:
 
-- Python: 
-- Django: 
-- google-auth-oauthlib: 
+- Python: 3.11.6
+- Django: 5.1.7
+- google-auth-oauthlib: 1.2.1
 
 To ensure compatibility, please make sure your virtual environment matches these versions.
 

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1>Your Dashboard</h1>
+    
+    <div class="dashboard-summary">
+        <div class="summary-card">
+            <h2>Active Assessments</h2>
+            <p class="count">0</p>
+        </div>
+        
+        <div class="summary-card">
+            <h2>Completed Assessments</h2>
+            <p class="count">0</p>
+        </div>
+        
+        <div class="summary-card">
+            <h2>Your Courses</h2>
+            <p class="count">0</p>
+        </div>
+    </div>
+    
+    <div class="dashboard-section">
+        <h2>Pending Assessments</h2>
+        <p>You don't have any pending assessments.</p>
+    </div>
+    
+    <div class="dashboard-section">
+        <h2>Recent Activity</h2>
+        <p>No recent activity to display.</p>
+    </div>
+</div>
+{% endblock %} 
