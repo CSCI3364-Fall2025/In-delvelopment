@@ -124,3 +124,8 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Add these lines to your settings.py
+GOOGLE_CLIENT_ID = '216906751903-ihoeclgif80p4eepls916v4l909ihvfd.apps.googleusercontent.com'
+GOOGLE_CLIENT_SECRET = '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'
+GOOGLE_REDIRECT_URI = 'http://localhost:8000/authentication/callback/'
