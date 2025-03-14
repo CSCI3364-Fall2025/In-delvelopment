@@ -5,21 +5,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Peer Assessment System{% endblock %}</title>
+    <!-- Added optional bootstrap functionality -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_css %}{% endblock %}
+    <!-- Can put styling into a separate CSS file but going to leave it here for now -->
+    <style>
+        :root {
+            --bc-maroon: #8b0000;
+            --bc-gold: #bfa76f; 
+        }
+
+        .login-btn {
+            background-color: #bfa76f;
+            color: white;
+        }
+
+        .login-btn:hover {
+            background: #9b885a;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <div class="navbar">
-            <div class="logo">Peer Assessment System</div>
-            <nav>
-                <a href="{% url 'home' %}">Home</a>
-                <a href="{% url 'dashboard' %}">Dashboard</a>
-                <!-- Temporarily comment out until you implement Google login -->
-                <!-- <a href="{% url 'google_login' %}">Login With Google</a> -->
-                <a href="#">Login With Google</a>
-            </nav>
-        </div>
+        <nav class="navbar navbar-expand-md p-3" style="background-color: var(--bc-maroon)">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{% url 'home' %}" style="color: var(--bc-gold);">Peer Assessment System</a>
+                <ul class="navbar-nav">
+                    <li class="nav-item m-2">
+                        <a href="{% url 'home' %}" class="nav-link active" style="color: var(--bc-gold);">Home</a>
+                    </li>
+                    <li class="nav-item m-2">
+                        <a href="{% url 'dashboard' %}" class="nav-link active" style="color: var(--bc-gold);">Dashboard</a>
+                    </li>
+                    <!-- Temporarily comment out until you implement Google login -->
+                    <!-- <a href="{% url 'google_login' %}">Login With Google</a> -->
+                    <li class="nav-item m-2">
+                        <a href="#" class="btn login-btn">Login With Google</a> 
+                    </li>
+                </ul>
+                
+            </div>
+        </nav>    
+        
     </header>
     
     <main>
@@ -27,10 +56,12 @@
     </main>
     
     <footer>
-        <div class="footer-content">
-            <img src="{% static 'images/logo.png' %}" alt="Ctrl Alt Elite Logo">
-            <p>© 2025 Ctrl Alt Elite Peer Assessment System</p>
-        </div>
+        <nav class="navbar" style="background-color: var(--bc-maroon);">
+            <div class="container-fluid">
+                <img class="navbar-brand" src="{% static 'images/logo.png' %}" alt="Ctrl Alt Elite Logo" style="color: var(--bc-gold);">
+                <p class="nav-item m-2" style="color: var(--bc-gold);">© 2025 Ctrl Alt Elite Peer Assessment System</p>
+            </div>
+        </nav>
     </footer>
 </body>
 </html> 
