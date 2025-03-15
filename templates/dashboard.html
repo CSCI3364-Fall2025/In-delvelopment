@@ -1,36 +1,150 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - Peer Assessment System{% endblock %}
+{% block title %}Dashboard - Student | Peer Assessment System{% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <h1>Your Dashboard</h1>
-    
-    <div class="dashboard-summary">
-        <div class="summary-card">
-            <h2>Active Assessments</h2>
-            <p class="count">0</p>
-        </div>
-        
-        <div class="summary-card">
-            <h2>Completed Assessments</h2>
-            <p class="count">0</p>
-        </div>
-        
-        <div class="summary-card">
-            <h2>Your Courses</h2>
-            <p class="count">0</p>
+<div class="container-fluid">
+    <div class="row text-center p-4">
+        <h1>Welcome Wesley Lawson{{ user.name }} - Student{{ user.role }}</h1>
+    </div>
+    <div class="row justify-content-center">
+        <div class="w-75 border border-2 rounded p-1" style="border-color: var(--bc-maroon);">
+            <div class="row p-1 text-center">
+                <h1 style="color: var(--bc-maroon);">User Profile</h1>
+            </div>
+            <div class="row p-2 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Name:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                   <h5 class="fw-lighter">Wesley Lawson {{ user.name }}</h5>
+            </div>
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Email:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                   <h5 class="fw-lighter">lawsonwe@bc.edu {{ user.email }}</h5>
+                </div>
+            </div>
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Role:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                   <h5 class="fw-lighter">Student {{ user.role }}</h5>
+                </div>
+            </div>
+            <div class="row p-1 justify-content-center">
+                <div class="col">
+                    <a class="btn gold-btn" href="#">Edit Profile</a>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <div class="dashboard-section">
-        <h2>Pending Assessments</h2>
-        <p>You don't have any pending assessments.</p>
+
+    <div class="row p-2" id="assessment-summary-container">
+        <div class="row pt-1" id="assessments-summary-header">
+            <h2 style="color: var(--bc-maroon);">Assessment Overview:</h2>
+        </div>
+        <div class="row pt-2" id="active-assessments-container">
+            <div class="col-auto">
+                <span class="badge rounded-pill" style="background-color: var(--bc-gold);" id="num-open-assessments">1</span>
+            </div>
+            <div class="col-auto">
+                <h5>Active Assessments:</h5>
+            </div>
+            <!-- To be passed in to the view when the models are created -->
+            {% for assessment in active_assessments %}
+            {% endfor %}
+            <!-- Temporary 'example' assessments -->
+             <div class="col-auto">
+                <a href="#" class="link" style="color: var(--bc-gold);">Peer Assessment 3 (Samary: Software Engineering), Due March 21, 11:59 pm</a>
+             </div>
+        </div>
+        <div class="row pt-4" id="closed-assessments-container">
+            <div class="col-auto">
+                <span class="badge rounded-pill" style="background-color: var(--bc-gold);" id="num-closed-assessments">2</span>
+            </div>
+            <div class="col-auto">
+                <h5>Closed Assessments:</h5>
+            </div>
+            <!-- To be passed in to the view when the models are created -->
+            {% for assessment in assessments_closed %}
+            {% endfor %}
+            <!-- Temporary 'example' assessments -->
+            <div class="col-auto">
+               <a href="#" class="link-secondary">Peer Assessment 1 (Samary: Software Engineering), Closed February 12, 11:59 pm</a> 
+            </div>
+            <div class="col-auto">
+               <a href="#" class="link-secondary">Peer Assessment 2 (Samary: Software Engineering), Closed February 24, 11:59 pm</a> 
+            </div>
+        </div>
+        <div class="row pt-4" id="upcoming-assessments-container">
+            <div class="col-auto">
+                <span class="badge rounded-pill" style="background-color: var(--bc-gold);" id="num-upcoming-assessments">1</span>
+            </div>
+            <div class="col-auto">
+                <h5>Upcoming Assessments:</h5>
+            </div>
+            <!-- To be passed in to the view when the models are created -->
+            {% for assessment in assessments_closed %}
+            {% endfor %}
+            <!-- Temporary 'example' assessments -->
+            <div class="col-auto">
+               <p class="text-body-secondary">Peer Assessment 4 (Samary: Software Engineering), Opens April 2, 9:00 am</p>
+            </div>
+        </div>
     </div>
-    
-    <div class="dashboard-section">
-        <h2>Recent Activity</h2>
-        <p>No recent activity to display.</p>
+    <div class="row p-2" id="assessment-status-container">
+        <div class="col-auto" id="status-header">
+            <h2 style="color: var(--bc-maroon);">Status:</h2>
+        </div>
+        <div class="row" id="pending_assessments">
+            <div class="col-auto">
+                {% if num_uncompleted_assessments == 0 %}
+                <p>You have no pending peer assessments.</p>
+                {% else %}
+                <p>You have 1{{num_uncompleted_assessments }} assessment(s) to complete. </p>
+                {% endif %}
+            </div>
+            <div class="col-auto">
+                <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+            </div>
+        </div>
+        <div class="row" id="published_results">
+            <div class="col-auto">
+                {% if num_assessment_results == 0 %}
+                <p>You have no assessment results to view.</p>
+                {% else %}
+                <p>You have 2{{num_assessment_results }} returned assessment(s) to view. </p>
+                {% endif %}
+            </div>
+            <div class="col-auto">
+                <a href="#" style="color: var(--bc-gold);">View All Published Results</a>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="row p-2" id="quick_links">
+        <div class="row">
+            <div class="col-auto">
+                <h5 style="color: var(--bc-maroon);">Quick Links:</h5>
+            </div>
+            
+        </div>
+        <div class="col-auto">
+            <a href="#" style="color: var(--bc-gold);">View My Courses</a>
+        </div>
+        <div class="col-auto">
+            <a href="#" style="color: var(--bc-gold);">View My Teams</a>
+        </div>
+        <div class="col-auto">
+            <a href="#" style="color: var(--bc-gold);">Contact A Professor</a>
+        </div>
+        <div class="col-auto">
+            <a href="#" style="color: var(--bc-gold);">Report an Issue</a>
+        </div>
     </div>
 </div>
 {% endblock %} 
