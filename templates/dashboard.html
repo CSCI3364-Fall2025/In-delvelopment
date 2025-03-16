@@ -16,7 +16,7 @@
         </div>
     </div>
     {% endif %}
-    
+
     <div class="row text-center p-4">
         <h1>Welcome {{ user.name }} - {{ user.role }}</h1>
     </div>
@@ -30,14 +30,15 @@
                     <h5>Name:</h5>
                 </div>
                 <div class="col-auto mb-0">
-                   <h5 class="fw-lighter">Wesley Lawson {{ user.name }}</h5>
+                    <h5 class="fw-lighter">{{ user.name }}</h5>
+                </div>
             </div>
             <div class="row p-1 text-center justify-content-center">
                 <div class="col-auto">
                     <h5>Email:</h5>
                 </div>
                 <div class="col-auto mb-0">
-                   <h5 class="fw-lighter">lawsonwe@bc.edu {{ user.email }}</h5>
+                    <h5 class="fw-lighter">{{ user.email }}</h5>
                 </div>
             </div>
             <div class="row p-1 text-center justify-content-center">
@@ -45,7 +46,7 @@
                     <h5>Role:</h5>
                 </div>
                 <div class="col-auto mb-0">
-                   <h5 class="fw-lighter">Student {{ user.role }}</h5>
+                    <h5 class="fw-lighter">{{ user.role }}</h5>
                 </div>
             </div>
             <div class="row p-1 justify-content-center">
@@ -62,51 +63,48 @@
         </div>
         <div class="row pt-2" id="active-assessments-container">
             <div class="col-auto">
-                <span class="badge rounded-pill" style="background-color: var(--bc-gold);" id="num-open-assessments">1</span>
+                <span class="badge rounded-pill" style="background-color: var(--bc-gold);" id="num-open-assessments">{{
+                    active_assessments|length }}</span>
             </div>
             <div class="col-auto">
                 <h5>Active Assessments:</h5>
             </div>
-            <!-- To be passed in to the view when the models are created -->
             {% for assessment in active_assessments %}
+            <div class="col-auto">
+                <a href="#" class="link" style="color: var(--bc-gold);">{{ assessment.title }} ({{ assessment.course
+                    }}), Due {{ assessment.due_date }}</a>
+            </div>
             {% endfor %}
-            <!-- Temporary 'example' assessments -->
-             <div class="col-auto">
-                <a href="#" class="link" style="color: var(--bc-gold);">Peer Assessment 3 (Samary: Software Engineering), Due March 21, 11:59 pm</a>
-             </div>
         </div>
         <div class="row pt-4" id="closed-assessments-container">
             <div class="col-auto">
-                <span class="badge rounded-pill" style="background-color: var(--bc-gold);" id="num-closed-assessments">2</span>
+                <span class="badge rounded-pill" style="background-color: var(--bc-gold);"
+                    id="num-closed-assessments">{{ closed_assessments|length }}</span>
             </div>
             <div class="col-auto">
                 <h5>Closed Assessments:</h5>
             </div>
-            <!-- To be passed in to the view when the models are created -->
-            {% for assessment in assessments_closed %}
+            {% for assessment in closed_assessments %}
+            <div class="col-auto">
+                <a href="#" class="link-secondary">{{ assessment.title }} ({{ assessment.course }}), Closed {{
+                    assessment.closed_date }}</a>
+            </div>
             {% endfor %}
-            <!-- Temporary 'example' assessments -->
-            <div class="col-auto">
-               <a href="#" class="link-secondary">Peer Assessment 1 (Samary: Software Engineering), Closed February 12, 11:59 pm</a> 
-            </div>
-            <div class="col-auto">
-               <a href="#" class="link-secondary">Peer Assessment 2 (Samary: Software Engineering), Closed February 24, 11:59 pm</a> 
-            </div>
         </div>
         <div class="row pt-4" id="upcoming-assessments-container">
             <div class="col-auto">
-                <span class="badge rounded-pill" style="background-color: var(--bc-gold);" id="num-upcoming-assessments">1</span>
+                <span class="badge rounded-pill" style="background-color: var(--bc-gold);"
+                    id="num-upcoming-assessments">{{ upcoming_assessments|length }}</span>
             </div>
             <div class="col-auto">
                 <h5>Upcoming Assessments:</h5>
             </div>
-            <!-- To be passed in to the view when the models are created -->
-            {% for assessment in assessments_closed %}
-            {% endfor %}
-            <!-- Temporary 'example' assessments -->
+            {% for assessment in upcoming_assessments %}
             <div class="col-auto">
-               <p class="text-body-secondary">Peer Assessment 4 (Samary: Software Engineering), Opens April 2, 9:00 am</p>
+                <p class="text-body-secondary">{{ assessment.title }} ({{ assessment.course }}), Opens {{
+                    assessment.open_date }}</p>
             </div>
+            {% endfor %}
         </div>
     </div>
     <div class="row p-2" id="assessment-status-container">
@@ -118,7 +116,7 @@
                 {% if num_uncompleted_assessments == 0 %}
                 <p>You have no pending peer assessments.</p>
                 {% else %}
-                <p>You have 1{{num_uncompleted_assessments }} assessment(s) to complete. </p>
+                <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
                 {% endif %}
             </div>
             <div class="col-auto">
@@ -130,7 +128,7 @@
                 {% if num_assessment_results == 0 %}
                 <p>You have no assessment results to view.</p>
                 {% else %}
-                <p>You have 2{{num_assessment_results }} returned assessment(s) to view. </p>
+                <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
                 {% endif %}
             </div>
             <div class="col-auto">
@@ -144,7 +142,6 @@
             <div class="col-auto">
                 <h5 style="color: var(--bc-maroon);">Quick Links:</h5>
             </div>
-            
         </div>
         <div class="col-auto">
             <a href="#" style="color: var(--bc-gold);">View My Courses</a>
@@ -160,4 +157,62 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+
+{% if user.role == 'student' %}
+<div id="studentView" class="container">
+    <h2>Peer Assessment</h2>
+    <label for="student">Select Team Member:</label>
+    <select id="student" name="student">
+        <option value="julian_castro">Julian Castro</option>
+        <option value="student1">Alice</option>
+        <option value="student2">Bob</option>
+        <option value="student3">Charlie</option>
+        <option value="self">Self</option>
+    </select>
+    <label for="contribution">Rate Contribution:</label>
+    <select id="contribution" name="contribution">
+        <option value="excellent">Excellent</option>
+        <option value="good">Good</option>
+        <option value="average">Average</option>
+        <option value="poor">Poor</option>
+    </select>
+    <label for="teamwork">Rate Teamwork:</label>
+    <select id="teamwork" name="teamwork">
+        <option value="excellent">Excellent</option>
+        <option value="good">Good</option>
+        <option value="average">Average</option>
+        <option value="poor">Poor</option>
+    </select>
+    <label for="communication">Rate Communication:</label>
+    <select id="communication" name="communication">
+        <option value="excellent">Excellent</option>
+        <option value="good">Good</option>
+        <option value="average">Average</option>
+        <option value="poor">Poor</option>
+    </select>
+    <label for="feedback">Additional Comments:</label>
+    <textarea id="feedback" name="feedback"></textarea>
+    <button type="submit">Submit Assessment</button>
+    <button onclick="viewGrades()">View Grades</button>
+    <div id="gradeResults"></div>
+</div>
+{% elif user.role == 'professor' %}
+<div id="professorView" class="container">
+    <h2>Professor Dashboard</h2>
+    <label for="team">Select Team:</label>
+    <select id="team" name="team">
+        <option value="team1">Team Alpha</option>
+        <option value="team2">Team Beta</option>
+        <option value="team3">Team Gamma</option>
+    </select>
+    <label for="studentProf">Select Student:</label>
+    <select id="studentProf" name="studentProf">
+        <option value="julian_castro">Julian Castro</option>
+        <option value="student1">Alice</option>
+        <option value="student2">Bob</option>
+    </select>
+    <button type="button" onclick="viewAssessmentResults()">View Assessment Results</button>
+    <div id="assessmentResults"></div>
+</div>
+{% endif %}
+{% endblock %}

@@ -6,7 +6,7 @@
 <div class="hero">
     <h1>Welcome to the Peer Assessment System</h1>
     <p>Evaluate your peers and track your progress easily</p>
-    <a href="#" class="btn btn-primary">Get Started</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">Get Started</a>
 </div>
 
 <div class="features">
@@ -14,10 +14,70 @@
         <h2>For Students</h2>
         <p>Submit your self and peer assessments efficiently and track your scores.</p>
     </div>
-    
+
     <div class="feature">
         <h2>For Professors</h2>
         <p>Manage courses, create assessments, and analyze student evaluations.</p>
     </div>
 </div>
-{% endblock %} 
+
+{% if user.is_authenticated %}
+{% if user.profile.role == 'student' %}
+<div id="studentView" class="container">
+    <h2>Peer Assessment</h2>
+    <label for="student">Select Team Member:</label>
+    <select id="student" name="student">
+        <option value="julian_castro">Julian Castro</option>
+        <option value="student1">Alice</option>
+        <option value="student2">Bob</option>
+        <option value="student3">Charlie</option>
+        <option value="self">Self</option>
+    </select>
+    <label for="contribution">Rate Contribution:</label>
+    <select id="contribution" name="contribution">
+        <option value="excellent">Excellent</option>
+        <option value="good">Good</option>
+        <option value="average">Average</option>
+        <option value="poor">Poor</option>
+    </select>
+    <label for="teamwork">Rate Teamwork:</label>
+    <select id="teamwork" name="teamwork">
+        <option value="excellent">Excellent</option>
+        <option value="good">Good</option>
+        <option value="average">Average</option>
+        <option value="poor">Poor</option>
+    </select>
+    <label for="communication">Rate Communication:</label>
+    <select id="communication" name="communication">
+        <option value="excellent">Excellent</option>
+        <option value="good">Good</option>
+        <option value="average">Average</option>
+        <option value="poor">Poor</option>
+    </select>
+    <label for="feedback">Additional Comments:</label>
+    <textarea id="feedback" name="feedback"></textarea>
+    <button type="submit">Submit Assessment</button>
+    <button onclick="viewGrades()">View Grades</button>
+    <div id="gradeResults"></div>
+</div>
+{% elif user.profile.role == 'professor' %}
+<div id="professorView" class="container">
+    <h2>Professor Dashboard</h2>
+    <label for="team">Select Team:</label>
+    <select id="team" name="team">
+        <option value="team1">Team Alpha</option>
+        <option value="team2">Team Beta</option>
+        <option value="team3">Team Gamma</option>
+    </select>
+    <label for="studentProf">Select Student:</label>
+    <select id="studentProf" name="studentProf">
+        <option value="julian_castro">Julian Castro</option>
+        <option value="student1">Alice</option>
+        <option value="student2">Bob</option>
+    </select>
+    <button type="button" onclick="viewAssessmentResults()">View Assessment Results</button>
+    <div id="assessmentResults"></div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
