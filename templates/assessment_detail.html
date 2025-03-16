@@ -90,11 +90,14 @@
                             </div>
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="flagSelfAssessment">
-                                <label class="form-check-label" for="flagSelfAssessment">Flag for
-                                    Self-Assessment</label>
+                                <label class="form-check-label" for="flagSelfAssessment">Flag for Self-Assessment</label>
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="viewAssessmentResults()">View
-                                Assessment Results</button>
+                            <div class="mb-3">
+                                <label for="manualGrade" class="form-label">Manual Grade (0 - 10):</label>
+                                <input type="number" step="0.1" min="0" max="10" id="manualGrade" class="form-control">
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="submitManualGrade()">Submit Manual Grade</button>
+                            <button type="button" class="btn btn-primary mt-2" onclick="viewAssessmentResults()">View Assessment Results</button>
                         </form>
                         <div class="mt-4">
                             <h3>Summary Report</h3>
