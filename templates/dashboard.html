@@ -23,10 +23,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
-
-    <div class="row text-center p-4">
-        <h1>Welcome {{ user.name }} - {{ user.role }}</h1>
-    </div>
     <div class="row justify-content-center">
         <div class="w-75 border border-2 rounded p-1" style="border-color: var(--bc-maroon);">
             <div class="row p-1 text-center">
@@ -57,7 +53,7 @@
                 </div>
             </div>
             <div class="row p-1 justify-content-center">
-                <div class="col">
+                <div class="col-auto justify-content-center">
                     <a class="btn gold-btn" href="#">Edit Profile</a>
                 </div>
             </div>
@@ -77,7 +73,7 @@
             </div>
             {% for assessment in active_assessments %}
             <div class="col-auto">
-                <a href="{% url 'view_assessment' assessment.id %}" class="link" style="color: var(--bc-gold);">{{ assessment.title }} ({{ assessment.course }}), Due {{ assessment.due_date }}</a>
+                <a href="{% url 'view_assessment' assessment.id %}" class="link-secondary">{{ assessment.title }} ({{ assessment.course }}), Due {{ assessment.due_date }}</a>
             </div>
             {% endfor %}
         </div>
