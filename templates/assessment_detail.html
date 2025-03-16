@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Assessment Details | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>{{ assessment.title }}</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <p>Course: {{ assessment.course }}</p>
+                        <p>Due Date: {{ assessment.due_date }}</p>
+                    </div>
+                    {% if user.profile.role == 'student' %}
+                    <div id="studentView" class="container">
+                        <h2>Peer Assessment</h2>
+                        <form>
+                            <div class="mb-3">
+                                <label for="student" class="form-label">Select Team Member:</label>
+                                <select id="student" name="student" class="form-select">
+                                    <option value="team_member_1">Team Member #1</option>
+                                    <option value="team_member_2">Team Member #2</option>
+                                    <option value="team_member_3">Team Member #3</option>
+                                    <option value="self">Self</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contribution" class="form-label">Rate Contribution:</label>
+                                <select id="contribution" name="contribution" class="form-select">
+                                    <option value="4">Excellent</option>
+                                    <option value="3">Good</option>
+                                    <option value="2">Average</option>
+                                    <option value="1">Poor</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="teamwork" class="form-label">Rate Teamwork:</label>
+                                <select id="teamwork" name="teamwork" class="form-select">
+                                    <option value="4">Excellent</option>
+                                    <option value="3">Good</option>
+                                    <option value="2">Average</option>
+                                    <option value="1">Poor</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="communication" class="form-label">Rate Communication:</label>
+                                <select id="communication" name="communication" class="form-select">
+                                    <option value="4">Excellent</option>
+                                    <option value="3">Good</option>
+                                    <option value="2">Average</option>
+                                    <option value="1">Poor</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="feedback" class="form-label">Additional Comments:</label>
+                                <textarea id="feedback" name="feedback" class="form-control"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Assessment</button>
+                        </form>
+                        <div class="mt-4">
+                            <h3>Summary Report</h3>
+                            <p>Average Grade: <span id="averageGrade">N/A</span></p>
+                            <h4>Comments:</h4>
+                            <ul id="commentsList"></ul>
+                        </div>
+                    </div>
+                    {% elif user.profile.role == 'professor' %}
+                    <div id="professorView" class="container">
+                        <h2>Professor Dashboard</h2>
+                        <form>
+                            <div class="mb-3">
+                                <label for="team" class="form-label">Select Team:</label>
+                                <select id="team" name="team" class="form-select">
+                                    <option value="team_alpha">Team Alpha</option>
+                                    <option value="team_beta">Team Beta</option>
+                                    <option value="team_gamma">Team Gamma</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="studentProf" class="form-label">Select Student:</label>
+                                <select id="studentProf" name="studentProf" class="form-select">
+                                    <option value="team_member_1">Team Member #1</option>
+                                    <option value="team_member_2">Team Member #2</option>
+                                    <option value="team_member_3">Team Member #3</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="flagSelfAssessment">
+                                <label class="form-check-label" for="flagSelfAssessment">Flag for Self-Assessment</label>
+                            </div>
+                            <div class="mb-3">
+                                <label for="manualGrade" class="form-label">Manual Grade (0 - 10):</label>
+                                <input type="number" step="0.1" min="0" max="10" id="manualGrade" class="form-control">
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="submitManualGrade()">Submit Manual Grade</button>
+                            <button type="button" class="btn btn-primary mt-2" onclick="viewAssessmentResults()">View Assessment Results</button>
+                        </form>
+                        <div class="mt-4">
+                            <h3>Summary Report</h3>
+                            <p>Average Grade: <span id="averageGradeProf">N/A</span></p>
+                            <h4>Comments:</h4>
+                            <ul id="commentsListProf"></ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

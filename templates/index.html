@@ -1,0 +1,80 @@
+<!-- filepath: /Users/juliancstro/Documents/GitHub/Ctrl-Alt-Elite/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peer Assessment System</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <script src="{% static 'scripts.js' %}" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <h1>Peer Assessment System</h1>
+        <ul class="nav-links">
+            <li><button onclick="showStudentView()">Student View</button></li>
+            <li><button onclick="showProfessorView()">Professor Dashboard</button></li>
+        </ul>
+    </nav>
+    <div id="studentView" class="container">
+        <h2>Peer Assessment</h2>
+        <label for="student">Select Team Member:</label>
+        <select id="student" name="student">
+            <option value="julian_castro">Julian Castro</option>
+            <option value="student1">Alice</option>
+            <option value="student2">Bob</option>
+            <option value="student3">Charlie</option>
+            <option value="self">Self</option>
+        </select>
+        <label for="contribution">Rate Contribution:</label>
+        <select id="contribution" name="contribution">
+            <option value="excellent">Excellent</option>
+            <option value="good">Good</option>
+            <option value="average">Average</option>
+            <option value="poor">Poor</option>
+        </select>
+        <label for="teamwork">Rate Teamwork:</label>
+        <select id="teamwork" name="teamwork">
+            <option value="excellent">Excellent</option>
+            <option value="good">Good</option>
+            <option value="average">Average</option>
+            <option value="poor">Poor</option>
+        </select>
+        <label for="communication">Rate Communication:</label>
+        <select id="communication" name="communication">
+            <option value="excellent">Excellent</option>
+            <option value="good">Good</option>
+            <option value="average">Average</option>
+            <option value="poor">Poor</option>
+        </select>
+        <label for="feedback">Additional Comments:</label>
+        <textarea id="feedback" name="feedback"></textarea>
+        <button type="submit">Submit Assessment</button>
+        <button onclick="viewGrades()">View Grades</button>
+        <div id="gradeResults"></div>
+    </div>
+    <div id="professorView" class="container" style="display: none;">
+        <h2>Professor Dashboard</h2>
+        <label for="team">Select Team:</label>
+        <select id="team" name="team">
+            <option value="team1">Team Alpha</option>
+            <option value="team2">Team Beta</option>
+            <option value="team3">Team Gamma</option>
+        </select>
+        <label for="studentProf">Select Student:</label>
+        <select id="studentProf" name="studentProf">
+            <option value="julian_castro">Julian Castro</option>
+            <option value="student1">Alice</option>
+            <option value="student2">Bob</option>
+        </select>
+        <button type="button" onclick="viewAssessmentResults()">View Assessment Results</button>
+        <div id="assessmentResults"></div>
+    </div>
+    <footer class="footer">
+        <p>&copy; 2025 Peer Assessment System</p>
+    </footer>
+</body>
+
+</html>
