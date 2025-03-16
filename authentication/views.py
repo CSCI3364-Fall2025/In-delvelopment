@@ -12,7 +12,21 @@ from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAu
 # Create your views here.
 
 def login_view(request):
-    # If user is already authenticated, redirect to dashboard
+    # Ensure OAuth is set up
+    try:
+        from django.contrib.sites.models import Site
+        from allauth.socialaccount.models import SocialApp
+        
+        # Check if we have a Google provider
+        if not SocialApp.objects.filter(provider='google').exists():
+            # If not, try to set it up
+            from authentication.apps import AuthenticationConfig
+            config = AuthenticationConfig('authentication', 'authentication')
+            config.setup_oauth()
+    except Exception:
+        # If we can't set it up, we'll just continue and let the error happen
+        pass
+        
     return render(request, 'login.html')
 
 def set_role(request):
