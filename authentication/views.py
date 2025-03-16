@@ -1,10 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from allauth.socialaccount.models import SocialApp
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from .models import UserProfile
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
@@ -12,11 +10,12 @@ from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAu
 # Create your views here.
 
 def login_view(request):
+    # Import models inside the function
+    from allauth.socialaccount.models import SocialApp
+    from .models import UserProfile
+    
     # Ensure OAuth is set up
     try:
-        from django.contrib.sites.models import Site
-        from allauth.socialaccount.models import SocialApp
-        
         # Check if we have a Google provider
         if not SocialApp.objects.filter(provider='google').exists():
             # If not, try to set it up

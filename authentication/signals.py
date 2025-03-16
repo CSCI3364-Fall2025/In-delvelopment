@@ -1,6 +1,5 @@
 from django.dispatch import receiver
 from allauth.account.signals import user_signed_up
-from .models import UserProfile
 
 @receiver(user_signed_up)
 def set_user_role(sender, request, user, **kwargs):

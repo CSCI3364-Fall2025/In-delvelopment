@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from authentication.models import UserProfile
-from .models import Assessment
 
 def home(request):
     return render(request, 'home.html')
@@ -51,9 +50,5 @@ def dashboard(request):
 
 @login_required
 def view_assessment(request, assessment_id):
-    assessment = get_object_or_404(Assessment, id=assessment_id)
-    context = {
-        'assessment': assessment,
-        'user': request.user
-    }
-    return render(request, 'assessment_detail.html', context)
+    # For now, just return a simple response
+    return render(request, 'assessment_detail.html', {'assessment_id': assessment_id})

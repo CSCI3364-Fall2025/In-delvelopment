@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
-
 class AuthenticationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'authentication'
@@ -11,10 +10,38 @@ class AuthenticationConfig(AppConfig):
         import authentication.signals
         
         # Register the post_migrate signal to set up OAuth
-        post_migrate.connect(self.setup_oauth, sender=self)
+        # Only connect the signal once to avoid duplicate registrations
+        post_migrate.connect(self.setup_oauth, sender=self, dispatch_uid="setup_oauth_once")
+        
+        # Move the admin customization here to avoid early imports
+        self.customize_admin()
+    
+    def customize_admin(self):
+        """Customize the admin interface for SocialApp"""
+        try:
+            from django.contrib import admin
+            from allauth.socialaccount.models import SocialApp
+            from allauth.socialaccount.admin import SocialAppAdmin
+            
+            # Only unregister if it's already registered
+            if SocialApp in admin.site._registry:
+                admin.site.unregister(SocialApp)
+                
+                # Create a custom admin class if needed
+                class CustomSocialAppAdmin(SocialAppAdmin):
+                    pass
+                
+                admin.site.register(SocialApp, CustomSocialAppAdmin)
+        except Exception as e:
+            # This might happen if the admin site isn't ready yet
+            print(f"Could not customize admin: {e}")
     
     def setup_oauth(self, **kwargs):
         """Set up OAuth configuration automatically"""
+        # Avoid running during app checks or other non-migration operations
+        if kwargs.get('plan') is None:
+            return
+            
         # Use a hardcoded client ID and secret for development
         # In production, these would come from environment variables
         GOOGLE_CLIENT_ID = "583548039994-u848qtlu661loq7759f7r6q9m1j8269a.apps.googleusercontent.com"
