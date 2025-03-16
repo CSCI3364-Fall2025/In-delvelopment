@@ -1,3 +1,60 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from allauth.socialaccount.models import SocialApp
+from django.urls import reverse
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from .models import UserProfile
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
 
 # Create your views here.
+
+def login_view(request):
+    # If user is already authenticated, redirect to dashboard
+    return render(request, 'login.html')
+
+def set_role(request):
+    """Store the selected role in session and redirect to Google login"""
+    if request.method == 'POST':
+        user_role = request.POST.get('user_role', 'student')
+        # Store the role in session
+        request.session['selected_role'] = user_role
+        return redirect('google_login')
+    return redirect('login')
+
+def google_login(request):
+    # This will be handled by django-allauth
+    # Redirect to the allauth Google login URL with proper path
+    return redirect('/accounts/google/login/')
+
+@login_required
+def logout_view(request):
+    return redirect('account_logout')
+
+@login_required
+def update_role(request):
+    """Update the user's role after successful login"""
+    if request.user.is_authenticated:
+        selected_role = request.session.get('selected_role', 'student')
+        
+        # Update the user's profile with the selected role
+        if hasattr(request.user, 'profile'):
+            profile = request.user.profile
+            profile.role = selected_role
+            profile.save()
+            
+        # Clear the session variable
+        if 'selected_role' in request.session:
+            del request.session['selected_role']
+            
+        return redirect('dashboard')
+    return redirect('login')
+
+def custom_google_callback(request):
+    """Custom callback view for Google OAuth"""
+    # Force auto-signup
+    request.session['socialaccount_auto_signup'] = True
+    # Redirect to the standard callback
+    return redirect('/accounts/google/login/callback/')

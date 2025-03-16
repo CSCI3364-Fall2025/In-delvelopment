@@ -1,0 +1,9 @@
+Django
+google-auth-oauthlib
+google-auth
+oauthlib
+requests-oauthlib
+requests
+django-allauth
+pyjwt
+cryptography

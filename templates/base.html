@@ -42,7 +42,11 @@
                     <!-- Temporarily comment out until you implement Google login -->
                     <!-- <a href="{% url 'google_login' %}">Login With Google</a> -->
                     <li class="nav-item m-2">
-                        <a href="#" class="btn gold-btn">Login With Google</a> 
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'account_logout' %}" class="btn gold-btn">Logout</a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn gold-btn">Login With Google</a>
+                        {% endif %}
                     </li>
                 </ul>
                 

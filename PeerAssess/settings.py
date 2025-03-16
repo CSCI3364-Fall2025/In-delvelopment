@@ -37,9 +37,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'assessments',
     'authentication',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+SITE_ID = 1
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -49,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'PeerAssess.urls'
@@ -125,7 +134,39 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Add these lines to your settings.py
-GOOGLE_CLIENT_ID = '216906751903-ihoeclgif80p4eepls916v4l909ihvfd.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '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'
-GOOGLE_REDIRECT_URI = 'http://localhost:8000/authentication/callback/'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Allauth settings
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*']  # Only require email for signup
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Keep this setting
+ACCOUNT_UNIQUE_EMAIL = True  # Keep this setting
+
+# These settings should bypass the signup page
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# Force auto-connect of social accounts
+SOCIALACCOUNT_ADAPTER = 'authentication.adapters.BCEmailAdapter'
+
+# Redirect URLs
+LOGIN_REDIRECT_URL = 'dashboard'  # Redirect directly to dashboard after login
+LOGOUT_REDIRECT_URL = 'home'
+
+# Google OAuth settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
