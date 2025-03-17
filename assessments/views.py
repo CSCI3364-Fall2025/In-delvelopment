@@ -7,8 +7,12 @@ from .models import Assessment, AssessmentSubmission  # Import the Assessment an
 def home(request):
     return render(request, 'home.html')
 
-@login_required
 def dashboard(request):
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        # Redirect to our custom login page instead of the default login page
+        return render(request, 'please_login.html')
+    
     # Check if user has a BC email
     if not request.user.email.endswith('@bc.edu'):
         from django.contrib.auth import logout
