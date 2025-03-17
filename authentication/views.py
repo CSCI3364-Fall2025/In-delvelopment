@@ -44,7 +44,11 @@ def google_login(request):
 
 @login_required
 def logout_view(request):
-    return redirect('account_logout')
+    from django.contrib.auth import logout
+    
+    logout(request)
+    messages.success(request, "You have been successfully logged out.")
+    return redirect('home')
 
 @login_required
 def update_role(request):
