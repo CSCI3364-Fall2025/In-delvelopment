@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from authentication.models import UserProfile
+from .models import Assessment, AssessmentSubmission  # Import the Assessment and AssessmentSubmission models
 
 def home(request):
     return render(request, 'home.html')
@@ -20,14 +21,14 @@ def dashboard(request):
     
     # Example data for assessments
     active_assessments = [
-        {'id': 1, 'title': 'Peer Assessment 3', 'course': 'Software Engineering', 'due_date': 'March 21, 11:59 pm'}
+        {'id': 1, 'title': 'Peer Assessment 3', 'course': 'Software Engineering', 'due_date': '2025-03-21 23:59:00'}
     ]
     closed_assessments = [
-        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': 'February 12, 11:59 pm'},
-        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': 'February 24, 11:59 pm'}
+        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12 23:59:00', 'grade': 'A'},
+        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24 23:59:00', 'grade': 'B+'}
     ]
     upcoming_assessments = [
-        {'id': 4, 'title': 'Peer Assessment 4', 'course': 'Software Engineering', 'open_date': 'April 2, 9:00 am'}
+        {'id': 4, 'title': 'Peer Assessment 4', 'course': 'Software Engineering', 'open_date': '2025-04-02 09:00:00'}
     ]
     
     # Example data for new results notification
@@ -50,5 +51,54 @@ def dashboard(request):
 
 @login_required
 def view_assessment(request, assessment_id):
-    # For now, just return a simple response
-    return render(request, 'assessment_detail.html', {'assessment_id': assessment_id})
+    # Fetch the assessment details from the database
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Fetch the comments for the professor view
+    comments = AssessmentSubmission.objects.filter(assessment=assessment).values_list('feedback', flat=True)
+    
+    context = {
+        'assessment': assessment,
+        'comments': comments
+    }
+    
+    return render(request, 'assessment_detail.html', context)
+
+@login_required
+def submit_assessment(request, assessment_id):
+    if request.method == 'POST':
+        assessment = get_object_or_404(Assessment, id=assessment_id)
+        student = request.POST['student']
+        contribution = request.POST['contribution']
+        teamwork = request.POST['teamwork']
+        communication = request.POST['communication']
+        feedback = request.POST['feedback']
+        
+        # Save the assessment submission
+        AssessmentSubmission.objects.create(
+            assessment=assessment,
+            student=student,
+            contribution=contribution,
+            teamwork=teamwork,
+            communication=communication,
+            feedback=feedback
+        )
+        
+        messages.success(request, 'Assessment submitted successfully.')
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    return redirect('dashboard')
+
+@login_required
+def view_all_published_results(request):
+    # Example data for published results
+    published_results = [
+        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12 23:59:00'},
+        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24 23:59:00'}
+    ]
+    
+    context = {
+        'published_results': published_results
+    }
+    
+    return render(request, 'published_results.html', context)
