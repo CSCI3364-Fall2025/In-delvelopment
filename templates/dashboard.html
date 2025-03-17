@@ -23,6 +23,38 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
+
+    <div class="row p-2" id="assessment-status-container">
+        <div class="col-auto" id="status-header">
+            <h2 style="color: var(--bc-maroon);">Status:</h2>
+        </div>
+        <div class="row" id="pending_assessments">
+            <div class="col-auto">
+                {% if num_uncompleted_assessments == 0 %}
+                <p>You have no pending peer assessments.</p>
+                {% else %}
+                <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
+                {% endif %}
+            </div>
+            <div class="col-auto">
+                <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+            </div>
+        </div>
+        <div class="row" id="published_results">
+            <div class="col-auto">
+                {% if num_assessment_results == 0 %}
+                <p>You have no assessment results to view.</p>
+                {% else %}
+                <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
+                {% endif %}
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published
+                    Results</a>
+            </div>
+        </div>
+    </div>
+
     <div class="row justify-content-center">
         <div class="w-75 border border-2 rounded p-1" style="border-color: var(--bc-maroon);">
             <div class="row p-1 text-center">
@@ -103,13 +135,14 @@
                         <th>Closed Date</th>
                         <th>Closed Time</th>
                         <th>Grade</th>
+                        <th>Comments</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for assessment in closed_assessments %}
                     <tr>
                         <td>{{ assessment.id }}</td>
-                        <td><a href="{% url 'view_assessment' assessment.id %}" class="link-secondary"
+                        <td><a href="{% url 'view_comments' assessment.id %}" class="link-secondary"
                                 title="{{ assessment.title|default_if_none:'Assignment Title' }}">
                                 {{ assessment.title|default_if_none:"Assignment Title" }}
                             </a></td>
@@ -117,6 +150,8 @@
                         <td>{{ assessment.closed_date }}</td>
                         <td>{{ assessment.closed_time }}</td>
                         <td>{{ assessment.grade|default:"N/A" }}</td>
+                        <td><a href="{% url 'view_comments' assessment.id %}" class="btn btn-info">View Comments</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -138,10 +173,7 @@
                     {% for assessment in upcoming_assessments %}
                     <tr>
                         <td>{{ assessment.id }}</td>
-                        <td><a href="{% url 'view_assessment' assessment.id %}" class="link-secondary"
-                                title="{{ assessment.title|default_if_none:'Assignment Title' }}">
-                                {{ assessment.title|default_if_none:"Assignment Title" }}
-                            </a></td>
+                        <td>{{ assessment.title|default_if_none:"Assignment Title" }}</td>
                         <td>{{ assessment.course }}</td>
                         <td>{{ assessment.open_date }}</td>
                         <td>{{ assessment.open_time }}</td>
@@ -149,36 +181,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-    </div>
-    <div class="row p-2" id="assessment-status-container">
-        <div class="col-auto" id="status-header">
-            <h2 style="color: var(--bc-maroon);">Status:</h2>
-        </div>
-        <div class="row" id="pending_assessments">
-            <div class="col-auto">
-                {% if num_uncompleted_assessments == 0 %}
-                <p>You have no pending peer assessments.</p>
-                {% else %}
-                <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
-                {% endif %}
-            </div>
-            <div class="col-auto">
-                <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
-            </div>
-        </div>
-        <div class="row" id="published_results">
-            <div class="col-auto">
-                {% if num_assessment_results == 0 %}
-                <p>You have no assessment results to view.</p>
-                {% else %}
-                <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
-                {% endif %}
-            </div>
-            <div class="col-auto">
-                <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published
-                    Results</a>
-            </div>
         </div>
     </div>
     <hr>

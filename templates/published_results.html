@@ -22,18 +22,20 @@
                                     <th>Closed Date</th>
                                     <th>Closed Time</th>
                                     <th>Grade</th>
+                                    <th>Comments</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for result in published_results %}
                                 <tr>
                                     <td>{{ result.id }}</td>
-                                    <td><a href="{% url 'view_assessment' result.id %}" class="link-secondary">{{
-                                            result.title|default_if_none:"Assignment Title" }}</a></td>
+                                    <td>{{ result.title|default_if_none:"Assignment Title" }}</td>
                                     <td>{{ result.course }}</td>
                                     <td>{{ result.closed_date }}</td>
                                     <td>{{ result.closed_time }}</td>
                                     <td>{{ result.grade|default:"N/A" }}</td>
+                                    <td><a href="{% url 'view_comments' result.id %}" class="btn btn-info">View
+                                            Comments</a></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

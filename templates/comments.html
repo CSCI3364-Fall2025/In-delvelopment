@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Comments for {{ assessment.title }} | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>Comments for {{ assessment.title }}</h3>
+                </div>
+                <div class="card-body p-4">
+                    <ul class="list-group">
+                        {% for student, feedback in comments %}
+                        <li class="list-group-item">
+                            <strong>{{ student }}:</strong> {{ feedback }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

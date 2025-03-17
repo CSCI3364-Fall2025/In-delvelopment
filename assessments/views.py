@@ -33,6 +33,19 @@ def dashboard(request):
         Assessment.objects.create(id=3, title='Peer Assessment 2', course='Software Engineering', closed_date='2025-02-24 23:59:00')
         Assessment.objects.create(id=4, title='Peer Assessment 4', course='Software Engineering', open_date='2025-04-02 09:00:00')
     
+    # Create example data for assessment submissions if they don't exist
+    if not AssessmentSubmission.objects.filter(assessment_id=2).exists():
+        AssessmentSubmission.objects.create(assessment_id=2, student='Julian Castro', contribution=4, teamwork=4, communication=4, feedback='Great job on the project!')
+        AssessmentSubmission.objects.create(assessment_id=2, student='Alice', contribution=3, teamwork=3, communication=3, feedback='Needs improvement in communication.')
+        AssessmentSubmission.objects.create(assessment_id=2, student='Bob', contribution=5, teamwork=5, communication=5, feedback='Excellent teamwork and contribution.')
+        AssessmentSubmission.objects.create(assessment_id=2, student='Charlie', contribution=2, teamwork=2, communication=2, feedback='Average performance overall.')
+    
+    if not AssessmentSubmission.objects.filter(assessment_id=3).exists():
+        AssessmentSubmission.objects.create(assessment_id=3, student='Julian Castro', contribution=4, teamwork=4, communication=4, feedback='Great job on the project!')
+        AssessmentSubmission.objects.create(assessment_id=3, student='Alice', contribution=3, teamwork=3, communication=3, feedback='Needs improvement in communication.')
+        AssessmentSubmission.objects.create(assessment_id=3, student='Bob', contribution=5, teamwork=5, communication=5, feedback='Excellent teamwork and contribution.')
+        AssessmentSubmission.objects.create(assessment_id=3, student='Charlie', contribution=2, teamwork=2, communication=2, feedback='Average performance overall.')
+    
     active_assessments = [
         {'id': 1, 'title': 'Peer Assessment 3', 'course': 'Software Engineering', 'due_date': '2025-03-21', 'due_time': '23:59:00'}
     ]
@@ -115,3 +128,23 @@ def view_all_published_results(request):
     }
     
     return render(request, 'published_results.html', context)
+
+@login_required
+def view_comments(request, assessment_id):
+    # Fetch the assessment details from the database
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Example comments data
+    comments = [
+        ('Johnny', 'Great job on the project!'),
+        ('Alice', 'Needs improvement in communication.'),
+        ('Bob', 'Excellent teamwork and contribution.'),
+        ('Charlie', 'Average performance overall.')
+    ]
+    
+    context = {
+        'assessment': assessment,
+        'comments': comments
+    }
+    
+    return render(request, 'comments.html', context)

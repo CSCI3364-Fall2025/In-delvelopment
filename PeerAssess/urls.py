@@ -35,4 +35,5 @@ urlpatterns = [
     path('published-results/', views.view_all_published_results, name='view_all_published_results'),
     path('logout/', auth_views.logout_view, name='logout'),
     path('login-error/', auth_views.login_error, name='login_error'),
+    path('assessments/', include('assessments.urls')),
 ]
