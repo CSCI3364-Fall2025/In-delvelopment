@@ -52,13 +52,16 @@ def logout_view(request):
     # Perform the logout
     logout(request)
     
+    # Clear any session data
+    request.session.flush()
+    
     # Check if the email was from BC
     if user_email and not user_email.endswith('@bc.edu'):
         messages.error(request, "Access denied. Only Boston College (@bc.edu) email addresses are allowed.")
-        return redirect('home')
     else:
         messages.success(request, "You have been successfully logged out.")
-        return redirect('home')
+    
+    return redirect('home')
 
 @login_required
 def update_role(request):
