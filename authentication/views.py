@@ -46,9 +46,19 @@ def google_login(request):
 def logout_view(request):
     from django.contrib.auth import logout
     
+    # Get the user's email before logging them out
+    user_email = request.user.email
+    
+    # Perform the logout
     logout(request)
-    messages.success(request, "You have been successfully logged out.")
-    return redirect('home')
+    
+    # Check if the email was from BC
+    if user_email and not user_email.endswith('@bc.edu'):
+        messages.error(request, "Access denied. Only Boston College (@bc.edu) email addresses are allowed.")
+        return redirect('home')
+    else:
+        messages.success(request, "You have been successfully logged out.")
+        return redirect('home')
 
 @login_required
 def update_role(request):
@@ -94,3 +104,15 @@ def load_progress(request):
     """Retrieve saved progress for the student as plain text"""
     user_profile = UserProfile.objects.get(user=request.user)
     return HttpResponse(user_profile.progress_data)  # Return as plain text
+
+def login_error(request):
+    """Display a user-friendly error page for login issues"""
+    error_type = request.GET.get('error', 'unknown')
+    email = request.GET.get('email', '')
+    
+    context = {
+        'error_type': error_type,
+        'email': email
+    }
+    
+    return render(request, 'login_error.html', context)

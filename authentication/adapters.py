@@ -2,6 +2,8 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib import messages
 from django.shortcuts import redirect
 from allauth.account.utils import user_email, user_username, user_field
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
 
 class BCEmailAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
@@ -12,13 +14,20 @@ class BCEmailAdapter(DefaultSocialAccountAdapter):
         # Check if email is present (Google should provide it)
         if not email:
             messages.error(request, "Could not retrieve email from your Google account.")
-            return redirect('login')
+            return HttpResponseRedirect('/login-error/?error=no_email')
             
         # Check if email is from BC domain
         if not email.endswith('@bc.edu'):
+            # Clear any existing success messages
+            storage = messages.get_messages(request)
+            for message in storage:
+                # Remove any success messages
+                if message.level == messages.SUCCESS:
+                    storage.used = True
+            
             messages.error(request, "Only Boston College (@bc.edu) email addresses are allowed.")
-            # Prevent the login
-            return redirect('login')
+            # Redirect to a custom error page instead of raising an exception
+            return HttpResponseRedirect('/login-error/?error=non_bc_email&email=' + email)
         
         # Get the role from session
         selected_role = request.session.get('selected_role', 'student')

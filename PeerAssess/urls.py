@@ -33,4 +33,5 @@ urlpatterns = [
     path('custom-google-callback/', auth_views.custom_google_callback, name='custom_google_callback'),
     path('assessment/<int:assessment_id>/', views.view_assessment, name='view_assessment'),
     path('logout/', auth_views.logout_view, name='logout'),
+    path('login-error/', auth_views.login_error, name='login_error'),
 ]

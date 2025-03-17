@@ -8,6 +8,13 @@ def home(request):
 
 @login_required
 def dashboard(request):
+    # Check if user has a BC email
+    if not request.user.email.endswith('@bc.edu'):
+        from django.contrib.auth import logout
+        logout(request)
+        messages.error(request, "Access denied. Only Boston College (@bc.edu) email addresses are allowed.")
+        return redirect('home')
+    
     # Check if user has a profile, create one if not
     if not hasattr(request.user, 'profile'):
         UserProfile.objects.create(user=request.user)
