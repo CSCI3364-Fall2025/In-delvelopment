@@ -167,7 +167,8 @@ def dashboard(request):
         'upcoming_assessments': upcoming_assessments,
         'num_uncompleted_assessments': len(active_assessments),
         'num_assessment_results': len(closed_assessments),
-        'new_results': new_results
+        'new_results': new_results,
+        'request': request,
     }
     
     # Add welcome message

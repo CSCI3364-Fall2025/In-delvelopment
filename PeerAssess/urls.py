@@ -36,4 +36,8 @@ urlpatterns = [
     path('logout/', auth_views.logout_view, name='logout'),
     path('login-error/', auth_views.login_error, name='login_error'),
     path('assessments/', include('assessments.urls')),
+    path('debug/', include([
+        path('auth/', auth_views.debug_auth, name='debug_auth'),
+        #add more debug views here in the future
+    ])),
 ]

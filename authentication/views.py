@@ -116,3 +116,13 @@ def login_error(request):
     }
     
     return render(request, 'login_error.html', context)
+
+def debug_auth(request):
+    """Debug view to check authentication status"""
+    context = {
+        'is_authenticated': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else None,
+        'email': request.user.email if request.user.is_authenticated else None,
+        'session_keys': list(request.session.keys()),
+    }
+    return render(request, 'debug/auth.html', context)
