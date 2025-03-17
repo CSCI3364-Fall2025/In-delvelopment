@@ -26,16 +26,22 @@ def dashboard(request):
         'role': request.user.profile.get_role_display(),
     }
     
-    # Example data for assessments
+    # Create example data for assessments if they don't exist
+    if not Assessment.objects.exists():
+        Assessment.objects.create(id=1, title='Peer Assessment 3', course='Software Engineering', due_date='2025-03-21 23:59:00')
+        Assessment.objects.create(id=2, title='Peer Assessment 1', course='Software Engineering', closed_date='2025-02-12 23:59:00')
+        Assessment.objects.create(id=3, title='Peer Assessment 2', course='Software Engineering', closed_date='2025-02-24 23:59:00')
+        Assessment.objects.create(id=4, title='Peer Assessment 4', course='Software Engineering', open_date='2025-04-02 09:00:00')
+    
     active_assessments = [
-        {'id': 1, 'title': 'Peer Assessment 3', 'course': 'Software Engineering', 'due_date': '2025-03-21 23:59:00'}
+        {'id': 1, 'title': 'Peer Assessment 3', 'course': 'Software Engineering', 'due_date': '2025-03-21', 'due_time': '23:59:00'}
     ]
     closed_assessments = [
-        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12 23:59:00', 'grade': 'A'},
-        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24 23:59:00', 'grade': 'B+'}
+        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12', 'closed_time': '23:59:00', 'grade': 'A'},
+        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24', 'closed_time': '23:59:00', 'grade': 'B+'}
     ]
     upcoming_assessments = [
-        {'id': 4, 'title': 'Peer Assessment 4', 'course': 'Software Engineering', 'open_date': '2025-04-02 09:00:00'}
+        {'id': 4, 'title': 'Peer Assessment 4', 'course': 'Software Engineering', 'open_date': '2025-04-02', 'open_time': '09:00:00'}
     ]
     
     # Example data for new results notification
@@ -100,8 +106,8 @@ def submit_assessment(request, assessment_id):
 def view_all_published_results(request):
     # Example data for published results
     published_results = [
-        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12 23:59:00'},
-        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24 23:59:00'}
+        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12', 'closed_time': '23:59:00', 'grade': 'A'},
+        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24', 'closed_time': '23:59:00', 'grade': 'B+'}
     ]
     
     context = {

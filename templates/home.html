@@ -8,7 +8,8 @@
     <div class="row">
         <div class="col">
             {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show"
+                role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -40,7 +41,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
@@ -53,4 +54,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
