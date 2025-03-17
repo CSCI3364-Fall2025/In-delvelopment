@@ -3,21 +3,54 @@
 {% block title %}Home | Peer Assessment System{% endblock %}
 
 {% block content %}
-<div class="hero">
-    <h1>Welcome to the Peer Assessment System</h1>
-    <p>Evaluate your peers and track your progress easily</p>
-    <a href="#" class="btn btn-primary">Get Started</a>
-</div>
-
-<div class="features">
-    <div class="feature">
-        <h2>For Students</h2>
-        <p>Submit your self and peer assessments efficiently and track your scores.</p>
+{% if messages %}
+<div class="container mt-3">
+    <div class="row">
+        <div class="col">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
     </div>
-    
-    <div class="feature">
-        <h2>For Professors</h2>
-        <p>Manage courses, create assessments, and analyze student evaluations.</p>
+</div>
+{% endif %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4">Welcome to the Peer Assessment System</h1>
+            <p class="lead">Evaluate your peers and track your progress easily</p>
+            <div class="mt-4">
+                <a href="{% url 'login' %}" class="btn gold-btn btn-lg">Get Started</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>For Students</h3>
+                </div>
+                <div class="card-body">
+                    <p>Submit your self and peer assessments efficiently and track your scores.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>For Professors</h3>
+                </div>
+                <div class="card-body">
+                    <p>Manage courses, create assessments, and analyze student evaluations.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %} 

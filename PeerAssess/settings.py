@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'authentication.middleware.BCEmailMiddleware',
 ]
 
 ROOT_URLCONF = 'PeerAssess.urls'
@@ -139,17 +140,14 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-
 # Allauth settings
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*']  # Only require email for signup
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Keep this setting
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_UNIQUE_EMAIL = True  # Keep this setting
 
 # These settings should bypass the signup page
-SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_AUTO_SIGNUP = False
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_QUERY_EMAIL = True
@@ -160,6 +158,9 @@ SOCIALACCOUNT_ADAPTER = 'authentication.adapters.BCEmailAdapter'
 # Redirect URLs
 LOGIN_REDIRECT_URL = 'dashboard'  # Redirect directly to dashboard after login
 LOGOUT_REDIRECT_URL = 'home'
+
+# Custom adapter
+SOCIALACCOUNT_ADAPTER = 'authentication.adapters.BCEmailAdapter'
 
 # Google OAuth settings
 SOCIALACCOUNT_PROVIDERS = {

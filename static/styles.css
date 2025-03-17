@@ -112,3 +112,17 @@ button {
     background-color: var(--bc-maroon);
     color: var(--bc-gold);
 }
+
+.hero {
+    display: flex;
+    flex-direction: column;
+    /* Stack elements vertically */
+    justify-content: center;
+    /* Center vertically */
+    align-items: center;
+    /* Center horizontally */
+    height: 100vh;
+    /* Full viewport height */
+    text-align: center;
+    /* Center text horizontally */
+}

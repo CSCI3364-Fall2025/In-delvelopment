@@ -27,8 +27,12 @@ urlpatterns = [
     path('set-role/', auth_views.set_role, name='set_role'),
     path('google-login/', auth_views.google_login, name='google_login'),
     path('update-role/', auth_views.update_role, name='update_role'),
+    path('save_progress', auth_views.save_progress, name='save_progress'),
+    path('load_progress', auth_views.load_progress, name='load_progress'),
     path('accounts/', include('allauth.urls')),
     path('custom-google-callback/', auth_views.custom_google_callback, name='custom_google_callback'),
     path('assessment/<int:assessment_id>/', views.view_assessment, name='view_assessment'),
     path('published-results/', views.view_all_published_results, name='view_all_published_results'),
+    path('logout/', auth_views.logout_view, name='logout'),
+    path('login-error/', auth_views.login_error, name='login_error'),
 ]

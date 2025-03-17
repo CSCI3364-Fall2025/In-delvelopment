@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -6,14 +7,13 @@ from django.contrib.auth.decorators import login_required
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
+from .models import UserProfile
 
 # Create your views here.
 
 def login_view(request):
     # Import models inside the function
-    from allauth.socialaccount.models import SocialApp
-    from .models import UserProfile
-    
+    from allauth.socialaccount.models import SocialApp    
     # Ensure OAuth is set up
     try:
         # Check if we have a Google provider
@@ -44,7 +44,21 @@ def google_login(request):
 
 @login_required
 def logout_view(request):
-    return redirect('account_logout')
+    from django.contrib.auth import logout
+    
+    # Get the user's email before logging them out
+    user_email = request.user.email
+    
+    # Perform the logout
+    logout(request)
+    
+    # Check if the email was from BC
+    if user_email and not user_email.endswith('@bc.edu'):
+        messages.error(request, "Access denied. Only Boston College (@bc.edu) email addresses are allowed.")
+        return redirect('home')
+    else:
+        messages.success(request, "You have been successfully logged out.")
+        return redirect('home')
 
 @login_required
 def update_role(request):
@@ -52,16 +66,17 @@ def update_role(request):
     if request.user.is_authenticated:
         selected_role = request.session.get('selected_role', 'student')
         
-        # Update the user's profile with the selected role
-        if hasattr(request.user, 'profile'):
-            profile = request.user.profile
-            profile.role = selected_role
-            profile.save()
-            
-        # Clear the session variable
+        user_profile = UserProfile.objects.get(user=request.user)
+        user_profile.role = selected_role
+        user_profile.save()
+
+
         if 'selected_role' in request.session:
             del request.session['selected_role']
-            
+
+        # Load progress and store in session
+        request.session['progress'] = user_profile.progress_data
+
         return redirect('dashboard')
     return redirect('login')
 
@@ -71,3 +86,33 @@ def custom_google_callback(request):
     request.session['socialaccount_auto_signup'] = True
     # Redirect to the standard callback
     return redirect('/accounts/google/login/callback/')
+
+@login_required
+def save_progress(request):
+    """Save student progress to UserProfile as plain text"""
+    if request.method == "POST":
+        progress_data = request.POST.get("progress", "")  # Get text-based progress
+        
+        user_profile = UserProfile.objects.get(user=request.user)
+        user_profile.progress_data = progress_data  # Store as text
+        user_profile.save()
+        
+        return HttpResponse("Progress saved successfully.")
+    
+@login_required
+def load_progress(request):
+    """Retrieve saved progress for the student as plain text"""
+    user_profile = UserProfile.objects.get(user=request.user)
+    return HttpResponse(user_profile.progress_data)  # Return as plain text
+
+def login_error(request):
+    """Display a user-friendly error page for login issues"""
+    error_type = request.GET.get('error', 'unknown')
+    email = request.GET.get('email', '')
+    
+    context = {
+        'error_type': error_type,
+        'email': email
+    }
+    
+    return render(request, 'login_error.html', context)
