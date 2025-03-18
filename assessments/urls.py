@@ -1,5 +1,6 @@
 from django.urls import path
 from assessments.views import send_deadline_notifications_view
+from .views import student_average_score, professor_average_scores
 from . import views
 
 urlpatterns = [
@@ -11,4 +12,6 @@ urlpatterns = [
     path('published_results/', views.view_all_published_results, name='view_all_published_results'),
     path('profile/<str:name>', views.edit_profile, name='edit_profile'),
     path('send-deadline-notifications/', send_deadline_notifications_view, name='send_deadline_notifications'),
+    path('student-average/', student_average_score, name='student_average'),
+    path('professor-average/', professor_average_scores, name='professor_average'),
 ]

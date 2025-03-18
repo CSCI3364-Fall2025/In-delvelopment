@@ -12,6 +12,11 @@ from django.core.mail import send_mail
 from assessments.models import Assessment 
 from django.contrib.auth.models import User
 
+#imports for averages
+from django.http import JsonResponse
+from django.db.models import Avg
+from assessments.models import Assessment, AssessmentScore
+
 def home(request):
     return render(request, 'home.html')
 
@@ -325,3 +330,31 @@ def send_deadline_notifications_view(request):
             emails_sent += 1
 
     return HttpResponse(f"Deadline notification emails sent successfully. {emails_sent} emails delivered.")
+
+#average score functionality
+@login_required
+def student_average_score(request):
+    """Returns the average score of the logged-in student."""
+    student = request.user
+    scores = AssessmentScore.objects.filter(student=student)
+
+    if not scores.exists():
+        return JsonResponse({"student": student.username, "average_score": "No scores available"}, status=200)
+
+    average = scores.aggregate(Avg("score"))["score__avg"]
+    return JsonResponse({"student": student.username, "average_score": round(average, 2)})
+
+@login_required
+def professor_average_scores(request):
+    """Returns the average score for each assessment."""
+    assessments = Assessment.objects.prefetch_related("scores").all()
+    results = []
+
+    for assessment in assessments:
+        average = assessment.scores.aggregate(Avg("score"))["score__avg"]
+        results.append({
+            "assessment": assessment.title,
+            "average_score": round(average, 2) if average else "No scores"
+        })
+
+    return JsonResponse(results, safe=False)
