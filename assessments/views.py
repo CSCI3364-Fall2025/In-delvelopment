@@ -249,3 +249,16 @@ def view_comments(request, assessment_id):
     }
     
     return render(request, 'comments.html', context)
+
+@login_required
+def edit_profile(request, name):
+    
+    user_data = {
+        'name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0],
+        'email': request.user.email,
+        'role': request.user.profile.get_role_display(),
+    }
+
+    return render(request, 'edit_profile.html', {
+        "user": user_data
+    })
