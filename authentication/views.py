@@ -4,10 +4,13 @@ from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages #test
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
+#from authentication.views import login_view #test
 from .models import UserProfile
+
 
 # Create your views here.
 
@@ -129,3 +132,17 @@ def debug_auth(request):
         'session_keys': list(request.session.keys()),
     }
     return render(request, 'debug/auth.html', context)
+    
+#function for login view
+def login_view(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect("home")  # Redirect to homepage
+        else:
+            messages.error(request, "Invalid username or password")
+    return render(request, "login.html")
+    
