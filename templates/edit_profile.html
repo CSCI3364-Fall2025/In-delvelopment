@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %} Edit Profile | {{ user.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-end p-3">
+        <div class="col-auto">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary rounded-pill">Return to Dashboard</a>
+        </div>
+    </div>
+    <div class="row justify-content-center p-5">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>Edit Profile - {{ user.name }}</h3>
+                </div>
+                <div class="row p-1 text-center">
+                    <h1 style="color: var(--bc-maroon);">User Profile</h1>
+                </div>
+                <br>
+                <form method="POST" action="{% url 'dashboard' %}">
+                    {% csrf_token %}
+                    <div class="row py-1 m-2 align-items-end">
+                        <div class="col-auto">
+                            <label for="edit_user_name"><h5>Name:</h5></label>
+                        </div>
+                        <div class="col">
+                            <input type="text" value="{{ user.name }}" id="edit_user_name" name="edit_user_name" class="form-control" disabled>
+                        </div>
+                        <div class="row form-text justify-content-end" id="name_description">
+                            <div class="col-auto">
+                                <i>The name associated with Boston College cannot be changed.</i>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row py-2 m-2 align-items-center">
+                        <div class="col-auto">
+                            <label for="edit_email"><h5>Email:</h5></label>
+                        </div>
+                        <div class="col">
+                            <input type="email" value="{{ user.email }}" id="edit_email" name="edit_email" class="form-control" disabled>
+                        </div>
+                        <div class="row form-text justify-content-end" id="email_description">
+                                <div class="col-auto">
+                                    <i>The email associated with Boston College cannot be changed.</i>
+                                </div>
+                                
+                        </div>
+                    </div>
+                    <div class="row py-2 m-2 align-items-center">
+                        <div class="col-auto">
+                            <label for="edit_email"><h5>Preferred Name:</h5></label>
+                        </div>
+                        <div class="col">
+                            <input type="text" value="{{ user.name }}" id="preferred_name" name="preferred_name" class="form-control">
+                        </div>
+                        <div class="row form-text justify-content-end" id="preferred_name_description">
+                            <div class="col-auto">
+                                <i>This is the name that is displayed to other users.</i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row py-2 m-2 align-items-end">
+                        <div class="col-auto">
+                            <label for="edit_role"><h5>Role:</h5></label>
+                        </div>
+                        <div class="col">
+                            <select name="edit_role" id="edit_role" class="form-select" required>
+                                <option value="Student">Student</option>
+                                <option value="Professor">Professor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row justify-content-center py-3">
+                        <div class="col-auto">
+                            <button class="btn btn-lg gold-btn" type="submit">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
