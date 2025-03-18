@@ -241,6 +241,29 @@ def save_progress(request, assessment_id):
 
         messages.success(request, "Your progress has been saved successfully.")
         return redirect('view_assessment', assessment_id=assessment_id)
+   
+@login_required
+def load_progress(request, assessment_id):
+    """Retrieve saved progress for the student for a specific assessment."""
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+
+    # Try to get the user's progress for the specific assessment
+    progress = AssessmentProgress.objects.filter(student=request.user, assessment=assessment).first()
+
+    if progress:
+        # If progress exists, pass the progress data to the template
+        feedback = progress.progress_notes
+    else:
+        # If no progress exists, set progress_notes to an empty string or a placeholder
+        progress_notes = ""
+
+    # Pass the progress data to the context and render the assessment detail page
+    context = {
+        'assessment': assessment,
+        'progress_notes': progress_notes,
+    }
+
+    return render(request, 'assessment_detail.html', context)
 
 
 @login_required
@@ -251,7 +274,10 @@ def submit_assessment(request, assessment_id):
         contribution = request.POST['contribution']
         teamwork = request.POST['teamwork']
         communication = request.POST['communication']
-        feedback = request.POST['feedback']
+
+        # Retrieve the student's saved progress (if any)
+        progress = AssessmentProgress.objects.filter(student=request.user, assessment=assessment).first()
+        feedback = progress.progress_notes if progress else ""  # Use saved progress notes as feedback
         
         # Save the assessment submission
         AssessmentSubmission.objects.create(
@@ -267,6 +293,7 @@ def submit_assessment(request, assessment_id):
         return redirect('view_assessment', assessment_id=assessment_id)
     
     return redirect('dashboard')
+
 
 @login_required
 def view_all_published_results(request):

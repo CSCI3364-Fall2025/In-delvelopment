@@ -57,25 +57,18 @@
                                     <option value="1">Poor</option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label for="feedback" class="form-label">Additional Comments:</label>
-                                <textarea id="feedback" name="feedback" class="form-control"></textarea>
-                            </div>
                             <button type="submit" class="btn btn-primary">Submit Assessment</button>
                         </form>
 
-                        <!-- 🔴 PROGRESS TRACKING FEATURE ADDED HERE -->
-                        <hr>
-                        <h3>Track Your Progress</h3>
+                        <h3>Additional Comments</h3>
                         <form method="post" action="{% url 'save_progress' assessment.id %}">
                             {% csrf_token %}
                             <div class="mb-3">
-                                <label for="progress_notes" class="form-label">Your Progress Notes:</label>
-                                <textarea id="progress_notes" name="progress_notes" class="form-control" rows="4">{{ progress.progress_notes }}</textarea>
+                                <label for="progress_notes" class="form-label">Add additional comments here:</label>
+                                <textarea id="progress_notes" name="progress" class="form-control" rows="4">{{ progress.progress_notes }}</textarea>
                             </div>
-                            <button type="submit" class="btn btn-success">Save Progress</button>
+                            <button type="submit" class="btn btn-success">Save Comment Progress</button>
                         </form>
-                        <!-- 🔴 END OF PROGRESS TRACKING FEATURE -->
 
                         <div class="mt-4">
                             <h3>Summary Report</h3>
