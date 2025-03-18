@@ -295,9 +295,11 @@ def edit_profile(request, name):
         "user": user_data
     })
     
+
 def send_deadline_notifications_view(request):
     upcoming_deadline = timezone.now() + timedelta(days=3)
-    assessments = Assessment.objects.filter(deadline__date=upcoming_deadline.date())
+    
+    assessments = Assessment.objects.filter(due_date__date=upcoming_deadline.date())  # FIXED
 
     if not assessments.exists():
         return HttpResponse("No assessments due in 3 days.")
@@ -314,7 +316,7 @@ def send_deadline_notifications_view(request):
             subject = "Reminder: Assessment Deadline Approaching"
             message = (
                 f"Dear {student.username},\n\n"
-                f"This is a reminder that your assessment '{assessment.title}' is due on {assessment.deadline.strftime('%Y-%m-%d %H:%M')}. "
+                f"This is a reminder that your assessment '{assessment.title}' is due on {assessment.due_date.strftime('%Y-%m-%d %H:%M')}. "
                 "Please make sure to submit it on time.\n\n"
                 "Best regards,\nYour Course Team"
             )
