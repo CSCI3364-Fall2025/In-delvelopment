@@ -36,9 +36,24 @@ def dashboard(request):
     # Check if user has a profile, create one if not
     if not hasattr(request.user, 'profile'):
         UserProfile.objects.create(user=request.user)
+
+    # Check if the user has updated their profile 
+    if request.method == "POST":
+        updated_user = UserProfile.objects.get(user=request.user)
+
+        selected_role = request.POST['edit_role']
+        preferred_name = request.POST['preferred_name']
+
+        updated_user.role = selected_role
+        updated_user.preferred_name = preferred_name
+        updated_user.save()
+        messages.success(request, 'Your profile has been successfully updated.')
+    
+    current_user = UserProfile.objects.get(user=request.user)
     
     user_data = {
-        'name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0],
+        'preferred_name': current_user.preferred_name if not None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
         'email': request.user.email,
         'role': request.user.profile.get_role_display(),
     }
@@ -185,7 +200,7 @@ def dashboard(request):
     }
     
     # Add welcome message
-    messages.success(request, f"Welcome {user_data['name']} - {user_data['role']}!")
+    messages.success(request, f"Welcome {user_data['preferred_name']} - {user_data['role']}!")
     
     return render(request, 'dashboard.html', context)
 
@@ -290,8 +305,11 @@ def view_comments(request, assessment_id):
 @login_required
 def edit_profile(request, name):
     
+    current_user = UserProfile.objects.get(user=request.user)
+
     user_data = {
-        'name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0],
+        'preferred_name': current_user.preferred_name if not None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
         'email': request.user.email,
         'role': request.user.profile.get_role_display(),
     }

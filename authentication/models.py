@@ -14,6 +14,7 @@ class UserProfile(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=10, choices=USER_ROLES, default='student')
+    preferred_name = models.CharField(max_length=50, null=True, blank=True)
     progress_data = models.JSONField(default=dict)  # Store progress as JSON
 
     def __str__(self):

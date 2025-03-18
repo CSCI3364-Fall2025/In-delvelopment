@@ -65,7 +65,15 @@
                     <h5>Name:</h5>
                 </div>
                 <div class="col-auto mb-0">
-                    <h5 class="fw-lighter">{{ user.name }}</h5>
+                    <h5 class="fw-lighter">{{ user.real_name }}</h5>
+                </div>
+            </div>
+            <div class="row p-2 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Preferred Name:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">{{ user.preferred_name }}</h5>
                 </div>
             </div>
             <div class="row p-1 text-center justify-content-center">
@@ -86,7 +94,7 @@
             </div>
             <div class="row p-1 justify-content-center">
                 <div class="col-auto justify-content-center">
-                    <a class="btn gold-btn" href="{% url 'edit_profile' user.name %}">Edit Profile</a>
+                    <a class="btn gold-btn" href="{% url 'edit_profile' user.real_name %}">Edit Profile</a>
                 </div>
             </div>
         </div>

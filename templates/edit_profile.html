@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %} Edit Profile | {{ user.name }}{% endblock %}
+{% block title %} Edit Profile | {{ user.real_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -13,7 +13,7 @@
         <div class="col-md-6">
             <div class="card shadow">
                 <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <h3>Edit Profile - {{ user.name }}</h3>
+                    <h3>Edit Profile - {{ user.real_name }}</h3>
                 </div>
                 <div class="row p-1 text-center">
                     <h1 style="color: var(--bc-maroon);">User Profile</h1>
@@ -26,7 +26,7 @@
                             <label for="edit_user_name"><h5>Name:</h5></label>
                         </div>
                         <div class="col">
-                            <input type="text" value="{{ user.name }}" id="edit_user_name" name="edit_user_name" class="form-control" disabled>
+                            <input type="text" value="{{ user.real_name }}" id="edit_user_name" name="edit_user_name" class="form-control" disabled>
                         </div>
                         <div class="row form-text justify-content-end" id="name_description">
                             <div class="col-auto">
@@ -54,7 +54,7 @@
                             <label for="edit_email"><h5>Preferred Name:</h5></label>
                         </div>
                         <div class="col">
-                            <input type="text" value="{{ user.name }}" id="preferred_name" name="preferred_name" class="form-control">
+                            <input type="text" value="{{ user.preferred_name }}" id="preferred_name" name="preferred_name" class="form-control">
                         </div>
                         <div class="row form-text justify-content-end" id="preferred_name_description">
                             <div class="col-auto">
