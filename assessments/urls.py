@@ -8,4 +8,5 @@ urlpatterns = [
     path('assessment/<int:assessment_id>/submit/', views.submit_assessment, name='submit_assessment'),
     path('assessment/<int:assessment_id>/comments/', views.view_comments, name='view_comments'),
     path('published_results/', views.view_all_published_results, name='view_all_published_results'),
+    path('profile/<str:name>', views.edit_profile, name='edit_profile'),
 ]
