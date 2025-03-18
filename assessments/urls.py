@@ -1,4 +1,5 @@
 from django.urls import path
+from assessments.views import send_deadline_notifications_view
 from . import views
 
 urlpatterns = [
@@ -9,4 +10,5 @@ urlpatterns = [
     path('assessment/<int:assessment_id>/comments/', views.view_comments, name='view_comments'),
     path('published_results/', views.view_all_published_results, name='view_all_published_results'),
     path('profile/<str:name>', views.edit_profile, name='edit_profile'),
+    path('send-deadline-notifications/', send_deadline_notifications_view, name='send_deadline_notifications'),
 ]

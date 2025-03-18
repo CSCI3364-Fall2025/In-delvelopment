@@ -5,6 +5,13 @@ from authentication.models import UserProfile, AssessmentProgress
 from .models import Assessment, AssessmentSubmission  # Import the Assessment and AssessmentSubmission models
 from .models import Assessment, AssessmentSubmission
 
+from django.shortcuts import HttpResponse #imports for scheduler
+from django.utils import timezone
+from datetime import timedelta
+from django.core.mail import send_mail
+from assessments.models import Assessment 
+from django.contrib.auth.models import User
+
 def home(request):
     return render(request, 'home.html')
 
@@ -287,3 +294,32 @@ def edit_profile(request, name):
     return render(request, 'edit_profile.html', {
         "user": user_data
     })
+    
+def send_deadline_notifications_view(request):
+    upcoming_deadline = timezone.now() + timedelta(days=3)
+    assessments = Assessment.objects.filter(deadline__date=upcoming_deadline.date())
+
+    if not assessments.exists():
+        return HttpResponse("No assessments due in 3 days.")
+
+    emails_sent = 0
+
+    for assessment in assessments:
+        students = assessment.students.all()
+
+        for student in students:
+            if not student.email:
+                continue
+
+            subject = "Reminder: Assessment Deadline Approaching"
+            message = (
+                f"Dear {student.username},\n\n"
+                f"This is a reminder that your assessment '{assessment.title}' is due on {assessment.deadline.strftime('%Y-%m-%d %H:%M')}. "
+                "Please make sure to submit it on time.\n\n"
+                "Best regards,\nYour Course Team"
+            )
+
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [student.email])
+            emails_sent += 1
+
+    return HttpResponse(f"Deadline notification emails sent successfully. {emails_sent} emails delivered.")
