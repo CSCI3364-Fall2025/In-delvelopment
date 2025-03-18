@@ -10,6 +10,11 @@ class Assessment(models.Model):
 
     def __str__(self):
         return self.title
+        
+class AssessmentScore(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="scores")
+    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name="scores")
+    score = models.FloatField()
 
 class AssessmentSubmission(models.Model):
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
