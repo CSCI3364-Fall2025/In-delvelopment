@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from authentication.models import UserProfile
+from authentication.models import UserProfile, AssessmentProgress
 from .models import Assessment, AssessmentSubmission  # Import the Assessment and AssessmentSubmission models
+from .models import Assessment, AssessmentSubmission
 
 def home(request):
     return render(request, 'home.html')
@@ -184,12 +185,36 @@ def view_assessment(request, assessment_id):
     # Fetch the comments for the professor view
     comments = AssessmentSubmission.objects.filter(assessment=assessment).values_list('feedback', flat=True)
     
+    progress, created = AssessmentProgress.objects.get_or_create(
+        student=request.user,
+        assessment=assessment,
+    )
+
     context = {
         'assessment': assessment,
-        'comments': comments
+        'comments': comments, 
+        'progress': progress,
     }
     
     return render(request, 'assessment_detail.html', context)
+
+@login_required
+def save_progress(request, assessment_id):
+    """Save student's progress."""
+    if request.method == "POST":
+        progress_notes = request.POST.get("progress", "").strip()
+        assessment = get_object_or_404(Assessment, id=assessment_id)
+
+        # Retrieve or create a progress entry for the user
+        progress, _ = AssessmentProgress.objects.get_or_create(
+            student=request.user, assessment=assessment
+        )
+        progress.progress_notes = progress_notes  # Save progress text
+        progress.save()
+
+        messages.success(request, "Your progress has been saved successfully.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+
 
 @login_required
 def submit_assessment(request, assessment_id):
@@ -249,3 +274,16 @@ def view_comments(request, assessment_id):
     }
     
     return render(request, 'comments.html', context)
+
+@login_required
+def edit_profile(request, name):
+    
+    user_data = {
+        'name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0],
+        'email': request.user.email,
+        'role': request.user.profile.get_role_display(),
+    }
+
+    return render(request, 'edit_profile.html', {
+        "user": user_data
+    })
