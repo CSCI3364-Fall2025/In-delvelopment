@@ -27,10 +27,13 @@ def dashboard(request):
     }
     
     # Create example data for assessments if they don't exist
-    if not Assessment.objects.exists():
+    if not Assessment.objects.filter(id=1).exists():
         Assessment.objects.create(id=1, title='Peer Assessment 3', course='Software Engineering', due_date='2025-03-21 23:59:00')
+    if not Assessment.objects.filter(id=2).exists():
         Assessment.objects.create(id=2, title='Peer Assessment 1', course='Software Engineering', closed_date='2025-02-12 23:59:00')
+    if not Assessment.objects.filter(id=3).exists():
         Assessment.objects.create(id=3, title='Peer Assessment 2', course='Software Engineering', closed_date='2025-02-24 23:59:00')
+    if not Assessment.objects.filter(id=4).exists():
         Assessment.objects.create(id=4, title='Peer Assessment 4', course='Software Engineering', open_date='2025-04-02 09:00:00')
     
     # Create example data for assessment submissions if they don't exist
@@ -136,7 +139,7 @@ def view_comments(request, assessment_id):
     
     # Example comments data
     comments = [
-        ('Johnny', 'Great job on the project!'),
+        ('Julian Castro', 'Great job on the project!'),
         ('Alice', 'Needs improvement in communication.'),
         ('Bob', 'Excellent teamwork and contribution.'),
         ('Charlie', 'Average performance overall.')
