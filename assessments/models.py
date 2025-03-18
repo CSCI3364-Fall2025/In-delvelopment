@@ -2,9 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Assessment(models.Model):
-    title = models.CharField(max_length=255)
-    course = models.CharField(max_length=255)
-    due_date = models.DateTimeField()
+    title = models.CharField(max_length=200)
+    course = models.CharField(max_length=100)
+    due_date = models.DateTimeField(null=True, blank=True)
     closed_date = models.DateTimeField(null=True, blank=True)
     open_date = models.DateTimeField(null=True, blank=True)
 

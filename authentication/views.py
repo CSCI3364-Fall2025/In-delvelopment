@@ -4,10 +4,13 @@ from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages #test
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
+#from authentication.views import login_view #test
 from .models import UserProfile
+
 
 # Create your views here.
 
@@ -52,13 +55,16 @@ def logout_view(request):
     # Perform the logout
     logout(request)
     
+    # Clear any session data
+    request.session.flush()
+    
     # Check if the email was from BC
     if user_email and not user_email.endswith('@bc.edu'):
         messages.error(request, "Access denied. Only Boston College (@bc.edu) email addresses are allowed.")
-        return redirect('home')
     else:
         messages.success(request, "You have been successfully logged out.")
-        return redirect('home')
+    
+    return redirect('home')
 
 @login_required
 def update_role(request):
@@ -116,3 +122,27 @@ def login_error(request):
     }
     
     return render(request, 'login_error.html', context)
+
+def debug_auth(request):
+    """Debug view to check authentication status"""
+    context = {
+        'is_authenticated': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else None,
+        'email': request.user.email if request.user.is_authenticated else None,
+        'session_keys': list(request.session.keys()),
+    }
+    return render(request, 'debug/auth.html', context)
+    
+#function for login view
+def login_view(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect("home")  # Redirect to homepage
+        else:
+            messages.error(request, "Invalid username or password")
+    return render(request, "login.html")
+    

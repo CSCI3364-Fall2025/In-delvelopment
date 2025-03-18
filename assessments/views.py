@@ -1,14 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from authentication.models import UserProfile
+from authentication.models import UserProfile, AssessmentProgress
 from .models import Assessment, AssessmentSubmission  # Import the Assessment and AssessmentSubmission models
+from .models import Assessment, AssessmentSubmission
 
 def home(request):
     return render(request, 'home.html')
 
-@login_required
 def dashboard(request):
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        # Redirect to our custom login page instead of the default login page
+        return render(request, 'please_login.html')
+    
     # Check if user has a BC email
     if not request.user.email.endswith('@bc.edu'):
         from django.contrib.auth import logout
@@ -26,28 +31,121 @@ def dashboard(request):
         'role': request.user.profile.get_role_display(),
     }
     
-    # Create example data for assessments if they don't exist
-    if not Assessment.objects.filter(id=1).exists():
-        Assessment.objects.create(id=1, title='Peer Assessment 3', course='Software Engineering', due_date='2025-03-21 23:59:00')
-    if not Assessment.objects.filter(id=2).exists():
-        Assessment.objects.create(id=2, title='Peer Assessment 1', course='Software Engineering', closed_date='2025-02-12 23:59:00')
-    if not Assessment.objects.filter(id=3).exists():
-        Assessment.objects.create(id=3, title='Peer Assessment 2', course='Software Engineering', closed_date='2025-02-24 23:59:00')
-    if not Assessment.objects.filter(id=4).exists():
-        Assessment.objects.create(id=4, title='Peer Assessment 4', course='Software Engineering', open_date='2025-04-02 09:00:00')
+    # Get or create assessments
+    assessment1, _ = Assessment.objects.get_or_create(
+        id=1, 
+        defaults={
+            'title': 'Peer Assessment 3', 
+            'course': 'Software Engineering', 
+            'due_date': '2025-03-21 23:59:00'
+        }
+    )
+    assessment2, _ = Assessment.objects.get_or_create(
+        id=2, 
+        defaults={
+            'title': 'Peer Assessment 1', 
+            'course': 'Software Engineering', 
+            'closed_date': '2025-02-12 23:59:00'
+        }
+    )
+    assessment3, _ = Assessment.objects.get_or_create(
+        id=3, 
+        defaults={
+            'title': 'Peer Assessment 2', 
+            'course': 'Software Engineering', 
+            'closed_date': '2025-02-24 23:59:00'
+        }
+    )
+    assessment4, _ = Assessment.objects.get_or_create(
+        id=4, 
+        defaults={
+            'title': 'Peer Assessment 4', 
+            'course': 'Software Engineering', 
+            'open_date': '2025-04-02 09:00:00'
+        }
+    )
     
-    # Create example data for assessment submissions if they don't exist
-    if not AssessmentSubmission.objects.filter(assessment_id=2).exists():
-        AssessmentSubmission.objects.create(assessment_id=2, student='Julian Castro', contribution=4, teamwork=4, communication=4, feedback='Great job on the project!')
-        AssessmentSubmission.objects.create(assessment_id=2, student='Alice', contribution=3, teamwork=3, communication=3, feedback='Needs improvement in communication.')
-        AssessmentSubmission.objects.create(assessment_id=2, student='Bob', contribution=5, teamwork=5, communication=5, feedback='Excellent teamwork and contribution.')
-        AssessmentSubmission.objects.create(assessment_id=2, student='Charlie', contribution=2, teamwork=2, communication=2, feedback='Average performance overall.')
-    
-    if not AssessmentSubmission.objects.filter(assessment_id=3).exists():
-        AssessmentSubmission.objects.create(assessment_id=3, student='Julian Castro', contribution=4, teamwork=4, communication=4, feedback='Great job on the project!')
-        AssessmentSubmission.objects.create(assessment_id=3, student='Alice', contribution=3, teamwork=3, communication=3, feedback='Needs improvement in communication.')
-        AssessmentSubmission.objects.create(assessment_id=3, student='Bob', contribution=5, teamwork=5, communication=5, feedback='Excellent teamwork and contribution.')
-        AssessmentSubmission.objects.create(assessment_id=3, student='Charlie', contribution=2, teamwork=2, communication=2, feedback='Average performance overall.')
+    # Get or create submissions
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment2,
+        student='Julian Castro',
+        defaults={
+            'contribution': 4,
+            'teamwork': 4,
+            'communication': 4,
+            'feedback': 'Great job on the project!'
+        }
+    )
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment2,
+        student='Alice',
+        defaults={
+            'contribution': 3,
+            'teamwork': 3,
+            'communication': 3,
+            'feedback': 'Needs improvement in communication.'
+        }
+    )
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment2,
+        student='Bob',
+        defaults={
+            'contribution': 5,
+            'teamwork': 5,
+            'communication': 5,
+            'feedback': 'Excellent teamwork and contribution.'
+        }
+    )
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment2,
+        student='Charlie',
+        defaults={
+            'contribution': 2,
+            'teamwork': 2,
+            'communication': 2,
+            'feedback': 'Average performance overall.'
+        }
+    )
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment3,
+        student='Julian Castro',
+        defaults={
+            'contribution': 4,
+            'teamwork': 4,
+            'communication': 4,
+            'feedback': 'Great job on the project!'
+        }
+    )
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment3,
+        student='Alice',
+        defaults={
+            'contribution': 3,
+            'teamwork': 3,
+            'communication': 3,
+            'feedback': 'Needs improvement in communication.'
+        }
+    )
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment3,
+        student='Bob',
+        defaults={
+            'contribution': 5,
+            'teamwork': 5,
+            'communication': 5,
+            'feedback': 'Excellent teamwork and contribution.'
+        }
+    )
+    AssessmentSubmission.objects.get_or_create(
+        assessment=assessment3,
+        student='Charlie',
+        defaults={
+            'contribution': 2,
+            'teamwork': 2,
+            'communication': 2,
+            'feedback': 'Average performance overall.'
+        }
+    )
     
     active_assessments = [
         {'id': 1, 'title': 'Peer Assessment 3', 'course': 'Software Engineering', 'due_date': '2025-03-21', 'due_time': '23:59:00'}
@@ -70,7 +168,8 @@ def dashboard(request):
         'upcoming_assessments': upcoming_assessments,
         'num_uncompleted_assessments': len(active_assessments),
         'num_assessment_results': len(closed_assessments),
-        'new_results': new_results
+        'new_results': new_results,
+        'request': request,
     }
     
     # Add welcome message
@@ -86,12 +185,36 @@ def view_assessment(request, assessment_id):
     # Fetch the comments for the professor view
     comments = AssessmentSubmission.objects.filter(assessment=assessment).values_list('feedback', flat=True)
     
+    progress, created = AssessmentProgress.objects.get_or_create(
+        student=request.user,
+        assessment=assessment,
+    )
+
     context = {
         'assessment': assessment,
-        'comments': comments
+        'comments': comments, 
+        'progress': progress,
     }
     
     return render(request, 'assessment_detail.html', context)
+
+@login_required
+def save_progress(request, assessment_id):
+    """Save student's progress."""
+    if request.method == "POST":
+        progress_notes = request.POST.get("progress", "").strip()
+        assessment = get_object_or_404(Assessment, id=assessment_id)
+
+        # Retrieve or create a progress entry for the user
+        progress, _ = AssessmentProgress.objects.get_or_create(
+            student=request.user, assessment=assessment
+        )
+        progress.progress_notes = progress_notes  # Save progress text
+        progress.save()
+
+        messages.success(request, "Your progress has been saved successfully.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+
 
 @login_required
 def submit_assessment(request, assessment_id):
@@ -151,3 +274,16 @@ def view_comments(request, assessment_id):
     }
     
     return render(request, 'comments.html', context)
+
+@login_required
+def edit_profile(request, name):
+    
+    user_data = {
+        'name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0],
+        'email': request.user.email,
+        'role': request.user.profile.get_role_display(),
+    }
+
+    return render(request, 'edit_profile.html', {
+        "user": user_data
+    })

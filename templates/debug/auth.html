@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Authentication Debug | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3>Authentication Debug Information</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Is Authenticated:</strong> {{ is_authenticated }}</p>
+            <p><strong>Username:</strong> {{ username }}</p>
+            <p><strong>Email:</strong> {{ email }}</p>
+            <h4>Session Keys:</h4>
+            <ul>
+                {% for key in session_keys %}
+                <li>{{ key }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 
