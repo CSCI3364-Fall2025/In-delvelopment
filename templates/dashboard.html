@@ -17,7 +17,7 @@
     </div>
     {% endif %}
 
-    {% if user.role == 'student' and new_results %}
+    {% if user.role == 'student' or user.role == 'Student' and new_results %}
     <div class="alert alert-info alert-dismissible fade show" role="alert">
         New assessment results have been published! <a href="#" class="alert-link">View Results</a>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -30,32 +30,49 @@
         </div>
         <div class="row" id="pending_assessments">
             <div class="col-auto">
-                {% if num_uncompleted_assessments == 0 %}
-                <p>You have no pending peer assessments.</p>
+                {% if user.role == "professor" or user.role == "Professor" %}
+                <!-- Eventually implement logic -->
+                    <p>You have 16{{ total_incomplete_assignments }} students who still need to complete 'Peer Assessment 3'.</p>
                 {% else %}
-                <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
+                    {% if num_uncompleted_assessments == 0 %}
+                    <p>You have no pending peer assessments.</p>
+                    {% else %}
+                    <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="col-auto">
-                <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+                {% if user.profile.role == 'professor' or user.role == "Professor" %} 
+                    <a href="#" style="color: var(--bc-gold);">Manage Courses and Teams</a>
+                {% else %}
+                    <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+                {% endif %}
             </div>
         </div>
         <div class="row" id="published_results">
             <div class="col-auto">
-                {% if num_assessment_results == 0 %}
-                <p>You have no assessment results to view.</p>
+                {% if user.role == "professor" or user.role == "Professor" %}
+                    <!-- Eventually implement logic -->
+                    <p>You have 1 unreturned assessment(s) to grade.</p>
                 {% else %}
-                <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
+                    {% if num_assessment_results == 0 %}
+                        <p>You have no assessment results to view.</p>
+                    {% else %}
+                        <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="col-auto">
-                <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published
-                    Results</a>
+                {% if user.role == "professor" or user.role == "Professor" %}
+                    <a href="#" style="color: var(--bc-gold);">Grade And Return Assessments</a>
+                {% else %}
+                    <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published Results</a>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="row justify-content-center">
+    <div class="row justify-content-center" id="profile_box">
         <div class="w-75 border border-2 rounded p-1" style="border-color: var(--bc-maroon);">
             <div class="row p-1 text-center">
                 <h1 style="color: var(--bc-maroon);">User Profile</h1>
@@ -90,6 +107,25 @@
                 </div>
                 <div class="col-auto mb-0">
                     <h5 class="fw-lighter">{{ user.role }}</h5>
+                </div>
+            </div>
+            <hr class="m-3">
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Active Courses:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <!-- Eventually create a courses model, use logic to iterate over courses -->
+                    <h5 class="fw-lighter">Software Engineering</h5>
+                </div>
+            </div>
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>My Teams:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <!-- Eventually create a teams model, use logic to iterate over teams -->
+                    <h5 class="fw-lighter">Ctrl-Alt-Elite</h5>
                 </div>
             </div>
             <div class="row p-1 justify-content-center">
@@ -205,7 +241,7 @@
             <a href="#" style="color: var(--bc-gold);">View My Teams</a>
         </div>
         <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">Contact A Professor</a>
+            <a href="#" style="color: var(--bc-gold);">Contact{% if user.role == "Student" %} A Professor{% else %} Students{% endif %}</a>
         </div>
         <div class="col-auto">
             <a href="#" style="color: var(--bc-gold);">Report an Issue</a>

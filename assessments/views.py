@@ -52,10 +52,10 @@ def dashboard(request):
     current_user = UserProfile.objects.get(user=request.user)
     
     user_data = {
-        'preferred_name': current_user.preferred_name if not None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
         'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
         'email': request.user.email,
-        'role': request.user.profile.get_role_display(),
+        'role': current_user.role,
     }
     
     # Get or create assessments
@@ -308,10 +308,10 @@ def edit_profile(request, name):
     current_user = UserProfile.objects.get(user=request.user)
 
     user_data = {
-        'preferred_name': current_user.preferred_name if not None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'preferred_name': current_user.preferred_name if current_user.preferred_name != None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
         'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
         'email': request.user.email,
-        'role': request.user.profile.get_role_display(),
+        'role': current_user.role,
     }
 
     return render(request, 'edit_profile.html', {
