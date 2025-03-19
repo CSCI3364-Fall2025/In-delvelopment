@@ -240,7 +240,7 @@ def save_progress(request, assessment_id):
         progress.save()
 
         messages.success(request, "Your progress has been saved successfully.")
-        return redirect('view_assessment', assessment_id=assessment_id)
+        return redirect('dashboard')
    
 @login_required
 def load_progress(request, assessment_id):
