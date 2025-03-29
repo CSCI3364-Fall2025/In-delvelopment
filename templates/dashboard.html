@@ -276,5 +276,49 @@
             <a href="#" style="color: var(--bc-gold);">Report an Issue</a>
         </div>
     </div>
+    {% if user.profile.role == 'professor' or request.session.user_role == 'professor' %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h4>Professor Tools</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'invite_students' %}" class="btn gold-btn btn-block w-100">
+                                <i class="fas fa-envelope me-2"></i>Invite Students
+                            </a>
+                        </div>
+                        <!-- Add other professor tools here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h4>Debug Information</h4>
+                </div>
+                <div class="card-body">
+                    <p>Profile Role: {{ user.profile.role|default:"Not set" }}</p>
+                    <p>Session Role: {{ request.session.user_role|default:"Not set" }}</p>
+                    <div class="mb-3">
+                        <a href="{% url 'fix_session_role' %}" class="btn btn-sm btn-warning">Fix Session Role</a>
+                        <a href="{% url 'debug_role' %}" class="btn btn-sm btn-info">View Detailed Debug Info</a>
+                        <a href="{% url 'test_email' %}" class="btn btn-sm btn-primary">Test Email</a>
+                    </div>
+                    <div class="mb-3">
+                        <p><strong>Set Role Directly:</strong></p>
+                        <a href="{% url 'set_profile_role' role='student' %}" class="btn btn-sm btn-outline-secondary">Set as Student</a>
+                        <a href="{% url 'set_profile_role' role='professor' %}" class="btn btn-sm btn-outline-primary">Set as Professor</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

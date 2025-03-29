@@ -40,22 +40,30 @@ def dashboard(request):
     if not hasattr(request.user, 'profile'):
         UserProfile.objects.create(user=request.user)
 
+    # Get current user profile
+    current_user = UserProfile.objects.get(user=request.user)
+    
+    # Synchronize session with profile role
+    request.session['selected_role'] = current_user.role
+    request.session['user_role'] = current_user.role
+    
     # Check if the user has updated their profile 
     if request.method == "POST":
-        updated_user = UserProfile.objects.get(user=request.user)
-
         selected_role = request.POST['edit_role']
         preferred_name = request.POST['preferred_name']
 
-        updated_user.role = selected_role
-        updated_user.preferred_name = preferred_name
-        updated_user.save()
+        current_user.role = selected_role
+        current_user.preferred_name = preferred_name
+        current_user.save()
+        
+        # Update session to match profile role
+        request.session['selected_role'] = selected_role
+        request.session['user_role'] = selected_role
+        
         messages.success(request, 'Your profile has been successfully updated.')
     
-    current_user = UserProfile.objects.get(user=request.user)
-    
     user_data = {
-        'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'preferred_name': current_user.preferred_name if current_user.preferred_name != None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
         'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
         'email': request.user.email,
         'role': current_user.role,
@@ -335,8 +343,22 @@ def view_comments(request, assessment_id):
 
 @login_required
 def edit_profile(request, name):
-    
     current_user = UserProfile.objects.get(user=request.user)
+
+    if request.method == "POST":
+        selected_role = request.POST.get('edit_role')
+        preferred_name = request.POST.get('preferred_name')
+
+        current_user.role = selected_role
+        current_user.preferred_name = preferred_name
+        current_user.save()
+        
+        # Update session to match profile role
+        request.session['selected_role'] = selected_role
+        request.session['user_role'] = selected_role
+        
+        messages.success(request, 'Your profile has been successfully updated.')
+        return redirect('dashboard')
 
     user_data = {
         'preferred_name': current_user.preferred_name if current_user.preferred_name != None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
@@ -445,3 +467,144 @@ def create_course(request):
 @login_required
 def view_course(request, course_name):
     return render(request, 'view_course.html')
+
+@login_required
+def invite_students(request):
+    """Send invitation emails to students to join the system."""
+    # Check if user is a professor
+    is_professor = (
+        hasattr(request.user, 'profile') and request.user.profile.role == 'professor'
+    ) or request.session.get('user_role') == 'professor'
+    
+    if not is_professor:
+        messages.error(request, "Only professors can invite students.")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        # Get email addresses from the form
+        email_list = request.POST.get('student_emails', '').strip().split('\n')
+        email_list = [email.strip() for email in email_list if email.strip()]
+        
+        # Validate emails
+        valid_emails = []
+        invalid_emails = []
+        
+        for email in email_list:
+            try:
+                validate_email(email)
+                # Check if it's a BC email
+                if not email.endswith('@bc.edu'):
+                    invalid_emails.append(f"{email} (not a BC email)")
+                else:
+                    valid_emails.append(email)
+            except ValidationError:
+                invalid_emails.append(f"{email} (invalid format)")
+        
+        # Send invitations to valid emails
+        if valid_emails:
+            course_name = request.POST.get('course_name', 'the course')
+            emails_sent = 0
+            
+            for email in valid_emails:
+                subject = "Invitation to Boston College Peer Assessment System"
+                message = (
+                    f"Dear Student,\n\n"
+                    f"You have been invited by Professor {request.user.get_full_name() or request.user.username} "
+                    f"to join the Boston College Peer Assessment System for {course_name}.\n\n"
+                    f"Please visit {request.build_absolute_uri('/login/')} to log in with your BC credentials.\n\n"
+                    "Best regards,\nPeer Assessment System"
+                )
+                
+                try:
+                    send_mail(
+                        subject, 
+                        message, 
+                        settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
+                        [email]
+                    )
+                    emails_sent += 1
+                except Exception as e:
+                    messages.error(request, f"Error sending to {email}: {str(e)}")
+            
+            if emails_sent > 0:
+                messages.success(request, f"Successfully sent {emails_sent} invitation(s).")
+            
+        # Report invalid emails
+        if invalid_emails:
+            messages.warning(request, f"Could not send to the following emails: {', '.join(invalid_emails)}")
+            
+        return redirect('invite_students')
+    
+    # For GET requests, just show the form
+    return render(request, 'invite_students.html')
+
+def test_email(request):
+    """Send a test email to verify email configuration"""
+    if not request.user.is_authenticated:
+        return HttpResponse("Please log in first")
+    
+    try:
+        send_mail(
+            'Test Email from Peer Assessment System',
+            f'This is a test email sent to {request.user.email}.\n\nIf you received this, your email configuration is working!',
+            settings.DEFAULT_FROM_EMAIL,
+            [request.user.email],
+            fail_silently=False,
+        )
+        return HttpResponse(f"Test email sent to {request.user.email}. Check your console output or email inbox depending on your backend configuration.")
+    except Exception as e:
+        return HttpResponse(f"Error sending email: {str(e)}")
+    
+def debug_user_role(request):
+    """Debug view to check user role"""
+    if not request.user.is_authenticated:
+        return HttpResponse("Not logged in")
+    
+    output = f"Username: {request.user.username}<br>"
+    output += f"Email: {request.user.email}<br>"
+    
+    if hasattr(request.user, 'profile'):
+        output += f"Profile role: {request.user.profile.role}<br>"
+    else:
+        output += "No profile found<br>"
+    
+    # Check session
+    output += f"<br>Session data:<br>"
+    for key, value in request.session.items():
+        output += f"{key}: {value}<br>"
+    
+    return HttpResponse(output)
+
+@login_required
+def fix_session_role(request):
+    """Fix the session role to match the profile role"""
+    if not hasattr(request.user, 'profile'):
+        UserProfile.objects.create(user=request.user)
+    
+    profile = request.user.profile
+    
+    # Update session to match profile
+    request.session['selected_role'] = profile.role
+    request.session['user_role'] = profile.role
+    
+    messages.success(request, f"Session role updated to match profile role: {profile.role}")
+    return redirect('dashboard')
+
+@login_required
+def set_profile_role(request, role):
+    """Directly set the user's profile role"""
+    if not hasattr(request.user, 'profile'):
+        UserProfile.objects.create(user=request.user)
+    
+    profile = request.user.profile
+    
+    # Update profile role
+    profile.role = role
+    profile.save()
+    
+    # Update session to match profile
+    request.session['selected_role'] = role
+    request.session['user_role'] = role
+    
+    messages.success(request, f"Profile role updated to: {role}")
+    return redirect('dashboard')
