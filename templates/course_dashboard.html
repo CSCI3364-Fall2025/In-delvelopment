@@ -15,45 +15,47 @@
     <hr>
     <div class="row m-2 p-2">
         <div class="col">
-                <!-- Build out Course model, implement logic here -->
-                {% for course in user.active_courses %}
-                {% endfor %}
-            <!-- Example course below, use in the 'for' loop above -->
-            <div class="row border shadow p-2 m-3 rounded" id="courseBox">
-                <div class="col">
-                    <div class="row">
-                        <div class="col">
-                            <h4>CS1101: Introduction to Programming</h4>
+            {% for course in courses %}
+                <div class="row border shadow p-2 m-3 rounded" id="courseBox">
+                    <div class="col">
+                        <div class="row">
+                            <div class="col">
+                                <h4>{{ course.course_code }}: {{course.name }}</h4>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row pt-2 align-items-center">
-                        <div class="col-auto">
-                            <h6>Professor:</h6>
+                        <div class="row pt-2 align-items-center">
+                            <div class="col-auto">
+                                <h6>Professor:</h6>
+                            </div>
+                            <div class="col-auto">
+                                <h6 class="fw-lighter">{{ course.created_by.get_full_name }}</h6>
+                            </div>
+                            {% if request.user == course.created_by %}
+                            <div class="col-auto">
+                                <h6 class="fw-lighter" style="font-style: italic; color: red;">You are the professor for this course.</h6>
+                            </div>
+                            {% else %}
+                            <div class="col-auto">
+                                <h6 class="fw-lighter"><a href="#" style="color: var(--bc-gold);">Contact</a></h6>
+                            </div>
+                            {% endif %}
                         </div>
-                        <div class="col-auto">
-                            <h6 class="fw-lighter">Professor ABC {{ course.created_by.real_name }}</h6>
+                        <div class="row pt-2 align-items-center">
+                            <div class="col-auto">
+                                <h6>Course Description:</h6>
+                            </div>
+                            <div class="col-auto">
+                                <h6 class="fw-lighter">{{ course.description }}</h6>
+                            </div>
                         </div>
-                        {% if user == course.created_by %}
-                        <div class="col-auto">
-                            <h6 class="fw-lighter" style="font-style: italic; color: red;">You are the professor for this course.</h6>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="row pt-2 align-items-center">
-                        <div class="col-auto">
-                            <h6>Course Description:</h6>
-                        </div>
-                        <div class="col-auto">
-                            <h6 class="fw-lighter">Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolor placeat saepe nihil facilis dolorum temporibus perspiciatis dolore labore exercitationem, recusandae qui similique ducimus veniam iusto molestiae quis blanditiis molestias quod.</h6>
-                        </div>
-                    </div>
-                    <div class="row p-2 align-items-center">
-                        <div class="col-auto">
-                            <a href="#" class="btn maroon-btn">View{% if user == course.created_by %}/Manage{% endif %} Course</a>
+                        <div class="row p-2 align-items-center">
+                            <div class="col-auto">
+                                <a href="#" class="btn maroon-btn">{% if request.user == course.created_by %}Manage{% else %}View{% endif %} Course</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
     <div class="row m-2 p-2 justify-content-between">

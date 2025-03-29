@@ -417,5 +417,5 @@ def course_dashboard(request):
     }
 
     return render(request, 'course_dashboard.html', {
-        "user": user_data
+        "user": user_data, "courses": request.user.courses.filter(is_active=True)
     })

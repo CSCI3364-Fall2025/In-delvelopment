@@ -11,6 +11,18 @@ class Assessment(models.Model):
     def __str__(self):
         return self.title
         
+class Course(models.Model):
+    name = models.CharField(max_length=100)
+    course_code = models.CharField(max_length=10)
+    description = models.TextField(max_length=500)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_courses")
+    students = models.ManyToManyField(User, related_name="courses", blank=True)
+    assessments = models.ManyToManyField(Assessment, related_name="associated_course", blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.course_code}: {self.name}"
+
 class AssessmentScore(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="scores")
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name="scores")
