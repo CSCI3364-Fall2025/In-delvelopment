@@ -16,6 +16,9 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.db.models import Avg
 from assessments.models import Assessment, AssessmentScore
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.conf import settings
 
 def home(request):
     return render(request, 'home.html')
@@ -403,3 +406,69 @@ def professor_average_scores(request):
         })
 
     return JsonResponse(results, safe=False)
+
+@login_required
+def invite_students(request):
+    """Send invitation emails to students to join the system."""
+    # Check if user is a professor
+    if not request.user.is_authenticated or not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
+        messages.error(request, "Only professors can invite students.")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        # Get email addresses from the form
+        email_list = request.POST.get('student_emails', '').strip().split('\n')
+        email_list = [email.strip() for email in email_list if email.strip()]
+        
+        # Validate emails
+        valid_emails = []
+        invalid_emails = []
+        
+        for email in email_list:
+            try:
+                validate_email(email)
+                # Check if it's a BC email
+                if not email.endswith('@bc.edu'):
+                    invalid_emails.append(f"{email} (not a BC email)")
+                else:
+                    valid_emails.append(email)
+            except ValidationError:
+                invalid_emails.append(f"{email} (invalid format)")
+        
+        # Send invitations to valid emails
+        if valid_emails:
+            course_name = request.POST.get('course_name', 'the course')
+            emails_sent = 0
+            
+            for email in valid_emails:
+                subject = "Invitation to Boston College Peer Assessment System"
+                message = (
+                    f"Dear Student,\n\n"
+                    f"You have been invited by Professor {request.user.get_full_name() or request.user.username} "
+                    f"to join the Boston College Peer Assessment System for {course_name}.\n\n"
+                    f"Please visit {request.build_absolute_uri('/login/')} to log in with your BC credentials.\n\n"
+                    "Best regards,\nPeer Assessment System"
+                )
+                
+                try:
+                    send_mail(
+                        subject, 
+                        message, 
+                        settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
+                        [email]
+                    )
+                    emails_sent += 1
+                except Exception as e:
+                    messages.error(request, f"Error sending to {email}: {str(e)}")
+            
+            if emails_sent > 0:
+                messages.success(request, f"Successfully sent {emails_sent} invitation(s).")
+            
+        # Report invalid emails
+        if invalid_emails:
+            messages.warning(request, f"Could not send to the following emails: {', '.join(invalid_emails)}")
+            
+        return redirect('invite_students')
+    
+    # For GET requests, just show the form
+    return render(request, 'invite_students.html')
