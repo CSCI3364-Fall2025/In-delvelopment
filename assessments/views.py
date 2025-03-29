@@ -403,3 +403,19 @@ def professor_average_scores(request):
         })
 
     return JsonResponse(results, safe=False)
+
+@login_required
+def course_dashboard(request):
+
+    current_user = UserProfile.objects.get(user=request.user)
+    
+    user_data = {
+        'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
+        'email': request.user.email,
+        'role': current_user.role,
+    }
+
+    return render(request, 'course_dashboard.html', {
+        "user": user_data
+    })

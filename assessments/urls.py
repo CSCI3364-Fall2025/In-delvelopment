@@ -14,4 +14,5 @@ urlpatterns = [
     path('send-deadline-notifications/', send_deadline_notifications_view, name='send_deadline_notifications'),
     path('student-average/', student_average_score, name='student_average'),
     path('professor-average/', professor_average_scores, name='professor_average'),
+    path('courses', views.course_dashboard, name='course_dashboard'),
 ]
