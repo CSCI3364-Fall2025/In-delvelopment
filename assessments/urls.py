@@ -15,4 +15,6 @@ urlpatterns = [
     path('student-average/', student_average_score, name='student_average'),
     path('professor-average/', professor_average_scores, name='professor_average'),
     path('courses', views.course_dashboard, name='course_dashboard'),
+    path('courses/create', views.create_course, name='create_course'),
+    path('courses/<str:course_name>', views.view_course, name='view_course'),
 ]

@@ -14,6 +14,8 @@ class Assessment(models.Model):
 class Course(models.Model):
     name = models.CharField(max_length=100)
     course_code = models.CharField(max_length=10)
+    year = models.CharField(max_length=4, blank=True)
+    semester = models.CharField(max_length=6, blank=True)
     description = models.TextField(max_length=500)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_courses")
     students = models.ManyToManyField(User, related_name="courses", blank=True)

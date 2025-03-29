@@ -9,7 +9,7 @@ from django.shortcuts import HttpResponse #imports for scheduler
 from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
-from assessments.models import Assessment 
+from assessments.models import Assessment, Course 
 from django.contrib.auth.models import User
 
 #imports for averages
@@ -197,6 +197,7 @@ def dashboard(request):
         'num_assessment_results': len(closed_assessments),
         'new_results': new_results,
         'request': request,
+        'active_courses': request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True)
     }
     
     # Add welcome message
@@ -416,6 +417,28 @@ def course_dashboard(request):
         'role': current_user.role,
     }
 
+    #check if a new course has been created
+    if request.method == "POST":
+        new_course = Course.objects.create(
+            name=request.POST['courseName'],
+            course_code=request.POST['courseCode'],
+            year=request.POST['year'],
+            semester=request.POST['semester'],
+            description=request.POST['description'],
+            created_by = request.user,
+        )
+        new_course.save()
+        messages.success(request, f"Successfully created the course {new_course.name}")   
+
     return render(request, 'course_dashboard.html', {
-        "user": user_data, "courses": request.user.courses.filter(is_active=True)
+        "user": user_data, "courses": request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
+        "closed_courses": request.user.courses.filter(is_active=False)
     })
+
+@login_required
+def create_course(request):
+    return render(request, 'create_course.html')
+
+@login_required
+def view_course(request, course_name):
+    return render(request, 'view_course.html')
