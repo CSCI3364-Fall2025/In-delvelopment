@@ -714,3 +714,110 @@ def create_peer_assessments(request):
         form = PeerAssessmentForm()
 
     return render(request, 'create_peer_assessments.html', {'form': form})
+
+@login_required
+def publish_assessment_results(request, assessment_id):
+    """Publish assessment results to students"""
+    # Check if user is a professor
+    is_professor = (
+        hasattr(request.user, 'profile') and request.user.profile.role == 'professor'
+    ) or request.session.get('user_role') == 'professor'
+    
+    if not is_professor:
+        messages.error(request, "Only professors can publish assessment results.")
+        return redirect('dashboard')
+    
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if the professor is authorized to publish this assessment
+    if assessment.created_by != request.user:
+        messages.error(request, "You can only publish results for assessments you created.")
+        return redirect('dashboard')
+    
+    # Update assessment status to published
+    assessment.results_published = True
+    assessment.published_date = timezone.now()
+    assessment.save()
+    
+    # Get all students who submitted this assessment
+    submissions = AssessmentSubmission.objects.filter(assessment=assessment)
+    students = [submission.student for submission in submissions]
+    
+    # Send notification emails to students
+    emails_sent = 0
+    for student in students:
+        if not student.email:
+            continue
+            
+        subject = f"Results Published: {assessment.title}"
+        message = (
+            f"Dear {student.username},\n\n"
+            f"The results for '{assessment.title}' have been published. "
+            f"You can now view your assessment results on the platform.\n\n"
+            f"Please visit {request.build_absolute_uri('/published_results/')} to see your results.\n\n"
+            "Best regards,\nPeer Assessment System"
+        )
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [student.email],
+                fail_silently=False
+            )
+            emails_sent += 1
+        except Exception as e:
+            messages.warning(request, f"Failed to send notification to {student.email}: {str(e)}")
+    
+    messages.success(request, f"Assessment results published successfully. {emails_sent} notification emails sent.")
+    return redirect('view_assessment', assessment_id=assessment_id)
+
+@login_required
+def view_published_results(request, assessment_id):
+    """View published assessment results for students"""
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if results are published
+    if not assessment.results_published:
+        messages.error(request, "Results for this assessment have not been published yet.")
+        return redirect('dashboard')
+    
+    # Get the student's submission
+    try:
+        submission = AssessmentSubmission.objects.get(assessment=assessment, student=request.user)
+    except AssessmentSubmission.DoesNotExist:
+        messages.error(request, "You did not submit this assessment.")
+        return redirect('dashboard')
+    
+    # Get quantitative scores
+    quantitative_scores = submission.scores.filter(question__question_type='quantitative')
+    average_score = quantitative_scores.aggregate(Avg('score'))['score__avg'] or 0
+    
+    # Get qualitative answers (anonymized and sorted)
+    qualitative_answers = []
+    for question in assessment.questions.filter(question_type='qualitative'):
+        answers = []
+        # Get all submissions for this question from all students
+        all_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
+        for sub in all_submissions:
+            answer = sub.answers.filter(question=question).first()
+            if answer and answer.text_answer:
+                answers.append(answer.text_answer)
+        
+        # Sort answers alphabetically
+        answers.sort()
+        
+        qualitative_answers.append({
+            'question': question.text,
+            'answers': answers
+        })
+    
+    context = {
+        'assessment': assessment,
+        'average_score': round(average_score, 2),
+        'qualitative_answers': qualitative_answers,
+        'submission_date': submission.submission_date
+    }
+    
+    return render(request, 'view_published_results.html', context)
