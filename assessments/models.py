@@ -10,6 +10,14 @@ class Assessment(models.Model):
 
     def __str__(self):
         return self.title
+
+class Team(models.Model):
+    name = models.CharField(max_length=50, blank=True)
+    members = models.ManyToManyField(User, related_name="teams", blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Team {self.pk if len(self.name) == 0 else self.name}"
         
 class Course(models.Model):
     name = models.CharField(max_length=100)
@@ -18,6 +26,7 @@ class Course(models.Model):
     semester = models.CharField(max_length=6, blank=True)
     description = models.TextField(max_length=500)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_courses")
+    teams = models.ManyToManyField(Team, related_name="course", blank=True)
     students = models.ManyToManyField(User, related_name="courses", blank=True)
     assessments = models.ManyToManyField(Assessment, related_name="associated_course", blank=True)
     is_active = models.BooleanField(default=True)
