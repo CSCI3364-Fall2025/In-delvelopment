@@ -4,6 +4,19 @@
 
 {% block content %}
 <div class="container">
+    {% if messages %}
+    <div class="row mt-3">
+        <div class="col">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row pt-3 justify-content-between">
         <div class="col-auto">
             <h2>Course Details - {{ course.course_code }}: {{ course.name }}</h2>
@@ -35,7 +48,10 @@
                         {% if team.name == "" %}
                         <i>(Unnamed Team)</i>:
                         {% else %}
-                        {{ team.name }}:
+                        {{ team.name }}
+                        {% endif %}
+                        {% if team in request.user.teams.all %}
+                        <h6 style="color: var(--bc-gold);">You are on this team.</h6>
                         {% endif %}
                     </h5>
                 </div>
@@ -54,6 +70,8 @@
                     <div class="col-auto">
                         {% if course.created_by == request.user and user.role == "professor" %}
                             <a href="#" class="btn maroon-btn">Edit Team</a>
+                        {% elif team in request.user.teams.all %}
+                            <a href="#" class="btn maroon-btn">Contact Team</a>
                         {% else %}
                             <a href="#" class="btn maroon-btn">Request to Join Team</a>
                         {% endif %}
@@ -67,7 +85,7 @@
                 <h6 class="fw-lighter">To delete a team, click on <b>'Edit Team'</b> then <b>'Delete Team'</b> to remove the desired team. To add more teams, click on the <b>'Add Teams'</b> button.</h6>
             </div>
             <div class="col-auto">
-                <a href="#" class="btn maroon-btn btn-lg">Add Teams</a>
+                <a href="{% url 'add_teams' course.name %}" class="btn maroon-btn btn-lg">Add Teams</a>
             </div>
         </div>
         {% endif %}
