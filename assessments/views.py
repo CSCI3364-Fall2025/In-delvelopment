@@ -529,7 +529,21 @@ def create_course(request):
 
 @login_required
 def view_course(request, course_name):
+
     current_user = UserProfile.objects.get(user=request.user)
+    course = Course.objects.get(name=course_name)
+
+    #Check if new teams have been created
+    if request.method == "POST":
+        print("here")
+        print(request.POST)
+        num_teams = request.POST['numTeams']
+        for i in range(int(num_teams)):
+            new_team = Team.objects.create()
+            new_team.save()
+            course.teams.add(new_team)
+        
+        messages.success(request, f"Successfully created {num_teams} new teams")
     
     user_data = {
         'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
@@ -538,12 +552,19 @@ def view_course(request, course_name):
         'role': current_user.role,
     }
 
-    course = Course.objects.get(name=course_name)
-
     return render(request, 'view_course.html', {
         "course": course, "teams": course.teams.all(),
         "assessments": course.assessments.all(),
         "user": user_data, "students": course.students.all()
+    })
+
+@login_required
+def add_teams(request, course_name):
+    
+    course = Course.objects.get(name=course_name)
+
+    return render(request, 'add_teams.html', {
+        "course": course, "teams": course.teams.all()
     })
 
 @login_required

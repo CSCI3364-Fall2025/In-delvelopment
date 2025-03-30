@@ -23,4 +23,5 @@ urlpatterns = [
     path('fix-session-role/', views.fix_session_role, name='fix_session_role'),
     path('set-profile-role/<str:role>/', views.set_profile_role, name='set_profile_role'),
     path('create_peer_assessments/', views.create_peer_assessments, name='create_peer_assessments'),
+    path('<str:course_name>/add_teams', views.add_teams, name='add_teams'),
 ]
