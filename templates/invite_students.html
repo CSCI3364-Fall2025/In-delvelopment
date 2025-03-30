@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Invite Students | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>Invite Students</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="course_name" class="form-label">Course Name</label>
+                            <input type="text" class="form-control" id="course_name" name="course_name" required>
+                            <div class="form-text">Enter the name of the course for which you're inviting students.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="student_emails" class="form-label">Student Email Addresses</label>
+                            <textarea class="form-control" id="student_emails" name="student_emails" rows="6" required placeholder="Enter one email address per line"></textarea>
+                            <div class="form-text">Enter one BC email address per line (must end with @bc.edu).</div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn gold-btn">Send Invitations</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -16,6 +16,9 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.db.models import Avg
 from assessments.models import Assessment, AssessmentScore
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.conf import settings
 
 def home(request):
     return render(request, 'home.html')
@@ -37,22 +40,30 @@ def dashboard(request):
     if not hasattr(request.user, 'profile'):
         UserProfile.objects.create(user=request.user)
 
+    # Get current user profile
+    current_user = UserProfile.objects.get(user=request.user)
+    
+    # Synchronize session with profile role
+    request.session['selected_role'] = current_user.role
+    request.session['user_role'] = current_user.role
+    
     # Check if the user has updated their profile 
     if request.method == "POST":
-        updated_user = UserProfile.objects.get(user=request.user)
-
         selected_role = request.POST['edit_role']
         preferred_name = request.POST['preferred_name']
 
-        updated_user.role = selected_role
-        updated_user.preferred_name = preferred_name
-        updated_user.save()
+        current_user.role = selected_role
+        current_user.preferred_name = preferred_name
+        current_user.save()
+        
+        # Update session to match profile role
+        request.session['selected_role'] = selected_role
+        request.session['user_role'] = selected_role
+        
         messages.success(request, 'Your profile has been successfully updated.')
     
-    current_user = UserProfile.objects.get(user=request.user)
-    
     user_data = {
-        'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'preferred_name': current_user.preferred_name if current_user.preferred_name != None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
         'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
         'email': request.user.email,
         'role': current_user.role,
@@ -332,8 +343,22 @@ def view_comments(request, assessment_id):
 
 @login_required
 def edit_profile(request, name):
-    
     current_user = UserProfile.objects.get(user=request.user)
+
+    if request.method == "POST":
+        selected_role = request.POST.get('edit_role')
+        preferred_name = request.POST.get('preferred_name')
+
+        current_user.role = selected_role
+        current_user.preferred_name = preferred_name
+        current_user.save()
+        
+        # Update session to match profile role
+        request.session['selected_role'] = selected_role
+        request.session['user_role'] = selected_role
+        
+        messages.success(request, 'Your profile has been successfully updated.')
+        return redirect('dashboard')
 
     user_data = {
         'preferred_name': current_user.preferred_name if current_user.preferred_name != None else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),

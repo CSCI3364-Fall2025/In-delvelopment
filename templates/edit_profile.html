@@ -68,8 +68,8 @@
                         </div>
                         <div class="col">
                             <select name="edit_role" id="edit_role" class="form-select" required>
-                                <option value="Student">Student</option>
-                                <option value="Professor">Professor</option>
+                                <option value="student" {% if user.role == 'student' %}selected{% endif %}>Student</option>
+                                <option value="professor" {% if user.role == 'professor' %}selected{% endif %}>Professor</option>
                             </select>
                         </div>
                     </div>
