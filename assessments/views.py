@@ -535,8 +535,6 @@ def view_course(request, course_name):
 
     #Check if new teams have been created
     if request.method == "POST":
-        print("here")
-        print(request.POST)
         num_teams = request.POST['numTeams']
         for i in range(int(num_teams)):
             new_team = Team.objects.create()
@@ -566,6 +564,19 @@ def add_teams(request, course_name):
     return render(request, 'add_teams.html', {
         "course": course, "teams": course.teams.all()
     })
+
+@login_required
+def edit_team(request, course_name, team_pk):
+    
+    team = Team.objects.get(pk=team_pk)
+    course = Course.objects.get(name=course_name)
+
+    return render(request, 'edit_team.html', {
+        "team": team, "course": course,
+        "students": course.students.all(),
+        "team_members": team.members.all()
+    })
+
 
 @login_required
 def invite_students(request):

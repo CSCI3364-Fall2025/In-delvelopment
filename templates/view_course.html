@@ -69,7 +69,7 @@
                 <div class="row mt-2">
                     <div class="col-auto">
                         {% if course.created_by == request.user and user.role == "professor" %}
-                            <a href="#" class="btn maroon-btn">Edit Team</a>
+                            <a href="{% url 'edit_team' course.name team.pk %}" class="btn maroon-btn">Edit Team</a>
                         {% elif team in request.user.teams.all %}
                             <a href="#" class="btn maroon-btn">Contact Team</a>
                         {% else %}
