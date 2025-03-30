@@ -533,15 +533,40 @@ def view_course(request, course_name):
     current_user = UserProfile.objects.get(user=request.user)
     course = Course.objects.get(name=course_name)
 
-    #Check if new teams have been created
+    #Check if teams have been created / updated
     if request.method == "POST":
-        num_teams = request.POST['numTeams']
-        for i in range(int(num_teams)):
-            new_team = Team.objects.create()
-            new_team.save()
-            course.teams.add(new_team)
-        
-        messages.success(request, f"Successfully created {num_teams} new teams")
+        # Check if teams are getting added
+        if request.POST.get('numTeams') != None:
+            num_teams = request.POST['numTeams']
+            for i in range(int(num_teams)):
+                new_team = Team.objects.create()
+                new_team.save()
+                course.teams.add(new_team)
+            
+            messages.success(request, f"Successfully created {num_teams} new teams")
+        else: 
+            team = Team.objects.get(pk=request.POST['team_pk'])
+            team_name = request.POST['teamName']
+            new_members = request.POST['addMembers']
+            remove_members = request.POST['removeMembers']
+            print(new_members)
+            print(remove_members)
+
+            team.name = team_name
+            if new_members != "None":
+                for member_pk in new_members:
+                    if member_pk != "Choose students to add to team.":
+                        student = User.objects.get(pk=member_pk)
+                        team.members.add(student)
+            
+            if remove_members != "None":
+                for member_pk in remove_members:
+                    if member_pk != "Choose students to remove from team.":
+                        student = User.objects.get(pk=member_pk)
+                        team.members.remove(student)
+
+            team.save()
+            messages.success(request, f"Team updated successfully.")
     
     user_data = {
         'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
@@ -576,7 +601,6 @@ def edit_team(request, course_name, team_pk):
         "students": course.students.all(),
         "team_members": team.members.all()
     })
-
 
 @login_required
 def invite_students(request):

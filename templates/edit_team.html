@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Team - {{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row pt-3 justify-content-between">
+        <div class="col-auto">
+            <h2>Edit Team - {{ course.course_code }}: {{ course.name }}</h2>
+        </div>  
+    </div>
+    <div class="row mx-4">
+        <div class="col">
+            <h6 class="fw-lighter"><b>Professor: </b>{{ course.created_by.get_full_name }} (<a href="#">{{ course.created_by.email }}</a>)</h6>
+        </div>
+    </div>
+    <div class="row mx-4">
+        <div class="col">
+            <h6 class="fw-lighter"><b>Description: </b>{{ course.description }}</h6>
+        </div>
+    </div>
+    <div class="row m-4 p-3 border shadow rounded justify-content-center" id="classInfoBox">
+        <div class="row">
+            <div class="col">
+                <h4>Team: 
+                    {% if team.name == "" %}
+                    <i>(Unnamed Team)</i>
+                    {% else %}
+                    {{ team.name }}
+                    {% endif %}
+                </h4>
+            </div>
+        </div>
+        <form action="{% url 'view_course' course.name %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" value="{{ team.pk }}" name="team_pk">
+            <div class="row m-2 pt-2">
+                <div class="col-auto align-self-end">
+                    <label for="teamName" class="form-label fw-bold">Team Name:</label>
+                </div>
+                <div class="col">
+                    <input type="text" class="form-control" value="{{ team.name }}" id="teamName" name="teamName">
+                </div>
+                <div class="col-auto form-text align-self-center">Create or update a team name, e.g. "Team Alpha"</div>
+            </div>
+            <div class="row m-2 pt-3">
+                <div class="col-auto">
+                    <h5>Members:</h5>
+                </div>
+                    {% if not team_members %}
+                        <div class="col align-self-center">
+                            <i>There are currently no members on this team.</i>
+                        </div>
+                    {% else %}
+                        <div class="col align-self-end">
+                            {% for member in team_members %}
+                            <h6 class="fw-lighter">{{ member.get_full_name }} (<a href="">{{ member.email }}</a>);</h6> 
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+            </div>
+            <hr class="m-3 py-2">
+            <div class="row m-2 pt-1">
+                <div class="col-auto align-self-center">
+                    <label for="addMembers" class="form-label fw-bold">Add Members:</label>
+                </div>
+                <div class="col">
+                    <select name="addMembers" id="addMembers" class="form-select" multiple>
+                        <option value="None" selected>Choose students to add to team.</option>
+                        {% for student in students %}
+                            {% if student not in team.members.all %}
+                            <option value="{{ student.pk }}">{{ student.get_full_name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col form-text">
+                    <p>Hold <b>'Shift'</b> to select multiple students to add to the team.</p>
+                </div>
+            </div>
+            <div class="row m-2 pt-1">
+                <div class="col-auto align-self-center">
+                    <label for="removeMembers" class="form-label fw-bold">Remove Members:</label>
+                </div>
+                <div class="col">
+                    <select name="removeMembers" id="removeMembers" class="form-select" multiple>
+                        <option value="None" selected>Choose students to remove from team.</option>
+                        {% for student in team_members %}
+                            <option value="{{ student.pk }}">{{ student.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col form-text">
+                    <p>Hold <b>'Shift'</b> to select multiple students to remove from the team.</p>
+                </div>
+            </div>
+            <div class="row m-2 pt-3 justify-content-end">
+                <div class="col align-self-end">
+                    <h6 class="fw-lighter">Click <b>'Update Team'</b> To update the team information. Alternatively, click <b>'Delete Team'</b> to delete the team entirely.</h6>
+                </div>
+                <div class="col-auto align-self-center">
+                    <a href="{% url 'view_course' course.name %}" class="btn btn-secondary rounded-pill">Cancel</a>
+                </div>
+                <div class="col-auto">
+                    <!-- Create a delete team view-->
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-lg gold-btn" type="submit">Update Team</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <br>
+</div>
+{% endblock %}
