@@ -27,4 +27,5 @@ urlpatterns = [
     path('assessment/<int:assessment_id>/publish/', views.publish_assessment_results, name='publish_assessment_results'),
     path('assessment/<int:assessment_id>/results/', views.view_published_results, name='view_published_results'),
     path('<str:course_name>/edit_team/<int:team_pk>', views.edit_team, name='edit_team'),
+    path('<str:course_name>/delete_team/<int:team_pk>', views.delete_team, name="delete_team"),
 ]

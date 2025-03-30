@@ -106,7 +106,8 @@
                     <a href="{% url 'view_course' course.name %}" class="btn btn-secondary rounded-pill">Cancel</a>
                 </div>
                 <div class="col-auto">
-                    <!-- Create a delete team view-->
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-lg btn-danger" data-bs-toggle="modal" data-bs-target="#deleteTeamModal">Delete Team</button>
                 </div>
                 <div class="col-auto">
                     <button class="btn btn-lg gold-btn" type="submit">Update Team</button>
@@ -116,4 +117,22 @@
     </div>
     <br>
 </div>
+<!-- Modal -->
+<div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-labelledby="DeleteTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Team</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this team?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="{% url 'delete_team' course.name team.pk %}" class="btn btn-danger">Delete Team</a>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

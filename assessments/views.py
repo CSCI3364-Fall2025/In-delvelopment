@@ -213,7 +213,8 @@ def dashboard(request):
         'num_assessment_results': len(closed_assessments),
         'new_results': new_results,
         'request': request,
-        'active_courses': request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True)
+        'active_courses': request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
+        'active_teams': request.user.teams.filter(is_active=True)
     }
     
     # Add welcome message
@@ -543,8 +544,9 @@ def view_course(request, course_name):
                 new_team.save()
                 course.teams.add(new_team)
             
-            messages.success(request, f"Successfully created {num_teams} new teams")
+            messages.success(request, f"Successfully created {num_teams} new teams.")
         else: 
+            # teams are being updated
             team = Team.objects.get(pk=request.POST['team_pk'])
             team_name = request.POST['teamName']
             new_members = request.POST['addMembers']
@@ -601,6 +603,15 @@ def edit_team(request, course_name, team_pk):
         "students": course.students.all(),
         "team_members": team.members.all()
     })
+
+@login_required
+def delete_team(request, course_name, team_pk):
+
+    team = Team.objects.get(pk=team_pk)
+    team.delete()
+
+    messages.success(request, f"Team deleted successfully.")
+    return redirect('view_course', course_name=course_name)
 
 @login_required
 def invite_students(request):

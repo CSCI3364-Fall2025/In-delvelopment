@@ -139,7 +139,11 @@
                         <i>None</i>
                         {% else %}
                         {% for team in active_teams %}
-                        {{ team.name }};
+                            {% if team.name == "" %}
+                                <i>(Unnamed team);</i>
+                            {% else %}
+                                {{ team.name }};
+                            {% endif %}
                         {% endfor %}
                         {% endif %}
                     </h5>
@@ -252,6 +256,9 @@
         </div>
         <div class="col-auto">
             <a href="{% url 'create_peer_assessments' %}" class="btn btn-lg maroon-btn">Create New Assessment</a>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'course_dashboard' %}" class="btn btn-lg maroon-btn">Manage Courses</a>
         </div>
     </div>
     {% endif %}
