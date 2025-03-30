@@ -529,12 +529,21 @@ def create_course(request):
 
 @login_required
 def view_course(request, course_name):
+    current_user = UserProfile.objects.get(user=request.user)
+    
+    user_data = {
+        'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
+        'email': request.user.email,
+        'role': current_user.role,
+    }
 
     course = Course.objects.get(name=course_name)
 
     return render(request, 'view_course.html', {
         "course": course, "teams": course.teams.all(),
-        "assessments": course.assessments.all()
+        "assessments": course.assessments.all(),
+        "user": user_data, "students": course.students.all()
     })
 
 @login_required

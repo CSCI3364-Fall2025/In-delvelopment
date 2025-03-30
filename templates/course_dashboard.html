@@ -46,7 +46,7 @@
                             <div class="col-auto">
                                 <h6 class="fw-lighter">{{ course.created_by.get_full_name }}</h6>
                             </div>
-                            {% if request.user == course.created_by %}
+                            {% if request.user == course.created_by and user.role == "professor" %}
                             <div class="col-auto">
                                 <h6 class="fw-lighter" style="font-style: italic; color: red;">You are the professor for this course.</h6>
                             </div>
@@ -66,7 +66,7 @@
                         </div>
                         <div class="row p-2 align-items-center">
                             <div class="col-auto">
-                                <a href="{% url 'view_course' course.name %}" class="btn maroon-btn">{% if request.user == course.created_by %}Manage{% else %}View{% endif %} Course</a>
+                                <a href="{% url 'view_course' course.name %}" class="btn maroon-btn">{% if request.user == course.created_by and user.role == "professor" %}Manage{% else %}View{% endif %} Course</a>
                             </div>
                         </div>
                     </div>

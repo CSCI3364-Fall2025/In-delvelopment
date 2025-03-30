@@ -14,10 +14,15 @@
     </div>
     <div class="row mx-4">
         <div class="col">
+            <h6 class="fw-lighter"><b>Professor: </b>{{ course.created_by.get_full_name }} (<a href="#">{{ course.created_by.email }}</a>)</h6>
+        </div>
+    </div>
+    <div class="row mx-4">
+        <div class="col">
             <h6 class="fw-lighter"><b>Description: </b>{{ course.description }}</h6>
         </div>
     </div>
-    <div class="row m-4 p-3 border shadow rounded justify-content-center">
+    <div class="row m-4 p-3 border shadow rounded justify-content-center" id="classInfoBox">
         <div class="row">
             <div class="col">
                 <h4>Teams:</h4>
@@ -47,16 +52,16 @@
                 </div>
                 <div class="row mt-2">
                     <div class="col-auto">
-                        {% if course.created_by == request.user %}
+                        {% if course.created_by == request.user and user.role == "professor" %}
                             <a href="#" class="btn maroon-btn">Edit Team</a>
                         {% else %}
-                            <a href="#">Request to Join Team</a>
+                            <a href="#" class="btn maroon-btn">Request to Join Team</a>
                         {% endif %}
                     </div>
                 </div>
             </div>
         {% endfor %}
-        {% if course.created_by == request.user %}
+        {% if course.created_by == request.user and user.role == "professor" %}
         <div class="row m-3 justify-content-between">
             <div class="col-auto align-self-center">
                 <h6 class="fw-lighter">To delete a team, click on <b>'Edit Team'</b> then <b>'Delete Team'</b> to remove the desired team. To add more teams, click on the <b>'Add Teams'</b> button.</h6>
@@ -78,20 +83,48 @@
         </div>
         {% else %}
             {% for assessment in assessments %}
+            <!-- Build out functionality to link assessments -->
             {% endfor %}
         {% endif %}
-        {% if course.created_by == request.user %}
+        {% if course.created_by == request.user and user.role == "professor" %}
         <div class="row m-3 justify-content-between">
             <div class="col-auto align-self-center">
                 <h6 class="fw-lighter">To create a new assessment, click on the <b>'Create Assessment'</b> button.</h6>
             </div>
             <div class="col-auto">
-                <a href="#" class="btn maroon-btn btn-lg">Create Assessment</a>
+                <a href="{% url 'create_peer_assessments' %}" class="btn maroon-btn btn-lg">Create Assessment</a>
+            </div>
+        </div>
+        {% endif %}
+        <hr class="m-3">
+        <div class="row">
+            <div class="col-auto mt-2">
+                <h4>Students:</h4>
+            </div>
+        </div> 
+        {% if not students %}
+        <div class="row">
+             <i>There are currently no students enrolled in this course.</i>
+        </div>
+        {% else %}
+            {% for student in students %}
+            <div class="row mt-1">
+                <h6 class="fw-lighter">{{ student.get_full_name }} (<a href="#">{{ student.email }}</a>);</h6>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% if course.created_by == request.user and user.role == "professor" %}
+        <div class="row m-3 justify-content-between">
+            <div class="col-auto align-self-center">
+                <h6 class="fw-lighter">To add students to a course, click on the <b>'Invite Students'</b> button. Alternatively, you can invite students directly to teams. </h6>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'invite_students' %}" class="btn maroon-btn btn-lg">Invite Students</a>
             </div>
         </div>
         {% endif %}
     </div>
-    {% if course.created_by == request.user %}
+    {% if course.created_by == request.user and user.role == "professor" %}
     <div class="row m-3 justify-content-end">
         <div class="col align-self-center">
             <h6 class="fw-lighter">To de-activate the course, click on <b>'Edit Course'</b>, then <b>'De-Activate Course'</b>. Once a course is de-activated, it can still be re-activated.</h6>
