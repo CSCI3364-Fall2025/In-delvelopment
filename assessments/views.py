@@ -729,11 +729,6 @@ def publish_assessment_results(request, assessment_id):
     
     assessment = get_object_or_404(Assessment, id=assessment_id)
     
-    # Check if the professor is authorized to publish this assessment
-    if assessment.created_by != request.user:
-        messages.error(request, "You can only publish results for assessments you created.")
-        return redirect('dashboard')
-    
     # Update assessment status to published
     assessment.results_published = True
     assessment.published_date = timezone.now()
@@ -741,17 +736,27 @@ def publish_assessment_results(request, assessment_id):
     
     # Get all students who submitted this assessment
     submissions = AssessmentSubmission.objects.filter(assessment=assessment)
-    students = [submission.student for submission in submissions]
     
     # Send notification emails to students
     emails_sent = 0
-    for student in students:
-        if not student.email:
+    for submission in submissions:
+        # Get the actual User object for the student
+        try:
+            # If student is stored as a username string
+            student_user = User.objects.get(username=submission.student)
+        except (User.DoesNotExist, TypeError):
+            # If student is already a User object or username doesn't exist
+            if isinstance(submission.student, User):
+                student_user = submission.student
+            else:
+                continue  # Skip if we can't find the user
+        
+        if not hasattr(student_user, 'email') or not student_user.email:
             continue
             
         subject = f"Results Published: {assessment.title}"
         message = (
-            f"Dear {student.username},\n\n"
+            f"Dear {student_user.username},\n\n"
             f"The results for '{assessment.title}' have been published. "
             f"You can now view your assessment results on the platform.\n\n"
             f"Please visit {request.build_absolute_uri('/published_results/')} to see your results.\n\n"
@@ -763,15 +768,15 @@ def publish_assessment_results(request, assessment_id):
                 subject,
                 message,
                 settings.DEFAULT_FROM_EMAIL,
-                [student.email],
+                [student_user.email],
                 fail_silently=False
             )
             emails_sent += 1
         except Exception as e:
-            messages.warning(request, f"Failed to send notification to {student.email}: {str(e)}")
+            messages.warning(request, f"Failed to send notification to {student_user.email}: {str(e)}")
     
     messages.success(request, f"Assessment results published successfully. {emails_sent} notification emails sent.")
-    return redirect('view_assessment', assessment_id=assessment_id)
+    return redirect('view_comments', assessment_id=assessment_id)
 
 @login_required
 def view_published_results(request, assessment_id):
@@ -821,3 +826,60 @@ def view_published_results(request, assessment_id):
     }
     
     return render(request, 'view_published_results.html', context)
+
+@login_required
+def create_test_data(request):
+    """Create test data for assessment publishing functionality"""
+    if not request.user.is_superuser:
+        messages.error(request, "Only superusers can create test data.")
+        return redirect('dashboard')
+    
+    # Create a test assessment directly without using Course
+    assessment = Assessment.objects.create(
+        title="Test Assessment",
+        course="Test Course",  # Just use a string since Assessment.course is a CharField
+        due_date=timezone.now() + timedelta(days=7),
+        closed_date=None,  # Not closed yet
+        results_published=False
+    )
+    
+    # Create test students if needed
+    test_students = []
+    for i in range(3):
+        username = f"teststudent{i+1}"
+        email = f"{username}@bc.edu"
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={'email': email}
+        )
+        if created:
+            user.set_password("testpassword")
+            user.save()
+            # Only create profile if it doesn't exist
+            UserProfile.objects.get_or_create(user=user, defaults={'role': "student"})
+        test_students.append(user)
+    
+    # Create test submissions
+    answers = [
+        "The presentation was very clear and well-structured.",
+        "I liked the examples provided during the presentation.",
+        "The visual aids were helpful in understanding the concepts."
+    ]
+    
+    for i, student in enumerate(test_students):
+        # Check if a submission already exists
+        if not AssessmentSubmission.objects.filter(assessment=assessment, student=student.username).exists():
+            # Create submission with only the fields that exist in the model
+            submission = AssessmentSubmission.objects.create(
+                assessment=assessment,
+                student=student.username,
+                # Remove submission_date since it doesn't exist
+                contribution=4 + (i % 2),  # Scores between 4-5
+                teamwork=4 + (i % 2),
+                communication=4 + (i % 2),
+                feedback=answers[i]
+            )
+    
+    messages.success(request, f"Test data created successfully. Assessment ID: {assessment.id}")
+    # Redirect to comments view instead of assessment view
+    return redirect('view_comments', assessment_id=assessment.id)

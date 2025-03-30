@@ -73,6 +73,28 @@
                         </ul>
                     </div>
 
+                    <!-- Professor-only publish results section -->
+                    {% if user.profile.role == 'professor' or request.session.user_role == 'professor' %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4>Publish Results</h4>
+                        </div>
+                        <div class="card-body">
+                            {% if not assessment.results_published %}
+                            <p>Ready to publish these results to students? This will send email notifications to all students who submitted this assessment.</p>
+                            <a href="{% url 'publish_assessment_results' assessment.id %}" class="btn btn-success" 
+                               onclick="return confirm('Are you sure you want to publish the results? This will notify all students.')">
+                                <i class="fas fa-check-circle me-2"></i>Publish Results
+                            </a>
+                            {% else %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>Results published on {{ assessment.published_date|date:"m/d/Y" }} at {{ assessment.published_date|time:"H:i" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
                 </div>
             </div>
