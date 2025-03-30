@@ -17,7 +17,7 @@
     </div>
     {% endif %}
 
-    {% if user.role == 'student' and new_results %}
+    {% if user.role == 'student' or user.role == 'Student' and new_results %}
     <div class="alert alert-info alert-dismissible fade show" role="alert">
         New assessment results have been published! <a href="#" class="alert-link">View Results</a>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -30,32 +30,49 @@
         </div>
         <div class="row" id="pending_assessments">
             <div class="col-auto">
-                {% if num_uncompleted_assessments == 0 %}
-                <p>You have no pending peer assessments.</p>
+                {% if user.role == "professor" or user.role == "Professor" %}
+                <!-- Eventually implement logic -->
+                    <p>You have 16{{ total_incomplete_assignments }} students who still need to complete 'Peer Assessment 3'.</p>
                 {% else %}
-                <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
+                    {% if num_uncompleted_assessments == 0 %}
+                    <p>You have no pending peer assessments.</p>
+                    {% else %}
+                    <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="col-auto">
-                <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+                {% if user.profile.role == 'professor' or user.role == "Professor" %} 
+                    <a href="{% url 'course_dashboard' %}" style="color: var(--bc-gold);">Manage Courses and Teams</a>
+                {% else %}
+                    <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+                {% endif %}
             </div>
         </div>
         <div class="row" id="published_results">
             <div class="col-auto">
-                {% if num_assessment_results == 0 %}
-                <p>You have no assessment results to view.</p>
+                {% if user.role == "professor" or user.role == "Professor" %}
+                    <!-- Eventually implement logic -->
+                    <p>You have 1 unreturned assessment(s) to grade.</p>
                 {% else %}
-                <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
+                    {% if num_assessment_results == 0 %}
+                        <p>You have no assessment results to view.</p>
+                    {% else %}
+                        <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="col-auto">
-                <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published
-                    Results</a>
+                {% if user.role == "professor" or user.role == "Professor" %}
+                    <a href="#" style="color: var(--bc-gold);">Grade And Return Assessments</a>
+                {% else %}
+                    <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published Results</a>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="row justify-content-center">
+    <div class="row justify-content-center" id="profile_box">
         <div class="w-75 border border-2 rounded p-1" style="border-color: var(--bc-maroon);">
             <div class="row p-1 text-center">
                 <h1 style="color: var(--bc-maroon);">User Profile</h1>
@@ -65,7 +82,15 @@
                     <h5>Name:</h5>
                 </div>
                 <div class="col-auto mb-0">
-                    <h5 class="fw-lighter">{{ user.name }}</h5>
+                    <h5 class="fw-lighter">{{ user.real_name }}</h5>
+                </div>
+            </div>
+            <div class="row p-2 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Preferred Name:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">{{ user.preferred_name }}</h5>
                 </div>
             </div>
             <div class="row p-1 text-center justify-content-center">
@@ -84,9 +109,43 @@
                     <h5 class="fw-lighter">{{ user.role }}</h5>
                 </div>
             </div>
+            <hr class="m-3">
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Active Courses:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                        <h5 class="fw-lighter">
+                            {% if not active_courses %}
+                            <i>None</i>
+                            {% else %}
+                                {% for course in active_courses %}
+                                {{ course.name }}{% if request.user == course.created_by %} <i>(Professor)</i>{% endif %};    
+                                {% endfor %}
+                            {% endif %}
+                        </h5>
+                    
+                </div>
+            </div>
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>My Teams:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">
+                        {% if not active_teams %}
+                        <i>None</i>
+                        {% else %}
+                            {% for team in active_teams %}
+                            {{ team.name }}; 
+                            {% endfor %}
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
             <div class="row p-1 justify-content-center">
                 <div class="col-auto justify-content-center">
-                    <a class="btn gold-btn" href="{% url 'edit_profile' user.name %}">Edit Profile</a>
+                    <a class="btn gold-btn" href="{% url 'edit_profile' user.real_name %}">Edit Profile</a>
                 </div>
             </div>
         </div>
@@ -183,6 +242,17 @@
             </table>
         </div>
     </div>
+    {% if user.role == "professor" or user.role == "Professor" %}
+    <div class="row p-2">
+        <div class="col-auto">
+            <a href="{% url 'create_course' %}" class="btn btn-lg maroon-btn">Create New Course</a>
+        </div>       
+        <div class="col-auto">
+            <a href="#" class="btn btn-lg maroon-btn">Create New Assessment</a>
+        </div>
+    </div>
+
+    {% endif %}
     <hr>
     <div class="row p-2" id="quick_links">
         <div class="row">
@@ -191,16 +261,67 @@
             </div>
         </div>
         <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">View My Courses</a>
+            <a href="{% url 'course_dashboard' %}" style="color: var(--bc-gold);">View My Courses</a>
         </div>
         <div class="col-auto">
             <a href="#" style="color: var(--bc-gold);">View My Teams</a>
         </div>
         <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">Contact A Professor</a>
+            <a href="#" style="color: var(--bc-gold);">Contact{% if user.role == "Student" %} A Professor{% else %} Students{% endif %}</a>
+        </div>
+        <div class="col-auto">
+            {% if user.role == "student" or user.role == "Student" %}
+                <a href="{% url 'student_average' %}" style="color: var(--bc-gold);">Average Score</a>
+            {% else %}
+                <a href="{% url 'professor_average' %}" style="color: var(--bc-gold);">Average Score</a>
+            {% endif %}
         </div>
         <div class="col-auto">
             <a href="#" style="color: var(--bc-gold);">Report an Issue</a>
+        </div>
+    </div>
+    {% if user.profile.role == 'professor' or request.session.user_role == 'professor' %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h4>Professor Tools</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'invite_students' %}" class="btn gold-btn btn-block w-100">
+                                <i class="fas fa-envelope me-2"></i>Invite Students
+                            </a>
+                        </div>
+                        <!-- Add other professor tools here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h4>Debug Information</h4>
+                </div>
+                <div class="card-body">
+                    <p>Profile Role: {{ user.profile.role|default:"Not set" }}</p>
+                    <p>Session Role: {{ request.session.user_role|default:"Not set" }}</p>
+                    <div class="mb-3">
+                        <a href="{% url 'fix_session_role' %}" class="btn btn-sm btn-warning">Fix Session Role</a>
+                        <a href="{% url 'debug_role' %}" class="btn btn-sm btn-info">View Detailed Debug Info</a>
+                        <a href="{% url 'test_email' %}" class="btn btn-sm btn-primary">Test Email</a>
+                    </div>
+                    <div class="mb-3">
+                        <p><strong>Set Role Directly:</strong></p>
+                        <a href="{% url 'set_profile_role' role='student' %}" class="btn btn-sm btn-outline-secondary">Set as Student</a>
+                        <a href="{% url 'set_profile_role' role='professor' %}" class="btn btn-sm btn-outline-primary">Set as Professor</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

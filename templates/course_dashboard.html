@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}My Courses {% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+    <div class="row mt-3">
+        <div class="col">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row pt-3 justify-content-between">
+        <div class="col-auto">
+            <h2>My Courses: {{ user.real_name }} - {{ user.role }}</h2>
+        </div>  
+        <div class="col-auto">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary rounded-pill">Return to Dashboard</a>
+        </div>
+    </div>
+    <hr>
+    <div class="row m-2 p-2">
+        <div class="col">
+            {% if not courses %}
+            <h6>You are not enrolled in any active courses.</h6>
+            {% else %}
+            {% for course in courses %}
+                <div class="row border shadow p-2 m-3 rounded" id="courseBox">
+                    <div class="col">
+                        <div class="row">
+                            <div class="col">
+                                <h4>{{ course.course_code }}: {{course.name }}</h4>
+                            </div>
+                        </div>
+                        <div class="row pt-2 align-items-center">
+                            <div class="col-auto">
+                                <h6>Professor:</h6>
+                            </div>
+                            <div class="col-auto">
+                                <h6 class="fw-lighter">{{ course.created_by.get_full_name }}</h6>
+                            </div>
+                            {% if request.user == course.created_by %}
+                            <div class="col-auto">
+                                <h6 class="fw-lighter" style="font-style: italic; color: red;">You are the professor for this course.</h6>
+                            </div>
+                            {% else %}
+                            <div class="col-auto">
+                                <h6 class="fw-lighter"><a href="#" style="color: var(--bc-gold);">Contact</a></h6>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="row pt-2 align-items-center">
+                            <div class="col-auto">
+                                <h6>Course Description:</h6>
+                            </div>
+                            <div class="col-auto">
+                                <h6 class="fw-lighter">{{ course.description }}</h6>
+                            </div>
+                        </div>
+                        <div class="row p-2 align-items-center">
+                            <div class="col-auto">
+                                <a href="{% url 'view_course' course.name %}" class="btn maroon-btn">{% if request.user == course.created_by %}Manage{% else %}View{% endif %} Course</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="row m-2 p-2 justify-content-between">
+        <div class="col-auto">
+            <a href="#" style="color: var(--bc-gold);">View Past Courses</a>
+        </div>
+        <div class="col-auto">
+            {% if user.role == "professor" or user.role == "Professor" %}
+                <a href="{% url 'create_course' %}" class="btn btn-lg maroon-btn">Create New Course</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

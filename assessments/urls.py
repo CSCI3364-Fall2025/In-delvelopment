@@ -1,5 +1,6 @@
 from django.urls import path
 from assessments.views import send_deadline_notifications_view
+from .views import student_average_score, professor_average_scores
 from . import views
 
 urlpatterns = [
@@ -11,4 +12,14 @@ urlpatterns = [
     path('published_results/', views.view_all_published_results, name='view_all_published_results'),
     path('profile/<str:name>', views.edit_profile, name='edit_profile'),
     path('send-deadline-notifications/', send_deadline_notifications_view, name='send_deadline_notifications'),
+    path('student-average/', student_average_score, name='student_average'),
+    path('professor-average/', professor_average_scores, name='professor_average'),
+    path('courses', views.course_dashboard, name='course_dashboard'),
+    path('courses/create', views.create_course, name='create_course'),
+    path('courses/<str:course_name>', views.view_course, name='view_course'),
+    path('invite-students/', views.invite_students, name='invite_students'),
+    path('debug-role/', views.debug_user_role, name='debug_role'),
+    path('test-email/', views.test_email, name='test_email'),
+    path('fix-session-role/', views.fix_session_role, name='fix_session_role'),
+    path('set-profile-role/<str:role>/', views.set_profile_role, name='set_profile_role'),
 ]

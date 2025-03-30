@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %} Create New Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-3 justify-content-between">
+        <div class="col-auto">
+            <h2>Create New Course</h2>
+        </div>
+          
+    </div>
+    <div class="row m-3 p-3 border shadow rounded justify-content-between">
+        <div class="row mb-3">
+            <div class="col-auto">
+                <h4>Course Information:</h4>
+            </div>
+            
+        </div>
+        <form action="{% url 'course_dashboard' %}" method="post">
+            {% csrf_token %}
+            <div class="row m-2">
+                <label for="courseName" class="form-label fw-bold">Course Name:</label>
+                <input type="text" class="form-control" id="courseName" name="courseName" placeholder="e.g. Introduction to Tomfoolery" required>
+            </div>
+            <div class="row m-2">
+                <label for="courseCode" class="form-label fw-bold">Course Code:</label>
+                <input type="text" class="form-control" id="courseCode" name="courseCode" placeholder="e.g. TOMF1101" required>
+            </div>
+            <div class="row m-2">
+                <label for="year" class="form-label fw-bold">Year:</label>
+                <select name="year" id="year" class="form-select" required>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                </select>
+            </div>
+            <div class="row m-2">
+                <label for="semester" class="form-label fw-bold">Semester:</label>
+                <select name="semester" id="semester" class="form-select" required>
+                    <option value="fall">Fall</option>
+                    <option value="spring">Spring</option>
+                </select>
+            </div>
+            
+            <div class="row m-2">
+                <label for="description" class="form-label fw-bold">Description:</label>
+                <textarea name="description" id="description" placeholder="Enter a brief course description here" class="form-control" required></textarea>
+            </div>
+            <br>
+            <div class="row" id="teamHeader">
+                <div class="col-auto">
+                    <h5 class="fw-bold">Teams</h5>
+                </div>
+                <div class="col-auto align-self-center">
+                    <h6 class="fw-lighter" style="font-style: italic;">Please select the number of teams you wish to create. More teams can be added after a course is created.</h6>
+                </div>
+            </div>
+            <div class="row m-2">
+                <div class="col-auto align-self-end">
+                    <label for="numTeams" class="form-label fw-bold">Number of Teams Associated with Course:</label>
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" id="numTeams" name="numTeams" placeholder="e.g. 3" min="0" max="10" required>
+                </div>
+            </div>
+            <hr class="mt-5">
+            <div class="row mt-5 justify-content-start">
+                <div class="col-auto">
+                    <h3>Create Course:</h3>
+                </div>
+                <div class="col">
+                    <h6 class="fw-lighter">Don't worry! You can always edit a course after its been created. <i>Click 'Cancel' to cancel the course submission.</i>
+                    </h6>
+                </div>
+                <div class="col-auto align-self-center">
+                    <a href="{% url 'course_dashboard' %}" class="btn btn-secondary rounded-pill">Cancel</a>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-lg gold-btn" type="submit">Create Course</button>
+                </div>
+                
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
