@@ -456,9 +456,9 @@ def course_dashboard(request):
         for i in range(int(num_teams)):
             new_team = Team.objects.create()
             new_team.save()
-            new_course.teams.add()
+            new_course.teams.add(new_team)
         new_course.save()
-        messages.success(request, f"Successfully created the course {new_course.name}")   
+        messages.success(request, f"Successfully created course '{new_course.name}'")   
 
     return render(request, 'course_dashboard.html', {
         "user": user_data, "courses": request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
