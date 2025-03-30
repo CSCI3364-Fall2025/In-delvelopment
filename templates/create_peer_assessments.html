@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Peer Assessment | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>Create Peer Assessment</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="peer-assessment-form">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+
+                        <!-- Single Dummy Self-Assessment Checkbox -->
+                        <div class="form-check mb-4">
+                            <label class="form-check-label" for="self-assessment-required"></label>
+                        </div>
+
+                        <div id="likert-questions-container" class="mb-4">
+                            <h5>Likert Questions</h5>
+                            <!-- Likert questions will be dynamically added here -->
+                        </div>
+                        <button type="button" class="btn btn-outline-primary mb-3" id="add-likert-question">
+                            Add Likert Question
+                        </button>
+
+                        <div id="open-ended-questions-container" class="mb-4">
+                            <h5>Open-Ended Questions</h5>
+                            <!-- Open-ended questions will be dynamically added here -->
+                        </div>
+                        <button type="button" class="btn btn-outline-primary mb-3" id="add-open-ended-question">
+                            Add Open-Ended Question
+                        </button>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Save Assessment</button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const likertContainer = document.getElementById('likert-questions-container');
+        const openEndedContainer = document.getElementById('open-ended-questions-container');
+
+        function addLikertQuestion() {
+            const questionCount = likertContainer.querySelectorAll('.likert-question').length + 1;
+            const likertQuestion = `
+                <div class="mb-3 likert-question">
+                    <label for="likert-question-${questionCount}" class="form-label">Likert Question ${questionCount}:</label>
+                    <input type="text" name="likert_questions[]" id="likert-question-${questionCount}" class="form-control" placeholder="Enter your Likert question here" required>
+                    <button type="button" class="btn btn-danger btn-sm mt-2 remove-likert-question">Remove</button>
+                </div>
+            `;
+            likertContainer.insertAdjacentHTML('beforeend', likertQuestion);
+        }
+
+        function addOpenEndedQuestion() {
+            const questionCount = openEndedContainer.querySelectorAll('.open-ended-question').length + 1;
+            const openEndedQuestion = `
+                <div class="mb-3 open-ended-question">
+                    <label for="open-ended-question-${questionCount}" class="form-label">Open-Ended Question ${questionCount}:</label>
+                    <input type="text" name="open_ended_questions[]" id="open-ended-question-${questionCount}" class="form-control" placeholder="Enter your open-ended question here" required>
+                    <button type="button" class="btn btn-danger btn-sm mt-2 remove-open-ended-question">Remove</button>
+                </div>
+            `;
+            openEndedContainer.insertAdjacentHTML('beforeend', openEndedQuestion);
+        }
+
+        function removeQuestion(event) {
+            if (event.target.classList.contains('remove-likert-question')) {
+                event.target.closest('.likert-question').remove();
+            } else if (event.target.classList.contains('remove-open-ended-question')) {
+                event.target.closest('.open-ended-question').remove();
+            }
+        }
+
+        document.getElementById('add-likert-question').addEventListener('click', addLikertQuestion);
+        document.getElementById('add-open-ended-question').addEventListener('click', addOpenEndedQuestion);
+        document.addEventListener('click', removeQuestion);
+    });
+</script>
+{% endblock %}

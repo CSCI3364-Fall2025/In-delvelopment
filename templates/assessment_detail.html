@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load range_tags %} <!-- Load the custom template tag -->
 
 {% block title %}Assessment Details | Peer Assessment System{% endblock %}
 
@@ -15,7 +16,37 @@
                         <p>Course: {{ assessment.course }}</p>
                         <p>Due Date: {{ assessment.due_date|date:"m/d/Y" }} at {{ assessment.due_date|time:"H:i" }}</p>
                     </div>
-                    
+
+                    <div class="mb-4">
+                        <h4>Team and Class Averages</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Team Average</th>
+                                    <th>Class Average</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Contribution</td>
+                                    <td>{{ team_avg.contribution }}</td>
+                                    <td>{{ class_avg.contribution }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Teamwork</td>
+                                    <td>{{ team_avg.teamwork }}</td>
+                                    <td>{{ class_avg.teamwork }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Communication</td>
+                                    <td>{{ team_avg.communication }}</td>
+                                    <td>{{ class_avg.communication }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                     {% if user.profile.role == 'student' or user.profile.role == 'Student' %}
                     <div id="studentView" class="container">
                         <h2>Peer Assessment</h2>
@@ -30,44 +61,80 @@
                                     <option value="self">Self</option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label for="contribution" class="form-label">Rate Contribution:</label>
-                                <select id="contribution" name="contribution" class="form-select">
-                                    <option value="4">Excellent</option>
-                                    <option value="3">Good</option>
-                                    <option value="2">Average</option>
-                                    <option value="1">Poor</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="teamwork" class="form-label">Rate Teamwork:</label>
-                                <select id="teamwork" name="teamwork" class="form-select">
-                                    <option value="4">Excellent</option>
-                                    <option value="3">Good</option>
-                                    <option value="2">Average</option>
-                                    <option value="1">Poor</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="communication" class="form-label">Rate Communication:</label>
-                                <select id="communication" name="communication" class="form-select">
-                                    <option value="4">Excellent</option>
-                                    <option value="3">Good</option>
-                                    <option value="2">Average</option>
-                                    <option value="1">Poor</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Submit Assessment</button>
-                        </form>
 
-                        <h3>Additional Comments</h3>
-                        <form method="post" action="{% url 'save_progress' assessment.id %}">
-                            {% csrf_token %}
+                            <!-- Likert Scale Questions -->
+                            <div class="mb-4">
+                                <label class="form-label">Rate Contribution:</label>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span>Poor</span>
+                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        {% for i in 5|range_filter %}
+                                        <div class="form-check mx-auto" style="z-index: 1;">
+                                            <input class="form-check-input" type="radio" name="contribution"
+                                                value="{{ i }}" required>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <span>Excellent</span>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Rate Teamwork:</label>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span>Poor</span>
+                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        {% for i in 5|range_filter %}
+                                        <div class="form-check mx-auto" style="z-index: 1;">
+                                            <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
+                                                required>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <span>Excellent</span>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Rate Communication:</label>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span>Poor</span>
+                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        {% for i in 5|range_filter %}
+                                        <div class="form-check mx-auto" style="z-index: 1;">
+                                            <input class="form-check-input" type="radio" name="communication"
+                                                value="{{ i }}" required>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <span>Excellent</span>
+                                </div>
+                            </div>
+
+                            <!-- Open-Ended Question -->
+                            <div class="mb-3">
+                                <label for="feedback" class="form-label">Give an overview of this member's role in the
+                                    team:</label>
+                                <textarea id="feedback" name="feedback" class="form-control" rows="4"
+                                    placeholder="Provide additional feedback here..."></textarea>
+                            </div>
+
+                            <!-- Additional Comments Section -->
                             <div class="mb-3">
                                 <label for="progress_notes" class="form-label">Add additional comments here:</label>
-                                <textarea id="progress_notes" name="progress" class="form-control" rows="4">{{ progress.progress_notes }}</textarea>
+                                <textarea id="progress_notes" name="progress" class="form-control"
+                                    rows="4">{{ progress.progress_notes }}</textarea>
                             </div>
-                            <button type="submit" class="btn btn-success">Save Comment Progress</button>
+
+                            <div class="d-flex justify-content-between">
+                                <button type="submit" class="btn btn-primary">Submit Assessment</button>
+                                <button type="submit" formaction="{% url 'save_progress' assessment.id %}"
+                                    class="btn btn-success">Save Comment Progress</button>
+                            </div>
                         </form>
 
                         <div class="mt-4">

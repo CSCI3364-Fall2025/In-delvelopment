@@ -7,6 +7,7 @@ class Assessment(models.Model):
     due_date = models.DateTimeField(null=True, blank=True)
     closed_date = models.DateTimeField(null=True, blank=True)
     open_date = models.DateTimeField(null=True, blank=True)
+    self_assessment_required = models.BooleanField(default=False)  # New field
 
     def __str__(self):
         return self.title

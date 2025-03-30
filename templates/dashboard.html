@@ -32,41 +32,43 @@
             <div class="col-auto">
                 {% if user.role == "professor" or user.role == "Professor" %}
                 <!-- Eventually implement logic -->
-                    <p>You have 16{{ total_incomplete_assignments }} students who still need to complete 'Peer Assessment 3'.</p>
+                <p>You have 16{{ total_incomplete_assignments }} students who still need to complete 'Peer Assessment
+                    3'.</p>
                 {% else %}
-                    {% if num_uncompleted_assessments == 0 %}
-                    <p>You have no pending peer assessments.</p>
-                    {% else %}
-                    <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
-                    {% endif %}
+                {% if num_uncompleted_assessments == 0 %}
+                <p>You have no pending peer assessments.</p>
+                {% else %}
+                <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
+                {% endif %}
                 {% endif %}
             </div>
             <div class="col-auto">
-                {% if user.profile.role == 'professor' or user.role == "Professor" %} 
-                    <a href="{% url 'course_dashboard' %}" style="color: var(--bc-gold);">Manage Courses and Teams</a>
+                {% if user.profile.role == 'professor' or user.role == "Professor" %}
+                <a href="{% url 'course_dashboard' %}" style="color: var(--bc-gold);">Manage Courses and Teams</a>
                 {% else %}
-                    <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+                <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
                 {% endif %}
             </div>
         </div>
         <div class="row" id="published_results">
             <div class="col-auto">
                 {% if user.role == "professor" or user.role == "Professor" %}
-                    <!-- Eventually implement logic -->
-                    <p>You have 1 unreturned assessment(s) to grade.</p>
+                <!-- Eventually implement logic -->
+                <p>You have 1 unreturned assessment(s) to grade.</p>
                 {% else %}
-                    {% if num_assessment_results == 0 %}
-                        <p>You have no assessment results to view.</p>
-                    {% else %}
-                        <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
-                    {% endif %}
+                {% if num_assessment_results == 0 %}
+                <p>You have no assessment results to view.</p>
+                {% else %}
+                <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
+                {% endif %}
                 {% endif %}
             </div>
             <div class="col-auto">
                 {% if user.role == "professor" or user.role == "Professor" %}
-                    <a href="#" style="color: var(--bc-gold);">Grade And Return Assessments</a>
+                <a href="#" style="color: var(--bc-gold);">Grade And Return Assessments</a>
                 {% else %}
-                    <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published Results</a>
+                <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published
+                    Results</a>
                 {% endif %}
             </div>
         </div>
@@ -115,16 +117,16 @@
                     <h5>Active Courses:</h5>
                 </div>
                 <div class="col-auto mb-0">
-                        <h5 class="fw-lighter">
-                            {% if not active_courses %}
-                            <i>None</i>
-                            {% else %}
-                                {% for course in active_courses %}
-                                {{ course.name }}{% if request.user == course.created_by %} <i>(Professor)</i>{% endif %};    
-                                {% endfor %}
-                            {% endif %}
-                        </h5>
-                    
+                    <h5 class="fw-lighter">
+                        {% if not active_courses %}
+                        <i>None</i>
+                        {% else %}
+                        {% for course in active_courses %}
+                        {{ course.name }}{% if request.user == course.created_by %} <i>(Professor)</i>{% endif %};
+                        {% endfor %}
+                        {% endif %}
+                    </h5>
+
                 </div>
             </div>
             <div class="row p-1 text-center justify-content-center">
@@ -136,9 +138,9 @@
                         {% if not active_teams %}
                         <i>None</i>
                         {% else %}
-                            {% for team in active_teams %}
-                            {{ team.name }}; 
-                            {% endfor %}
+                        {% for team in active_teams %}
+                        {{ team.name }};
+                        {% endfor %}
                         {% endif %}
                     </h5>
                 </div>
@@ -164,20 +166,21 @@
                         <th>Title</th>
                         <th>Course</th>
                         <th>Due Date</th>
-                        <th>Due Time</th>
+                        <!-- Removed Self-Assessment column -->
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for assessment in active_assessments %}
                     <tr>
                         <td>{{ assessment.id }}</td>
-                        <td><a href="{% url 'view_assessment' assessment.id %}" class="link-secondary"
-                                title="{{ assessment.title|default_if_none:'Assignment Title' }}">
-                                {{ assessment.title|default_if_none:"Assignment Title" }}
-                            </a></td>
+                        <td>{{ assessment.title }}</td>
                         <td>{{ assessment.course }}</td>
                         <td>{{ assessment.due_date }}</td>
-                        <td>{{ assessment.due_time }}</td>
+                        <!-- Removed Self-Assessment toggle button -->
+                        <td>
+                            <!-- ...existing actions... -->
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -209,7 +212,7 @@
                         <td>{{ assessment.closed_date }}</td>
                         <td>{{ assessment.closed_time }}</td>
                         <td>{{ assessment.grade|default:"N/A" }}</td>
-                        <td><a href="{% url 'view_comments' assessment.id %}" class="btn btn-info">View Comments</a>
+                        <td><a href="{% url 'view_comments' assessment.id %}" class="btn btn-primary">View Comments</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -246,12 +249,11 @@
     <div class="row p-2">
         <div class="col-auto">
             <a href="{% url 'create_course' %}" class="btn btn-lg maroon-btn">Create New Course</a>
-        </div>       
+        </div>
         <div class="col-auto">
-            <a href="#" class="btn btn-lg maroon-btn">Create New Assessment</a>
+            <a href="{% url 'create_peer_assessments' %}" class="btn btn-lg maroon-btn">Create New Assessment</a>
         </div>
     </div>
-
     {% endif %}
     <hr>
     <div class="row p-2" id="quick_links">
@@ -267,13 +269,14 @@
             <a href="#" style="color: var(--bc-gold);">View My Teams</a>
         </div>
         <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">Contact{% if user.role == "Student" %} A Professor{% else %} Students{% endif %}</a>
+            <a href="#" style="color: var(--bc-gold);">Contact{% if user.role == "Student" %} A Professor{% else %}
+                Students{% endif %}</a>
         </div>
         <div class="col-auto">
             {% if user.role == "student" or user.role == "Student" %}
-                <a href="{% url 'student_average' %}" style="color: var(--bc-gold);">Average Score</a>
+            <a href="{% url 'student_average' %}" style="color: var(--bc-gold);">Average Score</a>
             {% else %}
-                <a href="{% url 'professor_average' %}" style="color: var(--bc-gold);">Average Score</a>
+            <a href="{% url 'professor_average' %}" style="color: var(--bc-gold);">Average Score</a>
             {% endif %}
         </div>
         <div class="col-auto">
@@ -292,6 +295,11 @@
                         <div class="col-md-4 mb-3">
                             <a href="{% url 'invite_students' %}" class="btn gold-btn btn-block w-100">
                                 <i class="fas fa-envelope me-2"></i>Invite Students
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'create_peer_assessments' %}" class="btn gold-btn btn-block w-100">
+                                <i class="fas fa-plus me-2"></i>Create Peer Assessments
                             </a>
                         </div>
                         <!-- Add other professor tools here -->
@@ -317,8 +325,10 @@
                     </div>
                     <div class="mb-3">
                         <p><strong>Set Role Directly:</strong></p>
-                        <a href="{% url 'set_profile_role' role='student' %}" class="btn btn-sm btn-outline-secondary">Set as Student</a>
-                        <a href="{% url 'set_profile_role' role='professor' %}" class="btn btn-sm btn-outline-primary">Set as Professor</a>
+                        <a href="{% url 'set_profile_role' role='student' %}"
+                            class="btn btn-sm btn-outline-secondary">Set as Student</a>
+                        <a href="{% url 'set_profile_role' role='professor' %}"
+                            class="btn btn-sm btn-outline-primary">Set as Professor</a>
                     </div>
                 </div>
             </div>

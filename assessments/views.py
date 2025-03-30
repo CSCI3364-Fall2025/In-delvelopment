@@ -20,6 +20,11 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
+import logging
+logger = logging.getLogger(__name__)
+
+print("views.py loaded")
+
 def home(request):
     return render(request, 'home.html')
 
@@ -229,12 +234,46 @@ def view_assessment(request, assessment_id):
         assessment=assessment,
     )
 
+    # Calculate team and class averages for closed assessments
+    if assessment.closed_date:
+        team_submissions = AssessmentSubmission.objects.filter(
+            assessment=assessment, student__in=request.user.teams.values_list('members__username', flat=True)
+        )
+        class_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
+
+        team_avg = {
+            'contribution': team_submissions.aggregate(Avg('contribution'))['contribution__avg'] or "N/A",
+            'teamwork': team_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or "N/A",
+            'communication': team_submissions.aggregate(Avg('communication'))['communication__avg'] or "N/A",
+        }
+
+        class_avg = {
+            'contribution': class_submissions.aggregate(Avg('contribution'))['contribution__avg'] or "N/A",
+            'teamwork': class_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or "N/A",
+            'communication': class_submissions.aggregate(Avg('communication'))['communication__avg'] or "N/A",
+        }
+    else:
+        # Provide dummy data if the assessment is not closed
+        team_avg = {
+            'contribution': "N/A",
+            'teamwork': "N/A",
+            'communication': "N/A",
+        }
+        class_avg = {
+            'contribution': "N/A",
+            'teamwork': "N/A",
+            'communication': "N/A",
+        }
+
     context = {
         'assessment': assessment,
         'comments': comments, 
         'progress': progress,
+        'team_avg': team_avg,
+        'class_avg': class_avg,
     }
     
+    logger.debug(f"Context: {context}")
     return render(request, 'assessment_detail.html', context)
 
 @login_required
@@ -283,14 +322,11 @@ def submit_assessment(request, assessment_id):
     if request.method == 'POST':
         assessment = get_object_or_404(Assessment, id=assessment_id)
         student = request.POST['student']
-        contribution = request.POST['contribution']
-        teamwork = request.POST['teamwork']
-        communication = request.POST['communication']
+        contribution = int(request.POST['contribution'])
+        teamwork = int(request.POST['teamwork'])
+        communication = int(request.POST['communication'])
+        feedback = request.POST.get('feedback', '').strip()
 
-        # Retrieve the student's saved progress (if any)
-        progress = AssessmentProgress.objects.filter(student=request.user, assessment=assessment).first()
-        feedback = progress.progress_notes if progress else ""  # Use saved progress notes as feedback
-        
         # Save the assessment submission
         AssessmentSubmission.objects.create(
             assessment=assessment,
@@ -325,20 +361,42 @@ def view_all_published_results(request):
 def view_comments(request, assessment_id):
     # Fetch the assessment details from the database
     assessment = get_object_or_404(Assessment, id=assessment_id)
-    
-    # Example comments data
-    comments = [
-        ('Julian Castro', 'Great job on the project!'),
-        ('Alice', 'Needs improvement in communication.'),
-        ('Bob', 'Excellent teamwork and contribution.'),
-        ('Charlie', 'Average performance overall.')
-    ]
-    
+
+    # Ensure the assessment is closed
+    if not assessment.closed_date:
+        messages.error(request, "Comments and averages are only available for closed assessments.")
+        return redirect('dashboard')
+
+    # Fetch comments for the assessment
+    general_comments = AssessmentSubmission.objects.filter(assessment=assessment).values_list('student', 'feedback')
+    additional_comments = AssessmentProgress.objects.filter(assessment=assessment).values_list('student__username', 'progress_notes')
+
+    # Calculate team and class averages
+    team_submissions = AssessmentSubmission.objects.filter(
+        assessment=assessment, student__in=request.user.teams.values_list('members__username', flat=True)
+    )
+    class_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
+
+    team_avg = {
+        'contribution': team_submissions.aggregate(Avg('contribution'))['contribution__avg'] or "N/A",
+        'teamwork': team_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or "N/A",
+        'communication': team_submissions.aggregate(Avg('communication'))['communication__avg'] or "N/A",
+    }
+
+    class_avg = {
+        'contribution': class_submissions.aggregate(Avg('contribution'))['contribution__avg'] or "N/A",
+        'teamwork': class_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or "N/A",
+        'communication': class_submissions.aggregate(Avg('communication'))['communication__avg'] or "N/A",
+    }
+
     context = {
         'assessment': assessment,
-        'comments': comments
+        'general_comments': general_comments,
+        'additional_comments': additional_comments,
+        'team_avg': team_avg,
+        'class_avg': class_avg,
     }
-    
+
     return render(request, 'comments.html', context)
 
 @login_required
@@ -616,6 +674,34 @@ def set_profile_role(request, role):
     # Update session to match profile
     request.session['selected_role'] = role
     request.session['user_role'] = role
-    
     messages.success(request, f"Profile role updated to: {role}")
     return redirect('dashboard')
+
+from django import forms
+
+class PeerAssessmentForm(forms.ModelForm):
+    """Form for creating a single peer assessment with strict date inputs."""
+    open_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    due_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
+    class Meta:
+        model = Assessment
+        fields = ['title', 'course', 'open_date', 'due_date', 'self_assessment_required']  # Include the new field
+
+@login_required
+def create_peer_assessments(request):
+    """Allow professors to create a single peer assessment."""
+    if request.user.profile.role != "professor":
+        messages.error(request, "Only professors can create peer assessments.")
+        return redirect('dashboard')
+
+    if request.method == "POST":
+        form = PeerAssessmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Peer assessment created successfully.")
+            return redirect('dashboard')
+    else:
+        form = PeerAssessmentForm()
+
+    return render(request, 'create_peer_assessments.html', {'form': form})
