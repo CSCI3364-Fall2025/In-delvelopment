@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone #for updates
 
 class Assessment(models.Model):
     title = models.CharField(max_length=200)
@@ -52,3 +53,20 @@ class AssessmentSubmission(models.Model):
 
     def __str__(self):
         return f"{self.assessment.title} - {self.student}"
+        
+class PeerAssessment(models.Model):
+    title = models.CharField(max_length=255)
+    publication_date = models.DateTimeField()
+    closing_date = models.DateTimeField()
+    publication_email_sent = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.title
+
+class Submission(models.Model):
+    assessment = models.ForeignKey(PeerAssessment, on_delete=models.CASCADE)
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.student.username} - {self.assessment.title}"
