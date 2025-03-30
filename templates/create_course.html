@@ -52,37 +52,24 @@
                     <h5 class="fw-bold">Teams</h5>
                 </div>
                 <div class="col-auto align-self-center">
-                    <h6 class="fw-lighter" style="font-style: italic;">(Optional field, teams can be added after a course is created)</h6>
+                    <h6 class="fw-lighter" style="font-style: italic;">Please select the number of teams you wish to create. More teams can be added after a course is created.</h6>
                 </div>
-                
             </div>
             <div class="row m-2">
-                <div class="col-auto">
-                    <label for="teamName" class="form-label fw-bold">Team Name</label>
-                    <input type="text" class="form-control" placeholder="e.g. Team Alpha">
-                </div>
-                <div class="col-6">
-                    <label for="teamMembers" class="form-label fw-bold">Add Team Members:</label>
-                    <input type="text" id="teamMembers" class="form-control" placeholder="Enter student email, e.g. student@bc.edu">
-                </div>
-                <!-- Want to add some functionality that allows you to add more members and will toggle another input field -->
                 <div class="col-auto align-self-end">
-                        <button class="btn maroon-btn" id="addMoreMembers">Add more Members</button>
+                    <label for="numTeams" class="form-label fw-bold">Number of Teams Associated with Course:</label>
                 </div>
-            </div>
-            <!-- Will toggle another team input option-->
-            <div class="row m-3">
-                <div class="col-auto">
-                     <button class="btn maroon-btn">Add More Teams</button>
+                <div class="col">
+                    <input type="number" class="form-control" id="numTeams" name="numTeams" placeholder="e.g. 3" min="0" max="10" required>
                 </div>
             </div>
             <hr class="mt-5">
             <div class="row mt-5 justify-content-start">
                 <div class="col-auto">
-                    <h3>Submit Course:</h3>
+                    <h3>Create Course:</h3>
                 </div>
                 <div class="col">
-                    <h6 class="fw-lighter">Don't worry! You can always edit courses after a course has been created. <i>Click 'Cancel' to cancel the course submission.</i>
+                    <h6 class="fw-lighter">Don't worry! You can always edit a course after its been created. <i>Click 'Cancel' to cancel the course submission.</i>
                     </h6>
                 </div>
                 <div class="col-auto align-self-center">

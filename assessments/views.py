@@ -9,7 +9,7 @@ from django.shortcuts import HttpResponse #imports for scheduler
 from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
-from assessments.models import Assessment, Course 
+from assessments.models import Assessment, Course, Team 
 from django.contrib.auth.models import User
 
 #imports for averages
@@ -452,6 +452,11 @@ def course_dashboard(request):
             description=request.POST['description'],
             created_by = request.user,
         )
+        num_teams = request.POST['numTeams']
+        for i in range(int(num_teams)):
+            new_team = Team.objects.create()
+            new_team.save()
+            new_course.teams.add()
         new_course.save()
         messages.success(request, f"Successfully created the course {new_course.name}")   
 
@@ -466,7 +471,13 @@ def create_course(request):
 
 @login_required
 def view_course(request, course_name):
-    return render(request, 'view_course.html')
+
+    course = Course.objects.get(name=course_name)
+
+    return render(request, 'view_course.html', {
+        "course": course, "teams": course.teams.all(),
+        "assessments": course.assessments.all()
+    })
 
 @login_required
 def invite_students(request):
