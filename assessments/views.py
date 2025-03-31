@@ -23,6 +23,9 @@ from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
 
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+
 print("views.py loaded")
 
 def home(request):
@@ -192,18 +195,17 @@ def dashboard(request):
     
     # Replace the hardcoded lists with database queries
     active_assessments = Assessment.objects.filter(
-        open_date__lte=timezone.now(),
-        due_date__gte=timezone.now(),
-        closed_date__isnull=True
-    )
+        closed_date__isnull=True,
+        open_date__isnull=True
+    ).order_by('due_date')
     
     closed_assessments = Assessment.objects.filter(
         closed_date__isnull=False
-    )
+    ).order_by('-closed_date')
     
     upcoming_assessments = Assessment.objects.filter(
-        open_date__gt=timezone.now()
-    )
+        open_date__isnull=False
+    ).order_by('open_date')
     
     # Example data for new results notification
     new_results = True  # Set this to True if there are new results to notify the student
@@ -347,17 +349,27 @@ def submit_assessment(request, assessment_id):
 
 @login_required
 def view_all_published_results(request):
-    # Example data for published results
-    published_results = [
-        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12', 'closed_time': '23:59:00', 'grade': 'A'},
-        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24', 'closed_time': '23:59:00', 'grade': 'B+'}
-    ]
+    """View all published assessment results for a student"""
+    # Get all assessments with published results
+    published_assessments = Assessment.objects.filter(results_published=True)
+    
+    # Filter to only include assessments the student has submitted
+    student_assessments = []
+    for assessment in published_assessments:
+        try:
+            submission = AssessmentSubmission.objects.get(assessment=assessment, student=request.user.username)
+            student_assessments.append({
+                'assessment': assessment,
+                'submission': submission
+            })
+        except AssessmentSubmission.DoesNotExist:
+            continue
     
     context = {
-        'published_results': published_results
+        'student_assessments': student_assessments
     }
     
-    return render(request, 'published_results.html', context)
+    return render(request, 'all_published_results.html', context)
 
 @login_required
 def view_comments(request, assessment_id):
@@ -808,17 +820,18 @@ def publish_assessment_results(request, assessment_id):
     # Send notification emails to students
     emails_sent = 0
     for submission in submissions:
-        # Get the actual User object for the student
+        # Try to get the User object for the student
         try:
-            # If student is stored as a username string
             student_user = User.objects.get(username=submission.student)
-        except (User.DoesNotExist, TypeError):
-            # If student is already a User object or username doesn't exist
-            if isinstance(submission.student, User):
-                student_user = submission.student
-            else:
-                continue  # Skip if we can't find the user
+        except User.DoesNotExist:
+            # If no user exists with this username, try to find by email
+            try:
+                student_user = User.objects.get(email=submission.student)
+            except User.DoesNotExist:
+                # Skip if we can't find the user
+                continue
         
+        # Skip if no email is available
         if not hasattr(student_user, 'email') or not student_user.email:
             continue
             
@@ -858,39 +871,29 @@ def view_published_results(request, assessment_id):
     
     # Get the student's submission
     try:
-        submission = AssessmentSubmission.objects.get(assessment=assessment, student=request.user)
+        submission = AssessmentSubmission.objects.get(assessment=assessment, student=request.user.username)
     except AssessmentSubmission.DoesNotExist:
         messages.error(request, "You did not submit this assessment.")
         return redirect('dashboard')
     
-    # Get quantitative scores
-    quantitative_scores = submission.scores.filter(question__question_type='quantitative')
-    average_score = quantitative_scores.aggregate(Avg('score'))['score__avg'] or 0
+    # Calculate average score for quantitative questions
+    avg_score = (submission.contribution + submission.teamwork + submission.communication) / 3.0
     
-    # Get qualitative answers (anonymized and sorted)
-    qualitative_answers = []
-    for question in assessment.questions.filter(question_type='qualitative'):
-        answers = []
-        # Get all submissions for this question from all students
-        all_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
-        for sub in all_submissions:
-            answer = sub.answers.filter(question=question).first()
-            if answer and answer.text_answer:
-                answers.append(answer.text_answer)
-        
-        # Sort answers alphabetically
-        answers.sort()
-        
-        qualitative_answers.append({
-            'question': question.text,
-            'answers': answers
-        })
+    # Get qualitative answers (feedback) from all submissions for this assessment
+    all_feedback = []
+    submissions = AssessmentSubmission.objects.filter(assessment=assessment)
+    for sub in submissions:
+        if sub.feedback:
+            all_feedback.append(sub.feedback)
+    
+    # Sort feedback alphabetically
+    all_feedback.sort()
     
     context = {
         'assessment': assessment,
-        'average_score': round(average_score, 2),
-        'qualitative_answers': qualitative_answers,
-        'submission_date': submission.submission_date
+        'average_score': round(avg_score, 2),
+        'qualitative_answers': all_feedback,
+        'submission_date': submission.submitted_at if hasattr(submission, 'submitted_at') else None
     }
     
     return render(request, 'view_published_results.html', context)
@@ -902,13 +905,13 @@ def create_test_data(request):
         messages.error(request, "Only superusers can create test data.")
         return redirect('dashboard')
     
-    # Create a test assessment directly without using Course
+    # Create a test assessment that's already closed
     assessment = Assessment.objects.create(
         title="Test Assessment",
-        course="Test Course",  # Just use a string since Assessment.course is a CharField
-        due_date=timezone.now() + timedelta(days=7),
-        closed_date=None,  # Not closed yet
-        results_published=False
+        course="Test Course",
+        due_date=timezone.now() - timedelta(days=1),  # Due date in the past
+        closed_date=timezone.now() - timedelta(hours=12),  # Already closed
+        results_published=False  # Not yet published
     )
     
     # Create test students if needed
@@ -927,27 +930,132 @@ def create_test_data(request):
             UserProfile.objects.get_or_create(user=user, defaults={'role': "student"})
         test_students.append(user)
     
-    # Create test submissions
-    answers = [
-        "The presentation was very clear and well-structured.",
-        "I liked the examples provided during the presentation.",
-        "The visual aids were helpful in understanding the concepts."
+    # Create a test professor if needed
+    prof_username = "testprofessor"
+    prof_email = f"{prof_username}@bc.edu"
+    prof_user, prof_created = User.objects.get_or_create(
+        username=prof_username,
+        defaults={'email': prof_email}
+    )
+    if prof_created:
+        prof_user.set_password("testpassword")
+        prof_user.save()
+        UserProfile.objects.get_or_create(user=prof_user, defaults={'role': "professor"})
+    
+    # Create test submissions with varied feedback to test alphabetical sorting
+    feedback_comments = [
+        "Excellent presentation with clear explanations.",
+        "Appreciated the detailed examples provided.",
+        "Visuals were helpful but could be improved.",
+        "Collaboration was effective throughout the project.",
+        "Better communication would have improved outcomes.",
+        "Deadlines were consistently met by the team."
     ]
     
+    # Ensure we have enough feedback options
+    while len(feedback_comments) < len(test_students):
+        feedback_comments.append(f"Additional feedback item {len(feedback_comments) + 1}.")
+    
+    # Create submissions for each student
     for i, student in enumerate(test_students):
         # Check if a submission already exists
         if not AssessmentSubmission.objects.filter(assessment=assessment, student=student.username).exists():
-            # Create submission with only the fields that exist in the model
-            submission = AssessmentSubmission.objects.create(
+            # Create submission with randomized scores and feedback
+            contribution = 3 + (i % 3)  # Scores between 3-5
+            teamwork = 2 + (i % 4)      # Scores between 2-5
+            communication = 3 + ((i+1) % 3)  # Scores between 3-5
+            
+            # Select two different feedback items for each student
+            primary_feedback_idx = i % len(feedback_comments)
+            secondary_feedback_idx = (i + 3) % len(feedback_comments)
+            
+            feedback = feedback_comments[primary_feedback_idx]
+            
+            # Create the submission
+            AssessmentSubmission.objects.create(
                 assessment=assessment,
                 student=student.username,
-                # Remove submission_date since it doesn't exist
-                contribution=4 + (i % 2),  # Scores between 4-5
-                teamwork=4 + (i % 2),
-                communication=4 + (i % 2),
-                feedback=answers[i]
+                contribution=contribution,
+                teamwork=teamwork,
+                communication=communication,
+                feedback=feedback
+            )
+            
+            # Create a second submission with different feedback for variety
+            AssessmentSubmission.objects.create(
+                assessment=assessment,
+                student=f"peer{i+1}",  # Fictional peer
+                contribution=4,
+                teamwork=4,
+                communication=4,
+                feedback=feedback_comments[secondary_feedback_idx]
             )
     
-    messages.success(request, f"Test data created successfully. Assessment ID: {assessment.id}")
-    # Redirect to comments view instead of assessment view
+    # Create progress notes for some students
+    for i, student in enumerate(test_students):
+        if i % 2 == 0:  # Only for some students
+            progress, _ = AssessmentProgress.objects.get_or_create(
+                student=student,
+                assessment=assessment,
+                defaults={
+                    'progress_notes': f"Additional notes from {student.username}: This assessment helped me understand the material better."
+                }
+            )
+    
+    messages.success(request, mark_safe(f"""
+        <strong>Test data created successfully. Assessment ID: {assessment.id}</strong><br>
+        <div class="mt-3">
+            <h5>Quick Actions:</h5>
+            <a href="{reverse('view_comments', kwargs={'assessment_id': assessment.id})}" class="btn btn-primary">View & Publish Results</a>
+            {student_links_html}
+            <button onclick="openStudentViews()" class="btn btn-success">Open All Student Views</button>
+        </div>
+    """))
+    
+    # Redirect to comments view for the professor to publish
     return redirect('view_comments', assessment_id=assessment.id)
+
+@login_required
+def view_as_student(request, username, assessment_id):
+    """View assessment results as if you were a specific student (admin only)"""
+    if not request.user.is_superuser:
+        messages.error(request, "Only superusers can use this feature.")
+        return redirect('dashboard')
+    
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if results are published
+    if not assessment.results_published:
+        messages.error(request, "Results for this assessment have not been published yet.")
+        return redirect('dashboard')
+    
+    # Get the student's submission
+    try:
+        submission = AssessmentSubmission.objects.get(assessment=assessment, student=username)
+    except AssessmentSubmission.DoesNotExist:
+        messages.error(request, f"User {username} did not submit this assessment.")
+        return redirect('dashboard')
+    
+    # Calculate average score for quantitative questions
+    avg_score = (submission.contribution + submission.teamwork + submission.communication) / 3.0
+    
+    # Get qualitative answers (feedback) from all submissions for this assessment
+    all_feedback = []
+    submissions = AssessmentSubmission.objects.filter(assessment=assessment)
+    for sub in submissions:
+        if sub.feedback:
+            all_feedback.append(sub.feedback)
+    
+    # Sort feedback alphabetically
+    all_feedback.sort()
+    
+    context = {
+        'assessment': assessment,
+        'average_score': round(avg_score, 2),
+        'qualitative_answers': all_feedback,
+        'submission_date': submission.submitted_at if hasattr(submission, 'submitted_at') else None,
+        'viewing_as': username,
+        'is_preview': True
+    }
+    
+    return render(request, 'view_published_results.html', context)

@@ -171,7 +171,6 @@
                         <th>Course</th>
                         <th>Due Date</th>
                         <th>Due Time</th>
-                        <!-- Removed Self-Assessment column -->
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -183,7 +182,6 @@
                         <td>{{ assessment.course }}</td>
                         <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
                         <td>{{ assessment.due_date|time:"H:i" }}</td>
-                        <!-- Removed Self-Assessment toggle button -->
                         <td>
                             <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-primary">View Details</a>
                             {% if user.role == "student" or user.role == "Student" %}
@@ -196,6 +194,7 @@
                 </tbody>
             </table>
         </div>
+
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
             <h3>Closed Assessments</h3>
             <table class="table table-striped table-bordered">
@@ -214,21 +213,20 @@
                     {% for assessment in closed_assessments %}
                     <tr>
                         <td>{{ assessment.id }}</td>
-                        <td><a href="{% url 'view_comments' assessment.id %}" class="link-secondary"
-                                title="{{ assessment.title|default_if_none:'Assignment Title' }}">
-                                {{ assessment.title|default_if_none:"Assignment Title" }}
-                            </a></td>
+                        <td>{{ assessment.title }}</td>
                         <td>{{ assessment.course }}</td>
-                        <td>{{ assessment.closed_date }}</td>
-                        <td>{{ assessment.closed_time }}</td>
-                        <td>{{ assessment.grade|default:"N/A" }}</td>
-                        <td><a href="{% url 'view_comments' assessment.id %}" class="btn btn-primary">View Comments</a>
+                        <td>{{ assessment.closed_date|date:"M. d, Y" }}</td>
+                        <td>{{ assessment.closed_date|time:"g:i a" }}</td>
+                        <td>N/A</td>
+                        <td>
+                            <a href="{% url 'view_comments' assessment.id %}" class="btn btn-primary">View Comments</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
             <h3>Upcoming Assessments</h3>
             <table class="table table-striped table-bordered">
@@ -247,14 +245,15 @@
                         <td>{{ assessment.id }}</td>
                         <td>{{ assessment.title|default_if_none:"Assignment Title" }}</td>
                         <td>{{ assessment.course }}</td>
-                        <td>{{ assessment.open_date }}</td>
-                        <td>{{ assessment.open_time }}</td>
+                        <td>{{ assessment.open_date|date:"M. d, Y" }}</td>
+                        <td>{{ assessment.open_date|time:"g:i a" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+    
     {% if user.role == "professor" or user.role == "Professor" %}
     <div class="row p-2">
         <div class="col-auto">
@@ -265,6 +264,9 @@
         </div>
         <div class="col-auto">
             <a href="{% url 'course_dashboard' %}" class="btn btn-lg maroon-btn">Manage Courses</a>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'invite_students' %}" class="btn btn-lg maroon-btn">Invite Students</a>
         </div>
     </div>
     {% endif %}
@@ -296,32 +298,6 @@
             <a href="#" style="color: var(--bc-gold);">Report an Issue</a>
         </div>
     </div>
-    {% if user.profile.role == 'professor' or request.session.user_role == 'professor' %}
-    <div class="row mt-3">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <h4>Professor Tools</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'invite_students' %}" class="btn gold-btn btn-block w-100">
-                                <i class="fas fa-envelope me-2"></i>Invite Students
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'create_peer_assessments' %}" class="btn gold-btn btn-block w-100">
-                                <i class="fas fa-plus me-2"></i>Create Peer Assessments
-                            </a>
-                        </div>
-                        <!-- Add other professor tools here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
     <div class="row mt-3">
         <div class="col-12">
             <div class="card">
@@ -335,6 +311,7 @@
                         <a href="{% url 'fix_session_role' %}" class="btn btn-sm btn-warning">Fix Session Role</a>
                         <a href="{% url 'debug_role' %}" class="btn btn-sm btn-info">View Detailed Debug Info</a>
                         <a href="{% url 'test_email' %}" class="btn btn-sm btn-primary">Test Email</a>
+                        <a href="{% url 'create_test_data' %}" class="btn btn-sm btn-success">Create Test Assessment</a>
                     </div>
                     <div class="mb-3">
                         <p><strong>Set Role Directly:</strong></p>

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Published Results | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>Results: {{ assessment.title }}</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h4>Assessment Information</h4>
+                        <p><strong>Course:</strong> {{ assessment.course }}</p>
+                        <p><strong>Published Date:</strong> {{ assessment.published_date|date:"F d, Y" }}</p>
+                        {% if submission_date %}
+                        <p><strong>Your Submission Date:</strong> {{ submission_date|date:"F d, Y" }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Your Results</h4>
+                        <div class="alert alert-info">
+                            <p><strong>Average Score:</strong> {{ average_score }} / 5.0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Qualitative Feedback (Anonymous)</h4>
+                        <div class="list-group">
+                            {% for answer in qualitative_answers %}
+                            <div class="list-group-item">
+                                {{ answer }}
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item">
+                                No qualitative feedback was provided.
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_preview %}
+<div class="alert alert-info">
+    <strong>Preview Mode:</strong> You are viewing this page as {{ viewing_as }}. This is a preview only.
+</div>
+{% endif %}
+{% endblock %}
