@@ -53,7 +53,7 @@
                         {% if team.name == "" %}
                         <i>(Unnamed Team)</i>:
                         {% else %}
-                        {{ team.name }}
+                        {{ team.name }}:
                         {% endif %}
                         {% if team in request.user.teams.all %}
                         <h6 style="color: var(--bc-gold);">You are on this team.</h6>
