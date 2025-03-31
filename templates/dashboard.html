@@ -139,11 +139,11 @@
                         <i>None</i>
                         {% else %}
                         {% for team in active_teams %}
-                            {% if team.name == "" %}
-                                <i>(Unnamed team);</i>
-                            {% else %}
-                                {{ team.name }};
-                            {% endif %}
+                        {% if team.name == "" %}
+                        <i>(Unnamed team);</i>
+                        {% else %}
+                        {{ team.name }};
+                        {% endif %}
                         {% endfor %}
                         {% endif %}
                     </h5>
@@ -183,7 +183,11 @@
                         <td>{{ assessment.due_date }}</td>
                         <!-- Removed Self-Assessment toggle button -->
                         <td>
-                            <!-- ...existing actions... -->
+                            <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-primary">View Details</a>
+                            {% if user.role == "student" or user.role == "Student" %}
+                            <a href="{% url 'submit_assessment' assessment.id %}" class="btn btn-success">Submit
+                                Form</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
