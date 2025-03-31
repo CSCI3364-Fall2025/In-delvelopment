@@ -321,6 +321,7 @@ def load_progress(request, assessment_id):
     return render(request, 'assessment_detail.html', context)
 
 
+
 @login_required
 def submit_assessment(request, assessment_id):
     if request.method == 'POST':
@@ -991,6 +992,7 @@ def create_test_data(request):
                 feedback=feedback_comments[secondary_feedback_idx]
             )
     
+<<<<<<< HEAD
     # Create progress notes for some students
     for i, student in enumerate(test_students):
         if i % 2 == 0:  # Only for some students
@@ -1059,3 +1061,27 @@ def view_as_student(request, username, assessment_id):
     }
     
     return render(request, 'view_published_results.html', context)
+=======
+    messages.success(request, f"Test data created successfully. Assessment ID: {assessment.id}")
+    # Redirect to comments view instead of assessment view
+    return redirect('view_comments', assessment_id=assessment.id)
+
+
+
+@login_required
+def enroll_in_course(request):
+    if request.method == "POST":
+        course_name = request.POST.get("course_name", "").strip()
+        
+        if course_name:
+            try:
+                course = Course.objects.get(name=course_name)
+                course.students.add(request.user)  # Enroll the student
+                return render(request, "course_details.html", {"message": "Course details coming soon"})
+            except Course.DoesNotExist:
+                return render(request, "enroll.html", {"error": "Course not found!"})
+        else:
+            return render(request, "enroll.html", {"error": "Please provide a course name."})
+    
+    return render(request, "enroll.html")
+>>>>>>> 2831bb3 (made it so students can enroll to classes and edited the saving functionality)

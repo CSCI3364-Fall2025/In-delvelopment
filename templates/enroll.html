@@ -1,0 +1,29 @@
+<!-- enroll.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Enroll in a Course{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Enroll in a Course</h2>
+    
+    <!-- Display error message if exists -->
+    {% if error %}
+      <div class="alert alert-danger" role="alert">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <!-- Enrollment form -->
+    <form method="POST">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="course_name" class="form-label">Course Name</label>
+        <input type="text" class="form-control" id="course_name" name="course_name" required>
+      </div>
+      
+      <button type="submit" class="btn gold-btn w-100">Enroll</button>
+    </form>
+  </div>
+{% endblock %}

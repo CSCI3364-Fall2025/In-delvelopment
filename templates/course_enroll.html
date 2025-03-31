@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - {{ user.role }} | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Existing content -->
+
+    <div class="row p-2" id="profile_box">
+        <div class="w-75 border border-2 rounded p-1" style="border-color: var(--bc-maroon);">
+            <div class="row p-1 text-center">
+                <h1 style="color: var(--bc-maroon);">User Profile</h1>
+            </div>
+            <div class="row p-2 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Name:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">{{ user.real_name }}</h5>
+                </div>
+            </div>
+            <div class="row p-2 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Preferred Name:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">{{ user.preferred_name }}</h5>
+                </div>
+            </div>
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Email:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">{{ user.email }}</h5>
+                </div>
+            </div>
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Role:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">{{ user.role }}</h5>
+                </div>
+            </div>
+            <hr class="m-3">
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>Active Courses:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">
+                        {% if not active_courses %}
+                        <i>None</i>
+                        {% else %}
+                        {% for course in active_courses %}
+                        {{ course.name }}{% if request.user == course.created_by %} <i>(Professor)</i>{% endif %};
+                        {% endfor %}
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
+            <div class="row p-1 text-center justify-content-center">
+                <div class="col-auto">
+                    <h5>My Teams:</h5>
+                </div>
+                <div class="col-auto mb-0">
+                    <h5 class="fw-lighter">
+                        {% if not active_teams %}
+                        <i>None</i>
+                        {% else %}
+                        {% for team in active_teams %}
+                        {% if team.name == "" %}
+                        <i>(Unnamed team);</i>
+                        {% else %}
+                        {{ team.name }};
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
+            <div class="row p-1 justify-content-center">
+                <div class="col-auto justify-content-center">
+                    <a class="btn gold-btn" href="{% url 'edit_profile' user.real_name %}">Edit Profile</a>
+                </div>
+            </div>
+
+            <!-- New Button to Enroll in a Course -->
+            <div class="row p-1 justify-content-center mt-3">
+                <div class="col-auto">
+                    <a class="btn gold-btn" href="{% url 'enroll' %}">Enroll in a Course</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Existing content continues -->
+</div>
+{% endblock %}
