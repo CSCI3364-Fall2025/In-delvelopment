@@ -190,16 +190,20 @@ def dashboard(request):
         }
     )
     
-    active_assessments = [
-        {'id': 1, 'title': 'Peer Assessment 3', 'course': 'Software Engineering', 'due_date': '2025-03-21', 'due_time': '23:59:00'}
-    ]
-    closed_assessments = [
-        {'id': 2, 'title': 'Peer Assessment 1', 'course': 'Software Engineering', 'closed_date': '2025-02-12', 'closed_time': '23:59:00', 'grade': 'A'},
-        {'id': 3, 'title': 'Peer Assessment 2', 'course': 'Software Engineering', 'closed_date': '2025-02-24', 'closed_time': '23:59:00', 'grade': 'B+'}
-    ]
-    upcoming_assessments = [
-        {'id': 4, 'title': 'Peer Assessment 4', 'course': 'Software Engineering', 'open_date': '2025-04-02', 'open_time': '09:00:00'}
-    ]
+    # Replace the hardcoded lists with database queries
+    active_assessments = Assessment.objects.filter(
+        open_date__lte=timezone.now(),
+        due_date__gte=timezone.now(),
+        closed_date__isnull=True
+    )
+    
+    closed_assessments = Assessment.objects.filter(
+        closed_date__isnull=False
+    )
+    
+    upcoming_assessments = Assessment.objects.filter(
+        open_date__gt=timezone.now()
+    )
     
     # Example data for new results notification
     new_results = True  # Set this to True if there are new results to notify the student
@@ -209,8 +213,8 @@ def dashboard(request):
         'active_assessments': active_assessments,
         'closed_assessments': closed_assessments,
         'upcoming_assessments': upcoming_assessments,
-        'num_uncompleted_assessments': len(active_assessments),
-        'num_assessment_results': len(closed_assessments),
+        'num_uncompleted_assessments': active_assessments.count(),
+        'num_assessment_results': closed_assessments.count(),
         'new_results': new_results,
         'request': request,
         'active_courses': request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
@@ -302,17 +306,14 @@ def load_progress(request, assessment_id):
     # Try to get the user's progress for the specific assessment
     progress = AssessmentProgress.objects.filter(student=request.user, assessment=assessment).first()
 
-    if progress:
-        # If progress exists, pass the progress data to the template
-        feedback = progress.progress_notes
-    else:
-        # If no progress exists, set progress_notes to an empty string or a placeholder
-        progress_notes = ""
+    # If no progress exists, create an empty one (but don't save it)
+    if not progress:
+        progress = AssessmentProgress(student=request.user, assessment=assessment, progress_notes="")
 
-    # Pass the progress data to the context and render the assessment detail page
+    # Pass the progress object to the context and render the assessment detail page
     context = {
         'assessment': assessment,
-        'progress_notes': progress_notes,
+        'progress': progress,
     }
 
     return render(request, 'assessment_detail.html', context)

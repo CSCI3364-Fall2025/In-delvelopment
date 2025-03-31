@@ -170,6 +170,7 @@
                         <th>Title</th>
                         <th>Course</th>
                         <th>Due Date</th>
+                        <th>Due Time</th>
                         <!-- Removed Self-Assessment column -->
                         <th>Actions</th>
                     </tr>
@@ -180,7 +181,8 @@
                         <td>{{ assessment.id }}</td>
                         <td>{{ assessment.title }}</td>
                         <td>{{ assessment.course }}</td>
-                        <td>{{ assessment.due_date }}</td>
+                        <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
+                        <td>{{ assessment.due_date|time:"H:i" }}</td>
                         <!-- Removed Self-Assessment toggle button -->
                         <td>
                             <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-primary">View Details</a>
