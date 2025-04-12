@@ -178,7 +178,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Fallback for development
+EMAIL_BACKEND = 'authentication.email_backend.GmailAPIEmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@peerassessment.bc.edu'
 
 # Gmail API settings
