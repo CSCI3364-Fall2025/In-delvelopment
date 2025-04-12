@@ -169,16 +169,21 @@ SOCIALACCOUNT_PROVIDERS = {
         'SCOPE': [
             'profile',
             'email',
+            'https://www.googleapis.com/auth/gmail.send',
         ],
         'AUTH_PARAMS': {
-            'access_type': 'online',
+            'access_type': 'offline',
         }
     }
 }
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Fallback for development
 DEFAULT_FROM_EMAIL = 'noreply@peerassessment.bc.edu'
+
+# Gmail API settings
+USE_GMAIL_API = True  # Set to False to use the standard EMAIL_BACKEND
+GMAIL_API_SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
 # For production, you would use something like:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
