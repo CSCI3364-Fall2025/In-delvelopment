@@ -173,17 +173,23 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'offline',
+            'prompt': 'consent',  # This is critical for refresh tokens
+            'include_granted_scopes': 'true',  # Include previously granted scopes
         }
     }
 }
 
 # Email settings
-EMAIL_BACKEND = 'authentication.email_backend.GmailAPIEmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@peerassessment.bc.edu'
+EMAIL_BACKEND = 'authentication.smtp_backend.GoogleSMTPBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'yanaw@bc.edu'
+EMAIL_HOST_PASSWORD = 'niec uqez drxe dnfg'  # Your app password
+DEFAULT_FROM_EMAIL = 'yanaw@bc.edu'  # Should match EMAIL_HOST_USER
 
-# Gmail API settings
-USE_GMAIL_API = True  # Set to False to use the standard EMAIL_BACKEND
-GMAIL_API_SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+# Disable Gmail API
+USE_GMAIL_API = False
 
 # For production, you would use something like:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

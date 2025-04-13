@@ -675,11 +675,13 @@ def invite_students(request):
                 )
                 
                 try:
+                    # The send_mail function will now use our custom backend
                     send_mail(
                         subject, 
                         message, 
-                        settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
-                        [email]
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False
                     )
                     emails_sent += 1
                 except Exception as e:
@@ -697,20 +699,52 @@ def invite_students(request):
     # For GET requests, just show the form
     return render(request, 'invite_students.html')
 
+@login_required
 def test_email(request):
     """Send a test email to verify email configuration"""
     if not request.user.is_authenticated:
         return HttpResponse("Please log in first")
     
     try:
-        send_mail(
-            'Test Email from Peer Assessment System',
-            f'This is a test email sent to {request.user.email}.\n\nIf you received this, your email configuration is working!',
-            settings.DEFAULT_FROM_EMAIL,
-            [request.user.email],
-            fail_silently=False,
-        )
-        return HttpResponse(f"Test email sent to {request.user.email}. Check your console output or email inbox depending on your backend configuration.")
+        # Check if the user has the professor role
+        is_professor = (
+            hasattr(request.user, 'profile') and request.user.profile.role == 'professor'
+        ) or request.session.get('user_role') == 'professor'
+        
+        if is_professor:
+            # Import the Gmail API function
+            from authentication.gmail_api import send_email_via_gmail
+            
+            # Try to send directly via Gmail API
+            success = send_email_via_gmail(
+                user=request.user,
+                to=request.user.email,
+                subject='Test Email from Peer Assessment System (via Gmail API)',
+                body=f'This is a test email sent to {request.user.email} using the Gmail API.\n\nIf you received this, your Gmail API configuration is working!'
+            )
+            
+            if success:
+                return HttpResponse(f"Test email sent to {request.user.email} via Gmail API. Check your inbox.")
+            else:
+                # Fall back to regular send_mail
+                send_mail(
+                    'Test Email from Peer Assessment System (Fallback)',
+                    f'This is a test email sent to {request.user.email} using the fallback email backend.\n\nIf you received this, your fallback email configuration is working!',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [request.user.email],
+                    fail_silently=False,
+                )
+                return HttpResponse(f"Gmail API failed, but fallback email sent to {request.user.email}. Check your console output or email inbox.")
+        else:
+            # For non-professors, just use the standard email backend
+            send_mail(
+                'Test Email from Peer Assessment System',
+                f'This is a test email sent to {request.user.email}.\n\nIf you received this, your email configuration is working!',
+                settings.DEFAULT_FROM_EMAIL,
+                [request.user.email],
+                fail_silently=False,
+            )
+            return HttpResponse(f"Test email sent to {request.user.email}. Check your console output or email inbox depending on your backend configuration.")
     except Exception as e:
         return HttpResponse(f"Error sending email: {str(e)}")
     
@@ -992,81 +1026,9 @@ def create_test_data(request):
                 feedback=feedback_comments[secondary_feedback_idx]
             )
     
-<<<<<<< HEAD
-    # Create progress notes for some students
-    for i, student in enumerate(test_students):
-        if i % 2 == 0:  # Only for some students
-            progress, _ = AssessmentProgress.objects.get_or_create(
-                student=student,
-                assessment=assessment,
-                defaults={
-                    'progress_notes': f"Additional notes from {student.username}: This assessment helped me understand the material better."
-                }
-            )
-    
-    messages.success(request, mark_safe(f"""
-        <strong>Test data created successfully. Assessment ID: {assessment.id}</strong><br>
-        <div class="mt-3">
-            <h5>Quick Actions:</h5>
-            <a href="{reverse('view_comments', kwargs={'assessment_id': assessment.id})}" class="btn btn-primary">View & Publish Results</a>
-            {student_links_html}
-            <button onclick="openStudentViews()" class="btn btn-success">Open All Student Views</button>
-        </div>
-    """))
-    
-    # Redirect to comments view for the professor to publish
-    return redirect('view_comments', assessment_id=assessment.id)
-
-@login_required
-def view_as_student(request, username, assessment_id):
-    """View assessment results as if you were a specific student (admin only)"""
-    if not request.user.is_superuser:
-        messages.error(request, "Only superusers can use this feature.")
-        return redirect('dashboard')
-    
-    assessment = get_object_or_404(Assessment, id=assessment_id)
-    
-    # Check if results are published
-    if not assessment.results_published:
-        messages.error(request, "Results for this assessment have not been published yet.")
-        return redirect('dashboard')
-    
-    # Get the student's submission
-    try:
-        submission = AssessmentSubmission.objects.get(assessment=assessment, student=username)
-    except AssessmentSubmission.DoesNotExist:
-        messages.error(request, f"User {username} did not submit this assessment.")
-        return redirect('dashboard')
-    
-    # Calculate average score for quantitative questions
-    avg_score = (submission.contribution + submission.teamwork + submission.communication) / 3.0
-    
-    # Get qualitative answers (feedback) from all submissions for this assessment
-    all_feedback = []
-    submissions = AssessmentSubmission.objects.filter(assessment=assessment)
-    for sub in submissions:
-        if sub.feedback:
-            all_feedback.append(sub.feedback)
-    
-    # Sort feedback alphabetically
-    all_feedback.sort()
-    
-    context = {
-        'assessment': assessment,
-        'average_score': round(avg_score, 2),
-        'qualitative_answers': all_feedback,
-        'submission_date': submission.submitted_at if hasattr(submission, 'submitted_at') else None,
-        'viewing_as': username,
-        'is_preview': True
-    }
-    
-    return render(request, 'view_published_results.html', context)
-=======
     messages.success(request, f"Test data created successfully. Assessment ID: {assessment.id}")
     # Redirect to comments view instead of assessment view
     return redirect('view_comments', assessment_id=assessment.id)
-
-
 
 @login_required
 def enroll_in_course(request):
@@ -1084,4 +1046,52 @@ def enroll_in_course(request):
             return render(request, "enroll.html", {"error": "Please provide a course name."})
     
     return render(request, "enroll.html")
->>>>>>> 2831bb3 (made it so students can enroll to classes and edited the saving functionality)
+
+@login_required
+def debug_gmail_api(request):
+    """Debug view to check Gmail API configuration"""
+    from django.http import JsonResponse
+    from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
+    import json
+    
+    response_data = {
+        'user_email': request.user.email,
+        'is_authenticated': request.user.is_authenticated,
+    }
+    
+    # Check if we have a Google SocialApp configured
+    try:
+        social_app = SocialApp.objects.get(provider='google')
+        response_data['social_app'] = {
+            'name': social_app.name,
+            'client_id': social_app.client_id[:10] + '...',
+            'secret': social_app.secret[:5] + '...' if social_app.secret else None,
+        }
+    except SocialApp.DoesNotExist:
+        response_data['social_app'] = 'Not configured'
+    
+    # Check if user has a Google account
+    try:
+        social_account = SocialAccount.objects.get(user=request.user, provider='google')
+        response_data['social_account'] = {
+            'uid': social_account.uid,
+            'provider': social_account.provider,
+            'last_login': social_account.last_login.isoformat() if social_account.last_login else None,
+            'date_joined': social_account.date_joined.isoformat() if social_account.date_joined else None,
+        }
+    except SocialAccount.DoesNotExist:
+        response_data['social_account'] = 'Not found'
+    
+    # Check if user has a token
+    try:
+        if 'social_account' in response_data and response_data['social_account'] != 'Not found':
+            token = SocialToken.objects.get(account=social_account)
+            response_data['social_token'] = {
+                'token': token.token[:10] + '...' if token.token else None,
+                'token_secret': token.token_secret[:5] + '...' if token.token_secret else None,
+                'expires_at': token.expires_at.isoformat() if token.expires_at else None,
+            }
+    except SocialToken.DoesNotExist:
+        response_data['social_token'] = 'Not found'
+    
+    return JsonResponse(response_data)

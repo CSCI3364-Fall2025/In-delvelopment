@@ -40,4 +40,5 @@ urlpatterns = [
         path('auth/', auth_views.debug_auth, name='debug_auth'),
         #add more debug views here in the future
     ])),
+    path('reauth-google/', auth_views.reauth_google, name='reauth_google'),
 ]

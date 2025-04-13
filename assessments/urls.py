@@ -28,10 +28,7 @@ urlpatterns = [
     path('assessment/<int:assessment_id>/results/', views.view_published_results, name='view_published_results'),
     path('<str:course_name>/edit_team/<int:team_pk>', views.edit_team, name='edit_team'),
     path('<str:course_name>/delete_team/<int:team_pk>', views.delete_team, name="delete_team"),
-<<<<<<< HEAD
     path('create-test-data/', views.create_test_data, name='create_test_data'),
-    path('view-as-student/<str:username>/assessment/<int:assessment_id>/', views.view_as_student, name='view_as_student'),
-=======
     path('enroll/', views.enroll_in_course, name='enroll_in_course'),
->>>>>>> 2831bb3 (made it so students can enroll to classes and edited the saving functionality)
+    path('debug-gmail-api/', views.debug_gmail_api, name='debug_gmail_api'),
 ]

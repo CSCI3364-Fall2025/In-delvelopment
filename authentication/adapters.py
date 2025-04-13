@@ -4,6 +4,9 @@ from django.shortcuts import redirect
 from allauth.account.utils import user_email, user_username, user_field
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
+import logging
+
+logger = logging.getLogger(__name__)
 
 class BCEmailAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
@@ -42,6 +45,34 @@ class BCEmailAdapter(DefaultSocialAccountAdapter):
                 sociallogin.connect(request, user)
             except:
                 pass
+    
+    def save_token(self, socialtoken):
+        """Ensure refresh token is saved properly"""
+        logger.debug(f"Saving token for user: {socialtoken.account.user.email}")
+        logger.debug(f"Token: {socialtoken.token[:10]}...")
+        logger.debug(f"Refresh token exists: {bool(socialtoken.token_secret)}")
+        
+        # Make sure to call the parent method to save the token
+        super().save_token(socialtoken)
+    
+    def parse_token(self, data, token):
+        """Make sure refresh token is properly parsed from OAuth response"""
+        token = super().parse_token(data, token)
+        
+        # Log the token data for debugging
+        logger.debug(f"OAuth token data keys: {data.keys()}")
+        logger.debug(f"OAuth token data: {data}")
+        
+        # Check if we have a refresh token in the data
+        if 'refresh_token' in data:
+            token.token_secret = data['refresh_token']
+            logger.debug(f"Parsed refresh token: {token.token_secret[:5]}...")
+        else:
+            logger.warning("No refresh token in OAuth response - user won't be able to use Gmail API")
+            logger.warning("This usually happens when the user has already granted access")
+            logger.warning("User should revoke access at https://myaccount.google.com/permissions")
+            
+        return token
     
     def save_user(self, request, sociallogin, form=None):
         """Save the user and set their role"""

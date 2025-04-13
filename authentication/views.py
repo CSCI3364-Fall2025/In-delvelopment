@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -132,6 +132,169 @@ def debug_auth(request):
         'session_keys': list(request.session.keys()),
     }
     return render(request, 'debug/auth.html', context)
+
+@login_required
+def debug_oauth(request):
+    """Debug view to check OAuth tokens"""
+    from allauth.socialaccount.models import SocialAccount, SocialToken
+    
+    # Check if user has a Google account
+    google_accounts = SocialAccount.objects.filter(user=request.user, provider='google')
+    
+    if not google_accounts.exists():
+        return JsonResponse({
+            'has_google_account': False,
+            'message': 'No Google account connected'
+        })
+    
+    # Get the Google account
+    google_account = google_accounts.first()
+    
+    # Check if user has a token
+    tokens = SocialToken.objects.filter(account=google_account)
+    
+    if not tokens.exists():
+        return JsonResponse({
+            'has_google_account': True,
+            'has_token': False,
+            'message': 'Google account connected but no token found'
+        })
+    
+    # Get the token
+    token = tokens.first()
+    
+    return JsonResponse({
+        'has_google_account': True,
+        'has_token': True,
+        'has_refresh_token': bool(token.token_secret),
+        'token_preview': token.token[:10] + '...' if token.token else 'None',
+        'refresh_token_preview': token.token_secret[:5] + '...' if token.token_secret else 'None',
+        'expires_at': token.expires_at.isoformat() if token.expires_at else None
+    })
+
+@login_required
+def debug_oauth_flow(request):
+    """Debug view to check OAuth flow and force re-authentication"""
+    from django.http import JsonResponse
+    from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
+    from django.shortcuts import redirect
+    
+    # Check if we're forcing re-auth
+    force_reauth = request.GET.get('force', 'false').lower() == 'true'
+    
+    if force_reauth:
+        # Delete existing tokens
+        accounts = SocialAccount.objects.filter(user=request.user, provider='google')
+        if accounts.exists():
+            account = accounts.first()
+            tokens = SocialToken.objects.filter(account=account)
+            if tokens.exists():
+                tokens.delete()
+                return JsonResponse({
+                    'message': 'Tokens deleted. Please log out and log in again.',
+                    'logout_url': '/accounts/logout/',
+                    'login_url': '/accounts/google/login/?process=login'
+                })
+    
+    # Get OAuth info
+    response_data = {
+        'user_email': request.user.email,
+        'is_authenticated': request.user.is_authenticated,
+    }
+    
+    # Check if we have a Google SocialApp configured
+    try:
+        social_app = SocialApp.objects.get(provider='google')
+        response_data['social_app'] = {
+            'name': social_app.name,
+            'client_id': social_app.client_id[:10] + '...',
+            'secret': social_app.secret[:5] + '...' if social_app.secret else None,
+        }
+    except SocialApp.DoesNotExist:
+        response_data['social_app'] = 'Not configured'
+    
+    # Check if user has a Google account
+    try:
+        social_account = SocialAccount.objects.get(user=request.user, provider='google')
+        response_data['social_account'] = {
+            'uid': social_account.uid,
+            'provider': social_account.provider,
+            'last_login': social_account.last_login.isoformat() if social_account.last_login else None,
+            'date_joined': social_account.date_joined.isoformat() if social_account.date_joined else None,
+        }
+    except SocialAccount.DoesNotExist:
+        response_data['social_account'] = 'Not found'
+    
+    # Check if user has a token
+    try:
+        if 'social_account' in response_data and response_data['social_account'] != 'Not found':
+            token = SocialToken.objects.get(account=social_account)
+            response_data['social_token'] = {
+                'token': token.token[:10] + '...' if token.token else None,
+                'token_secret': token.token_secret[:5] + '...' if token.token_secret else None,
+                'expires_at': token.expires_at.isoformat() if token.expires_at else None,
+            }
+    except SocialToken.DoesNotExist:
+        response_data['social_token'] = 'Not found'
+    
+    # Add links for debugging
+    response_data['debug_links'] = {
+        'force_reauth': request.build_absolute_uri() + '?force=true',
+        'test_email': '/assessments/test-email/',
+        'logout': '/accounts/logout/',
+        'login': '/accounts/google/login/?process=login'
+    }
+    
+    return JsonResponse(response_data)
+    
+@login_required
+def reauth_google(request):
+    """View to help users re-authenticate with Google to get fresh tokens"""
+    from allauth.socialaccount.models import SocialAccount, SocialToken
+    from django.urls import reverse
+    
+    # Check if user has a Google account
+    try:
+        social_account = SocialAccount.objects.get(user=request.user, provider='google')
+        
+        # Check if user already has a token with refresh capability
+        has_valid_token = False
+        try:
+            token = SocialToken.objects.get(account=social_account)
+            has_valid_token = bool(token.token_secret)
+        except SocialToken.DoesNotExist:
+            pass
+            
+        if has_valid_token:
+            messages.info(request, "You already have a valid Google token with refresh capability.")
+            return redirect('dashboard')
+            
+        # Delete any existing tokens to force re-authentication
+        SocialToken.objects.filter(account=social_account).delete()
+        
+        messages.info(request, "Your Google authentication has been reset. Please follow the steps below to reconnect.")
+        
+    except SocialAccount.DoesNotExist:
+        messages.info(request, "You need to connect your Google account to use Gmail features.")
+    
+    # Add debug information
+    debug_info = {
+        'user_email': request.user.email,
+        'has_google_account': SocialAccount.objects.filter(user=request.user, provider='google').exists(),
+    }
+    
+    if debug_info['has_google_account']:
+        social_account = SocialAccount.objects.get(user=request.user, provider='google')
+        debug_info['google_uid'] = social_account.uid
+        debug_info['has_token'] = SocialToken.objects.filter(account=social_account).exists()
+        
+        if debug_info['has_token']:
+            token = SocialToken.objects.get(account=social_account)
+            debug_info['token_preview'] = token.token[:10] + '...' if token.token else None
+            debug_info['has_refresh_token'] = bool(token.token_secret)
+            debug_info['refresh_token_preview'] = token.token_secret[:5] + '...' if token.token_secret else None
+    
+    return render(request, 'reauth_google.html', {'debug_info': debug_info})
     
 
     
