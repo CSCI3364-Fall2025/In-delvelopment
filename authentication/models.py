@@ -23,7 +23,7 @@ class UserProfile(models.Model):
 class AssessmentProgress(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)  # Link to the user
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)  # Link to the assessment
-    progress_notes = models.TextField(blank=True, null=True)  # Store student progress notes
+    progress_notes = models.JSONField(default=dict)  # Store progress as JSON
     last_updated = models.DateTimeField(auto_now=True)  # Auto-update timestamp
 
     def __str__(self):

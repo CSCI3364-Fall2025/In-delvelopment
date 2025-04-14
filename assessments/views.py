@@ -285,54 +285,52 @@ def view_assessment(request, assessment_id):
 
 @login_required
 def save_progress(request, assessment_id):
-    """Save student's progress."""
+    """Save or overwrite in-progress data for a multi-page assessment."""
     if request.method == "POST":
-        progress_notes = request.POST.get("progress", "").strip()
         assessment = get_object_or_404(Assessment, id=assessment_id)
+        progress_data = {}
+
+        # Iterate over POST data to handle all form fields
+        for key, value in request.POST.items():
+            if key == 'csrfmiddlewaretoken':
+                continue  # Skip CSRF token
+            if isinstance(value, list) or key.endswith('[]'):  # Handle checkboxes or multiple values
+                progress_data[key.rstrip('[]')] = request.POST.getlist(key)
+            else:
+                progress_data[key] = value
 
         # Retrieve or create a progress entry for the user
         progress, _ = AssessmentProgress.objects.get_or_create(
             student=request.user, assessment=assessment
         )
-        progress.progress_notes = progress_notes  # Save progress text
+        progress.progress_notes = progress_data  # Save progress data as JSON
         progress.save()
 
-        messages.success(request, "Your progress has been saved successfully.")
-        return redirect('dashboard')
-   
+        return JsonResponse({"message": "Progress saved successfully and overwritten.", "data": progress_data}, status=200)
+    return JsonResponse({"error": "Invalid request method."}, status=400)
+
 @login_required
 def load_progress(request, assessment_id):
-    """Retrieve saved progress for the student for a specific assessment."""
+    """Load in-progress data for a multi-page assessment."""
     assessment = get_object_or_404(Assessment, id=assessment_id)
-
-    # Try to get the user's progress for the specific assessment
     progress = AssessmentProgress.objects.filter(student=request.user, assessment=assessment).first()
 
-    # If no progress exists, create an empty one (but don't save it)
-    if not progress:
-        progress = AssessmentProgress(student=request.user, assessment=assessment, progress_notes="")
-
-    # Pass the progress object to the context and render the assessment detail page
-    context = {
-        'assessment': assessment,
-        'progress': progress,
-    }
-
-    return render(request, 'assessment_detail.html', context)
-
-
+    if progress and progress.progress_notes:
+        return JsonResponse(progress.progress_notes, status=200)
+    return JsonResponse({}, status=200)
 
 @login_required
 def submit_assessment(request, assessment_id):
+    """Submit the final assessment and clear progress data."""
     if request.method == 'POST':
         assessment = get_object_or_404(Assessment, id=assessment_id)
-        student = request.POST['student']
+        student = request.user.username
         contribution = int(request.POST['contribution'])
         teamwork = int(request.POST['teamwork'])
         communication = int(request.POST['communication'])
         feedback = request.POST.get('feedback', '').strip()
 
-        # Save the assessment submission
+        # Save the final submission
         AssessmentSubmission.objects.create(
             assessment=assessment,
             student=student,
@@ -341,12 +339,13 @@ def submit_assessment(request, assessment_id):
             communication=communication,
             feedback=feedback
         )
-        
-        messages.success(request, 'Assessment submitted successfully.')
-        return redirect('view_assessment', assessment_id=assessment_id)
-    
-    return redirect('dashboard')
 
+        # Clear the progress data
+        AssessmentProgress.objects.filter(student=request.user, assessment=assessment).delete()
+
+        messages.success(request, 'Assessment submitted successfully.')
+        return redirect('dashboard')
+    return redirect('dashboard')
 
 @login_required
 def view_all_published_results(request):
