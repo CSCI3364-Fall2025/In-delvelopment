@@ -199,5 +199,14 @@ USE_GMAIL_API = False
 # EMAIL_HOST_USER = 'your-email@example.com'
 # EMAIL_HOST_PASSWORD = 'your-email-password'
 
+# Redis config
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
+# Optional serialization config
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+# For django-celery-beat (admin-schedulable tasks)
+INSTALLED_APPS += ['django_celery_beat']
 

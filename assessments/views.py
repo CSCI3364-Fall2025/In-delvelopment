@@ -77,121 +77,121 @@ def dashboard(request):
         'role': current_user.role,
     }
     
-    # Get or create assessments
-    assessment1, _ = Assessment.objects.get_or_create(
-        id=1, 
-        defaults={
-            'title': 'Peer Assessment 3', 
-            'course': 'Software Engineering', 
-            'due_date': '2025-03-21 23:59:00'
-        }
-    )
-    assessment2, _ = Assessment.objects.get_or_create(
-        id=2, 
-        defaults={
-            'title': 'Peer Assessment 1', 
-            'course': 'Software Engineering', 
-            'closed_date': '2025-02-12 23:59:00'
-        }
-    )
-    assessment3, _ = Assessment.objects.get_or_create(
-        id=3, 
-        defaults={
-            'title': 'Peer Assessment 2', 
-            'course': 'Software Engineering', 
-            'closed_date': '2025-02-24 23:59:00'
-        }
-    )
-    assessment4, _ = Assessment.objects.get_or_create(
-        id=4, 
-        defaults={
-            'title': 'Peer Assessment 4', 
-            'course': 'Software Engineering', 
-            'open_date': '2025-04-02 09:00:00'
-        }
-    )
+    # # Get or create assessments
+    # assessment1, _ = Assessment.objects.get_or_create(
+    #     id=1, 
+    #     defaults={
+    #         'title': 'Peer Assessment 3', 
+    #         'course': Course.objects.get(), 
+    #         'due_date': '2025-03-21 23:59:00'
+    #     }
+    # )
+    # assessment2, _ = Assessment.objects.get_or_create(
+    #     id=2, 
+    #     defaults={
+    #         'title': 'Peer Assessment 1', 
+    #         'course': 'Software Engineering', 
+    #         'closed_date': '2025-02-12 23:59:00'
+    #     }
+    # )
+    # assessment3, _ = Assessment.objects.get_or_create(
+    #     id=3, 
+    #     defaults={
+    #         'title': 'Peer Assessment 2', 
+    #         'course': 'Software Engineering', 
+    #         'closed_date': '2025-02-24 23:59:00'
+    #     }
+    # )
+    # assessment4, _ = Assessment.objects.get_or_create(
+    #     id=4, 
+    #     defaults={
+    #         'title': 'Peer Assessment 4', 
+    #         'course': 'Software Engineering', 
+    #         'open_date': '2025-04-02 09:00:00'
+    #     }
+    # )
     
-    # Get or create submissions
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment2,
-        student='Julian Castro',
-        defaults={
-            'contribution': 4,
-            'teamwork': 4,
-            'communication': 4,
-            'feedback': 'Great job on the project!'
-        }
-    )
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment2,
-        student='Alice',
-        defaults={
-            'contribution': 3,
-            'teamwork': 3,
-            'communication': 3,
-            'feedback': 'Needs improvement in communication.'
-        }
-    )
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment2,
-        student='Bob',
-        defaults={
-            'contribution': 5,
-            'teamwork': 5,
-            'communication': 5,
-            'feedback': 'Excellent teamwork and contribution.'
-        }
-    )
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment2,
-        student='Charlie',
-        defaults={
-            'contribution': 2,
-            'teamwork': 2,
-            'communication': 2,
-            'feedback': 'Average performance overall.'
-        }
-    )
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment3,
-        student='Julian Castro',
-        defaults={
-            'contribution': 4,
-            'teamwork': 4,
-            'communication': 4,
-            'feedback': 'Great job on the project!'
-        }
-    )
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment3,
-        student='Alice',
-        defaults={
-            'contribution': 3,
-            'teamwork': 3,
-            'communication': 3,
-            'feedback': 'Needs improvement in communication.'
-        }
-    )
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment3,
-        student='Bob',
-        defaults={
-            'contribution': 5,
-            'teamwork': 5,
-            'communication': 5,
-            'feedback': 'Excellent teamwork and contribution.'
-        }
-    )
-    AssessmentSubmission.objects.get_or_create(
-        assessment=assessment3,
-        student='Charlie',
-        defaults={
-            'contribution': 2,
-            'teamwork': 2,
-            'communication': 2,
-            'feedback': 'Average performance overall.'
-        }
-    )
+    # # Get or create submissions
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment2,
+    #     student='Julian Castro',
+    #     defaults={
+    #         'contribution': 4,
+    #         'teamwork': 4,
+    #         'communication': 4,
+    #         'feedback': 'Great job on the project!'
+    #     }
+    # )
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment2,
+    #     student='Alice',
+    #     defaults={
+    #         'contribution': 3,
+    #         'teamwork': 3,
+    #         'communication': 3,
+    #         'feedback': 'Needs improvement in communication.'
+    #     }
+    # )
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment2,
+    #     student='Bob',
+    #     defaults={
+    #         'contribution': 5,
+    #         'teamwork': 5,
+    #         'communication': 5,
+    #         'feedback': 'Excellent teamwork and contribution.'
+    #     }
+    # )
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment2,
+    #     student='Charlie',
+    #     defaults={
+    #         'contribution': 2,
+    #         'teamwork': 2,
+    #         'communication': 2,
+    #         'feedback': 'Average performance overall.'
+    #     }
+    # )
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment3,
+    #     student='Julian Castro',
+    #     defaults={
+    #         'contribution': 4,
+    #         'teamwork': 4,
+    #         'communication': 4,
+    #         'feedback': 'Great job on the project!'
+    #     }
+    # )
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment3,
+    #     student='Alice',
+    #     defaults={
+    #         'contribution': 3,
+    #         'teamwork': 3,
+    #         'communication': 3,
+    #         'feedback': 'Needs improvement in communication.'
+    #     }
+    # )
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment3,
+    #     student='Bob',
+    #     defaults={
+    #         'contribution': 5,
+    #         'teamwork': 5,
+    #         'communication': 5,
+    #         'feedback': 'Excellent teamwork and contribution.'
+    #     }
+    # )
+    # AssessmentSubmission.objects.get_or_create(
+    #     assessment=assessment3,
+    #     student='Charlie',
+    #     defaults={
+    #         'contribution': 2,
+    #         'teamwork': 2,
+    #         'communication': 2,
+    #         'feedback': 'Average performance overall.'
+    #     }
+    # )
     
     # Replace the hardcoded lists with database queries
     active_assessments = Assessment.objects.filter(
@@ -526,9 +526,7 @@ def course_dashboard(request):
         )
         num_teams = request.POST['numTeams']
         for i in range(int(num_teams)):
-            new_team = Team.objects.create()
-            new_team.save()
-            new_course.teams.add(new_team)
+            Team.objects.create(course=new_course)
         new_course.save()
         messages.success(request, f"Successfully created course '{new_course.name}'")   
 
@@ -553,9 +551,7 @@ def view_course(request, course_name):
         if request.POST.get('numTeams') != None:
             num_teams = request.POST['numTeams']
             for i in range(int(num_teams)):
-                new_team = Team.objects.create()
-                new_team.save()
-                course.teams.add(new_team)
+                Team.objects.create(course=course)
             
             messages.success(request, f"Successfully created {num_teams} new teams.")
         else: 
@@ -592,7 +588,7 @@ def view_course(request, course_name):
 
     return render(request, 'view_course.html', {
         "course": course, "teams": course.teams.all(),
-        "assessments": course.assessments.all(),
+        "assessments": Assessment.objects.filter(course=course),
         "user": user_data, "students": course.students.all()
     })
 

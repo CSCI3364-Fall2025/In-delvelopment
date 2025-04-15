@@ -21,9 +21,13 @@ class UserProfile(models.Model):
         return f"{self.user.email} - {self.get_role_display()}"
 
 class AssessmentProgress(models.Model):
+    
+    def default_progress_notes(): # So that you can migrate without any issues
+        return {}
+
     student = models.ForeignKey(User, on_delete=models.CASCADE)  # Link to the user
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)  # Link to the assessment
-    progress_notes = models.JSONField(default=dict)  # Store progress as JSON
+    progress_notes = models.JSONField(default=default_progress_notes)  # Store progress as JSON
     last_updated = models.DateTimeField(auto_now=True)  # Auto-update timestamp
 
     def __str__(self):
