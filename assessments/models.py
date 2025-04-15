@@ -28,6 +28,11 @@ class Assessment(models.Model):
 
     def __str__(self):
         return self.title
+        
+    def publish(self):
+        self.published = True
+        self.publish_date = timezone.now()
+        self.save()
 
 class Team(models.Model):
     name = models.CharField(max_length=50, blank=True)
