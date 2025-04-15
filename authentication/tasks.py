@@ -41,3 +41,7 @@ def peer_assessment_due_date_reminder():
 
         assessment.reminder_sent = True
         assessment.save()
+        
+@shared_task
+def send_assignment_survey_email(subject, message, recipient_list):
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
