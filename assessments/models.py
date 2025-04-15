@@ -69,3 +69,17 @@ class Submission(models.Model):
     
     def __str__(self):
         return f"{self.student.username} - {self.assessment.title}"
+
+class CourseInvitation(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="invitations")
+    email = models.EmailField()
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_invitations")
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['course', 'email']
+        
+    def __str__(self):
+        return f"Invitation to {self.course.name} for {self.email}"

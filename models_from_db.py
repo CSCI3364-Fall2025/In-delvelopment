@@ -93,6 +93,20 @@ class AssessmentsCourseStudents(models.Model):
         unique_together = (('course', 'user'),)
 
 
+class AssessmentsCourseinvitation(models.Model):
+    email = models.CharField(max_length=254)
+    created_at = models.DateTimeField()
+    accepted = models.BooleanField()
+    accepted_at = models.DateTimeField(blank=True, null=True)
+    course = models.ForeignKey(AssessmentsCourse, models.DO_NOTHING)
+    invited_by = models.ForeignKey('AuthUser', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'assessments_courseinvitation'
+        unique_together = (('course', 'email'),)
+
+
 class AssessmentsPeerassessment(models.Model):
     title = models.CharField(max_length=255)
     publication_date = models.DateTimeField()

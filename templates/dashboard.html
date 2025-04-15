@@ -74,6 +74,59 @@
         </div>
     </div>
 
+    <!-- Enrolled Courses Table (for students) -->
+    {% if user.profile.role == 'student' or request.session.user_role == 'student' %}
+    <div class="row mt-4 mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h4 class="mb-0">My Enrolled Courses</h4>
+                </div>
+                <div class="card-body">
+                    {% if active_courses %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Professor</th>
+                                    <th>Teams</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in active_courses %}
+                                <tr>
+                                    <td>{{ course.course_code }}</td>
+                                    <td>{{ course.name }}</td>
+                                    <td>{{ course.created_by.get_full_name }}</td>
+                                    <td>
+                                        {% for team in user.teams.all %}
+                                            {% if team.course == course %}
+                                                {{ team.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'view_course' course_name=course.name %}" class="btn btn-sm gold-btn">View Course</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        You are not enrolled in any courses yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row justify-content-center" id="profile_box">
         <div class="w-75 border border-2 rounded p-1" style="border-color: var(--bc-maroon);">
             <div class="row p-1 text-center">
@@ -329,5 +382,108 @@
             <a class="btn gold-btn" href="{% url 'enroll_in_course' %}">Enroll in a Course</a>
         </div>
     </div>
+    {% if pending_invitations_count > 0 %}
+    <div class="row mt-2">
+        <div class="col-auto">
+            <div class="alert alert-info">
+                You have {{ pending_invitations_count }} pending course invitation(s).
+                <a href="{% url 'pending_invitations' %}" class="alert-link">View and accept invitations</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<!-- Pending Invitations Popup -->
+{% if pending_invitations_count > 0 %}
+<div class="modal fade" id="invitationsModal" tabindex="-1" aria-labelledby="invitationsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                <h5 class="modal-title" id="invitationsModalLabel">Pending Course Invitations</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You have {{ pending_invitations_count }} pending course invitation(s).</p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Course Code</th>
+                                <th>Invited By</th>
+                                <th>Invitation Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invitationsTableBody">
+                            <!-- Will be populated via AJAX -->
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{% url 'pending_invitations' %}" class="btn gold-btn">View All Invitations</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- JavaScript to handle the invitation popup -->
+{% if pending_invitations_count > 0 %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show the modal automatically when page loads
+        var invitationsModal = new bootstrap.Modal(document.getElementById('invitationsModal'));
+        invitationsModal.show();
+        
+        // Load invitations via AJAX
+        fetch('{% url "get_pending_invitations_json" %}')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('invitationsTableBody');
+                tableBody.innerHTML = '';
+                
+                data.invitations.forEach(invitation => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${invitation.course_name}</td>
+                        <td>${invitation.course_code}</td>
+                        <td>${invitation.invited_by}</td>
+                        <td>${invitation.created_at}</td>
+                        <td>
+                            <form method="post" action="{% url 'accept_invitation' %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="invitation_id" value="${invitation.id}">
+                                <input type="hidden" name="action" value="accept">
+                                <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                            </form>
+                            <form method="post" action="{% url 'accept_invitation' %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="invitation_id" value="${invitation.id}">
+                                <input type="hidden" name="action" value="decline">
+                                <button type="submit" class="btn btn-danger btn-sm">Decline</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading invitations:', error);
+                document.getElementById('invitationsTableBody').innerHTML = 
+                    '<tr><td colspan="5" class="text-danger">Error loading invitations. Please try again.</td></tr>';
+            });
+    });
+</script>
+{% endif %}
 {% endblock %}

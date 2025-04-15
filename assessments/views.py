@@ -3,13 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from authentication.models import UserProfile, AssessmentProgress
 from .models import Assessment, AssessmentSubmission  # Import the Assessment and AssessmentSubmission models
-from .models import Assessment, AssessmentSubmission
+
 
 from django.shortcuts import HttpResponse #imports for scheduler
 from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
-from assessments.models import Assessment, Course, Team 
+from assessments.models import Assessment, Course, Team, CourseInvitation
 from django.contrib.auth.models import User
 
 #imports for averages
@@ -210,6 +210,12 @@ def dashboard(request):
     # Example data for new results notification
     new_results = True  # Set this to True if there are new results to notify the student
 
+    # Check for pending invitations
+    pending_invitations_count = CourseInvitation.objects.filter(
+        email=request.user.email,
+        accepted=False
+    ).count()
+    
     context = {
         'user': user_data,
         'active_assessments': active_assessments,
@@ -220,7 +226,8 @@ def dashboard(request):
         'new_results': new_results,
         'request': request,
         'active_courses': request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
-        'active_teams': request.user.teams.filter(is_active=True)
+        'active_teams': request.user.teams.filter(is_active=True),
+        'pending_invitations_count': pending_invitations_count
     }
     
     # Add welcome message
@@ -638,6 +645,18 @@ def invite_students(request):
         # Get email addresses from the form
         email_list = request.POST.get('student_emails', '').strip().split('\n')
         email_list = [email.strip() for email in email_list if email.strip()]
+        course_name = request.POST.get('course_name', '').strip()
+        
+        # Validate course
+        try:
+            course = Course.objects.get(name=course_name)
+            # Check if the user is the course creator
+            if course.created_by != request.user:
+                messages.error(request, "You can only invite students to courses you created.")
+                return redirect('invite_students')
+        except Course.DoesNotExist:
+            messages.error(request, f"Course '{course_name}' not found.")
+            return redirect('invite_students')
         
         # Validate emails
         valid_emails = []
@@ -656,16 +675,23 @@ def invite_students(request):
         
         # Send invitations to valid emails
         if valid_emails:
-            course_name = request.POST.get('course_name', 'the course')
             emails_sent = 0
             
             for email in valid_emails:
+                # Create or update invitation record
+                invitation, created = CourseInvitation.objects.update_or_create(
+                    course=course,
+                    email=email,
+                    defaults={'invited_by': request.user, 'accepted': False}
+                )
+                
                 subject = "Invitation to Boston College Peer Assessment System"
                 message = (
                     f"Dear Student,\n\n"
                     f"You have been invited by Professor {request.user.get_full_name() or request.user.username} "
-                    f"to join the Boston College Peer Assessment System for {course_name}.\n\n"
+                    f"to join the Boston College Peer Assessment System for {course.name}.\n\n"
                     f"Please visit {request.build_absolute_uri('/login/')} to log in with your BC credentials.\n\n"
+                    f"After logging in, you will see a notification to accept this course invitation.\n\n"
                     "Best regards,\nPeer Assessment System"
                 )
                 
@@ -683,7 +709,7 @@ def invite_students(request):
                     messages.error(request, f"Error sending to {email}: {str(e)}")
             
             if emails_sent > 0:
-                messages.success(request, f"Successfully sent {emails_sent} invitation(s).")
+                messages.success(request, f"Successfully sent {emails_sent} invitation(s) for course '{course.name}'.")
             
         # Report invalid emails
         if invalid_emails:
@@ -691,8 +717,9 @@ def invite_students(request):
             
         return redirect('invite_students')
     
-    # For GET requests, just show the form
-    return render(request, 'invite_students.html')
+    # For GET requests, show the form with course selection
+    courses = Course.objects.filter(created_by=request.user, is_active=True)
+    return render(request, 'invite_students.html', {'courses': courses})
 
 @login_required
 def test_email(request):
@@ -1090,3 +1117,92 @@ def debug_gmail_api(request):
         response_data['social_token'] = 'Not found'
     
     return JsonResponse(response_data)
+
+@login_required
+def pending_invitations(request):
+    """View and accept pending course invitations."""
+    # Get all invitations for the current user's email
+    invitations = CourseInvitation.objects.filter(
+        email=request.user.email,
+        accepted=False
+    ).select_related('course', 'invited_by')
+    
+    if request.method == 'POST':
+        invitation_id = request.POST.get('invitation_id')
+        action = request.POST.get('action')
+        
+        try:
+            invitation = CourseInvitation.objects.get(id=invitation_id, email=request.user.email)
+            
+            if action == 'accept':
+                # Add student to course
+                invitation.course.students.add(request.user)
+                # Mark invitation as accepted
+                invitation.accepted = True
+                invitation.accepted_at = timezone.now()
+                invitation.save()
+                
+                messages.success(request, f"You have successfully enrolled in {invitation.course.name}.")
+            elif action == 'decline':
+                # Delete the invitation
+                invitation.delete()
+                messages.info(request, f"You have declined the invitation to {invitation.course.name}.")
+                
+        except CourseInvitation.DoesNotExist:
+            messages.error(request, "Invalid invitation.")
+        
+        return redirect('pending_invitations')
+    
+    return render(request, 'pending_invitations.html', {'invitations': invitations})
+
+@login_required
+def get_pending_invitations_json(request):
+    """Return pending invitations as JSON for AJAX requests."""
+    invitations = CourseInvitation.objects.filter(
+        email=request.user.email,
+        accepted=False
+    ).select_related('course', 'invited_by')
+    
+    invitations_data = []
+    for invitation in invitations:
+        invitations_data.append({
+            'id': invitation.id,
+            'course_name': invitation.course.name,
+            'course_code': invitation.course.course_code,
+            'invited_by': invitation.invited_by.get_full_name() or invitation.invited_by.username,
+            'created_at': invitation.created_at.strftime('%b %d, %Y')
+        })
+    
+    return JsonResponse({'invitations': invitations_data})
+
+@login_required
+def accept_invitation(request):
+    """Accept or decline an invitation via AJAX."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+    
+    invitation_id = request.POST.get('invitation_id')
+    action = request.POST.get('action')
+    
+    try:
+        invitation = CourseInvitation.objects.get(id=invitation_id, email=request.user.email)
+        
+        if action == 'accept':
+            # Add student to course
+            invitation.course.students.add(request.user)
+            # Mark invitation as accepted
+            invitation.accepted = True
+            invitation.accepted_at = timezone.now()
+            invitation.save()
+            
+            messages.success(request, f"You have successfully enrolled in {invitation.course.name}.")
+        elif action == 'decline':
+            # Delete the invitation
+            invitation.delete()
+            messages.info(request, f"You have declined the invitation to {invitation.course.name}.")
+            
+    except CourseInvitation.DoesNotExist:
+        messages.error(request, "Invalid invitation.")
+    
+    # Redirect back to dashboard
+    return redirect('dashboard')

@@ -32,4 +32,7 @@ urlpatterns = [
     path('create-test-data/', views.create_test_data, name='create_test_data'),
     path('enroll/', views.enroll_in_course, name='enroll_in_course'),
     path('debug-gmail-api/', views.debug_gmail_api, name='debug_gmail_api'),
+    path('pending-invitations/', views.pending_invitations, name='pending_invitations'),
+    path('get-pending-invitations/', views.get_pending_invitations_json, name='get_pending_invitations_json'),
+    path('accept-invitation/', views.accept_invitation, name='accept_invitation'),
 ]
