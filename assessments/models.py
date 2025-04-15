@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone #for updates
 
+
 class Course(models.Model):
     name = models.CharField(max_length=100)
     course_code = models.CharField(max_length=10)

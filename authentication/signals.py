@@ -1,5 +1,8 @@
 from django.dispatch import receiver
 from allauth.account.signals import user_signed_up
+from django.db.models.signals import pre_save
+from assessments.models import Assessment
+
 
 @receiver(user_signed_up)
 def set_user_role(sender, request, user, **kwargs):
@@ -16,3 +19,25 @@ def set_user_role(sender, request, user, **kwargs):
     # Clear the session variable
     if 'user_role' in request.session:
         del request.session['user_role'] 
+        
+        
+@receiver(pre_save, sender=Assessment)
+def send_assignment_published_email(sender, instance, **kwargs):
+    """
+    Sends an email to students when an assignment (Assessment) is published.
+    This signal expects the Assessment model to have a Boolean field 'published'.
+    """
+    if instance.pk:
+        previous = Assessment.objects.get(pk=instance.pk)
+        if not previous.published and instance.published:
+            student_emails = list(User.objects.filter(is_staff=False, is_active=True)
+                                  .values_list('email', flat=True))
+            if student_emails:
+                subject = f"New Assignment Published: {instance.title}"
+                message = (
+                    f"Dear Student,\n\n"
+                    f"A new assignment titled '{instance.title}' has been published. "
+                    "Please log in to your account to view the details and submit your work.\n\n"
+                    "Best regards,\nYour Course Team"
+                )
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, student_emails)
