@@ -24,6 +24,7 @@ class Assessment(models.Model):
     self_assessment_required = models.BooleanField(default=False)  # New field
     results_published = models.BooleanField(default=False)
     published_date = models.DateTimeField(null=True, blank=True)
+    reminder_sent = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
