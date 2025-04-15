@@ -29,7 +29,16 @@ To ensure compatibility, please make sure your virtual environment matches these
 6. run migrations: `python manage.py migrate`
 7. start the development server: `python manage.py runserver`
 
-  
+### To Run Background Scheduler Locally
+1. Make sure redis, celery_beat is installed by running `pip install celery redis django-celery-beat`
+2. Install and run redis locally
+    - Install redis by using the command `brew install redis`
+    - Run a redis server by using the command `brew services start redis`
+    - You can check if Redis is activated by running `redis-cli ping` which should give you the value `PONG`
+3. Open 3 terminal windows
+    - In the first window, run the command `bash celery -A PeerAssess worker --loglevel=info` to run the celery worker
+    - In another window, run the command `bash celery -A PeerAssess beat --loglevel=info` to run the celery beat
+    - In the final window, run `python manage.py runserver` and go to the admin page to add scheduled tasks 
 
 ## Project Structure
 

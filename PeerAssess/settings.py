@@ -209,3 +209,5 @@ CELERY_TASK_SERIALIZER = 'json'
 
 # For django-celery-beat (admin-schedulable tasks)
 INSTALLED_APPS += ['django_celery_beat']
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
