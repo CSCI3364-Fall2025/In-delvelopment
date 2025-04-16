@@ -1,7 +1,9 @@
 from django.dispatch import receiver
 from allauth.account.signals import user_signed_up
 from django.db.models.signals import pre_save
-from assessments.models import Assessment
+from assessments.models import Assessment, User, Course
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 @receiver(user_signed_up)
@@ -29,7 +31,7 @@ def send_assignment_published_email(sender, instance, **kwargs):
     """
     if instance.pk:
         previous = Assessment.objects.get(pk=instance.pk)
-        if not previous.published and instance.published:
+        if not previous.results_published and instance.results_published:
             student_emails = list(User.objects.filter(is_staff=False, is_active=True)
                                   .values_list('email', flat=True))
             if student_emails:
