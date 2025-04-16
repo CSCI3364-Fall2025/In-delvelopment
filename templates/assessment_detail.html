@@ -54,11 +54,11 @@
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="student" class="form-label">Select Team Member:</label>
-                                <select id="student" name="student" class="form-select">
-                                    <option value="team_member_1">Team Member #1</option>
-                                    <option value="team_member_2">Team Member #2</option>
-                                    <option value="team_member_3">Team Member #3</option>
-                                    <option value="self">Self</option>
+                                <select id="student" name="student" class="form-select" required>
+                                    {% for member in team_members %}
+                                        <option value="{{ member.username }}">{{ member.get_full_name|default:member.username }}</option>
+                                    {% endfor %}
+                                    <option value="{{ request.user.username }}">Self</option>
                                 </select>
                             </div>
 
@@ -68,12 +68,11 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute"
-                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="contribution"
-                                                value="{{ i }}" required>
+                                            <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
+
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -85,12 +84,10 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute"
-                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
-                                                required>
+                                            <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -102,12 +99,10 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute"
-                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="communication"
-                                                value="{{ i }}" required>
+                                            <input class="form-check-input" type="radio" name="communication" value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -117,148 +112,26 @@
 
                             <!-- Open-Ended Question -->
                             <div class="mb-3">
-                                <label for="feedback" class="form-label">Give an overview of this member's role in the
-                                    team:</label>
-                                <textarea id="feedback" name="feedback" class="form-control" rows="4"
-                                    placeholder="Provide additional feedback here..."></textarea>
+                                <label for="feedback" class="form-label">Give an overview of this member's role in the team:</label>
+                                <textarea id="feedback" name="feedback" class="form-control" rows="4" placeholder="Provide additional feedback here...">{% if submission %}{{ submission.feedback }}{% endif %}</textarea>
                             </div>
-                            <!-- Removed additional comments section -->
-                            <div class="d-flex justify-content-between">
+
+                            <div class="text-end">
                                 <button type="submit" class="btn btn-primary">Submit Assessment</button>
-                                <button type="button" id="submit-progress" class="btn btn-success">Submit
-                                    Progress</button>
                             </div>
                         </form>
 
-                        <div class="mt-4"></div>
-                        <h3>Summary Report</h3>
-                        <p>Average Grade: <span id="averageGrade">N/A</span></p>
-                        <h4>Comments:</h4>
-                        <ul id="commentsList"></ul>
+                        <div class="mt-4">
+                            <h3>Summary Report</h3>
+                            <p>Average Grade: <span id="averageGrade">N/A</span></p>
+                            <h4>Comments:</h4>
+                            <ul id="commentsList"></ul>
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
-                {% elif user.profile.role == 'professor' or user.profile.role == 'Professor' %}
-                <div id="professorView" class="container">
-                    <h2>Professor Dashboard</h2>
-                    <form>
-                        <div class="mb-3">
-                            <label for="team" class="form-label">Select Team:</label>
-                            <select id="team" name="team" class="form-select">
-                                <option value="team_alpha">Team Alpha</option>
-                                <option value="team_beta">Team Beta</option>
-                                <option value="team_gamma">Team Gamma</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="studentProf" class="form-label">Select Student:</label>
-                            <select id="studentProf" name="studentProf" class="form-select">
-                                <option value="team_member_1">Team Member #1</option>
-                                <option value="team_member_2">Team Member #2</option>
-                                <option value="team_member_3">Team Member #3</option>
-                            </select>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="flagSelfAssessment">
-                            <label class="form-check-label" for="flagSelfAssessment">Flag for
-                                Self-Assessment</label>
-                        </div>
-                        <div class="mb-3">
-                            <label for="manualGrade" class="form-label">Manual Grade (0 - 10):</label>
-                            <input type="number" step="0.1" min="0" max="10" id="manualGrade" class="form-control">
-                        </div>
-                        <button type="button" class="btn btn-primary" onclick="submitManualGrade()">Submit Manual
-                            Grade</button>
-                        <button type="button" class="btn btn-primary mt-2" onclick="viewAssessmentResults()">View
-                            Assessment Results</button>
-                    </form>
-                    <div class="mt-4">
-                        <h3>Summary Report</h3>
-                        <p>Average Grade: <span id="averageGradeProf">N/A</span></p>
-                        <h4>Comments:</h4>
-                        <ul id="commentsListProf">
-                            {% for comment in comments %}
-                            <li>{{ comment }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.querySelector('form');
-        const assessmentId = "{{ assessment.id }}";
-        const localStorageKey = `assessment_progress_${assessmentId}`;
-
-        // Debugging: Log when the script starts
-        console.log("Script loaded for assessment:", assessmentId);
-
-        // Load saved progress from localStorage
-        try {
-            const savedProgress = JSON.parse(localStorage.getItem(localStorageKey));
-            if (savedProgress) {
-                console.log("Loaded progress from localStorage:", savedProgress);
-                for (const [key, value] of Object.entries(savedProgress)) {
-                    const field = form.querySelector(`[name="${key}"]`);
-                    if (field) {
-                        if (field.type === 'radio' || field.type === 'checkbox') {
-                            if (Array.isArray(value)) {
-                                value.forEach(val => {
-                                    const checkbox = form.querySelector(`[name="${key}"][value="${val}"]`);
-                                    if (checkbox) checkbox.checked = true;
-                                });
-                            } else {
-                                const radioOrCheckbox = form.querySelector(`[name="${key}"][value="${value}"]`);
-                                if (radioOrCheckbox) radioOrCheckbox.checked = true;
-                            }
-                        } else {
-                            field.value = value;
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error loading progress from localStorage:", error);
-        }
-
-        // Save progress to localStorage on input change
-        form.addEventListener('input', function () {
-            saveProgress();
-        });
-
-        // Save progress when "Submit Progress" is clicked
-        document.getElementById('submit-progress').addEventListener('click', function () {
-            saveProgress(true);
-        });
-
-        function saveProgress(showMessage = false) {
-            try {
-                const formData = new FormData(form);
-                const progressData = {};
-                formData.forEach((value, key) => {
-                    if (progressData[key]) {
-                        // Handle multiple values (e.g., checkboxes)
-                        if (!Array.isArray(progressData[key])) {
-                            progressData[key] = [progressData[key]];
-                        }
-                        progressData[key].push(value);
-                    } else {
-                        progressData[key] = value;
-                    }
-                });
-                localStorage.setItem(localStorageKey, JSON.stringify(progressData));
-                console.log("Progress saved to localStorage:", progressData);
-                if (showMessage) {
-                    console.log("Progress saved successfully.");
-                }
-            } catch (error) {
-                console.error("Error saving progress to localStorage:", error);
-            }
-        }
-    });
-</script>
 {% endblock %}

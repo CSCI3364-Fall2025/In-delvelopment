@@ -236,21 +236,30 @@ def dashboard(request):
 
 @login_required
 def view_assessment(request, assessment_id):
-    # Fetch the assessment details from the database
     assessment = get_object_or_404(Assessment, id=assessment_id)
-    
-    # Fetch the comments for the professor view
-    comments = AssessmentSubmission.objects.filter(assessment=assessment).values_list('feedback', flat=True)
-    
-    progress, created = AssessmentProgress.objects.get_or_create(
+
+    # Load or create draft progress
+    progress, _ = AssessmentProgress.objects.get_or_create(
         student=request.user,
-        assessment=assessment,
+        assessment=assessment
     )
 
-    # Calculate team and class averages for closed assessments
+    # Fetch the latest submission (if it exists) by this student for this assessment
+    existing_submission = AssessmentSubmission.objects.filter(
+        assessment=assessment,
+        student=request.user.username  # stored as CharField
+    ).first()
+
+    # Get team members (excluding self) – customize this based on your Team model
+    team_members = []
+    if hasattr(request.user, 'teams') and request.user.teams.exists():
+        team_members = request.user.teams.first().members.exclude(username=request.user.username)
+
+    # Get team and class averages (if the assessment is closed)
     if assessment.closed_date:
+        team_usernames = team_members.values_list('username', flat=True)
         team_submissions = AssessmentSubmission.objects.filter(
-            assessment=assessment, student__in=request.user.teams.values_list('members__username', flat=True)
+            assessment=assessment, student__in=team_usernames
         )
         class_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
 
@@ -266,13 +275,7 @@ def view_assessment(request, assessment_id):
             'communication': class_submissions.aggregate(Avg('communication'))['communication__avg'] or "N/A",
         }
     else:
-        # Provide dummy data if the assessment is not closed
-        team_avg = {
-            'contribution': "N/A",
-            'teamwork': "N/A",
-            'communication': "N/A",
-        }
-        class_avg = {
+        team_avg = class_avg = {
             'contribution': "N/A",
             'teamwork': "N/A",
             'communication': "N/A",
@@ -280,13 +283,13 @@ def view_assessment(request, assessment_id):
 
     context = {
         'assessment': assessment,
-        'comments': comments, 
         'progress': progress,
+        'submission': existing_submission,
+        'team_members': team_members,
         'team_avg': team_avg,
         'class_avg': class_avg,
     }
-    
-    logger.debug(f"Context: {context}")
+
     return render(request, 'assessment_detail.html', context)
 
 @login_required
@@ -328,48 +331,39 @@ def load_progress(request, assessment_id):
 @login_required
 def submit_assessment(request, assessment_id):
     if request.method == 'POST':
-        print("\n=== ASSESSMENT SUBMISSION DEBUG ===")
-        print(f"Attempting to submit assessment ID: {assessment_id}")
-        print(f"Student: {request.user.username}")
-        
         try:
             assessment = get_object_or_404(Assessment, id=assessment_id)
-            print(f"Found assessment: {assessment.title}")
-            student = request.user
+            student_username = request.user.username
+            assessed_username = request.POST.get('student', '').strip()
+            assessed_peer = User.objects.get(username=assessed_username)
 
-            # Print form data being submitted
-            print("\nForm Data:")
-            print(f"Contribution: {request.POST.get('contribution', 0)}")
-            print(f"Teamwork: {request.POST.get('teamwork', 0)}")
-            print(f"Communication: {request.POST.get('communication', 0)}")
-            print(f"Has feedback: {'Yes' if request.POST.get('feedback', '').strip() else 'No'}")
+            contribution = int(request.POST.get('contribution', 0))
+            teamwork = int(request.POST.get('teamwork', 0))
+            communication = int(request.POST.get('communication', 0))
+            feedback = request.POST.get('feedback', '').strip()
 
-            # Create the submission
-            submission = AssessmentSubmission.objects.create(
+            # ✅ Use update_or_create instead of create
+            submission, created = AssessmentSubmission.objects.update_or_create(
                 assessment=assessment,
-                student=student.username,
-                contribution=int(request.POST.get('contribution', 0)),
-                teamwork=int(request.POST.get('teamwork', 0)),
-                communication=int(request.POST.get('communication', 0)),
-                feedback=request.POST.get('feedback', '').strip()
+                student=student_username,
+                defaults={
+                    'assessed_peer': assessed_peer,
+                    'contribution': contribution,
+                    'teamwork': teamwork,
+                    'communication': communication,
+                    'feedback': feedback
+                }
             )
-            print(f"\nSubmission created successfully. ID: {submission.id}")
 
-            # Clear the progress data
-            deleted = AssessmentProgress.objects.filter(student=student, assessment=assessment).delete()
-            print(f"Cleared progress data: {deleted}")
-
-            print("=== SUBMISSION COMPLETE ===\n")
-            messages.success(request, 'Assessment submitted successfully.')
+            messages.success(request, "Assessment submitted successfully.")
             return redirect('dashboard')
 
+        except User.DoesNotExist:
+            messages.error(request, "Selected team member does not exist.")
         except Exception as e:
-            print(f"\nERROR during submission: {str(e)}")
-            print("=== SUBMISSION FAILED ===\n")
             messages.error(request, f"Error submitting assessment: {str(e)}")
-            return redirect('dashboard')
 
-    return redirect('dashboard')
+    return redirect('view_assessment', assessment_id=assessment_id)
 
 @login_required
 def view_all_published_results(request):
