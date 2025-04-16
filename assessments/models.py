@@ -50,12 +50,16 @@ class AssessmentScore(models.Model):
     score = models.FloatField()
 
 class AssessmentSubmission(models.Model):
-    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
-    student = models.CharField(max_length=255)
+    assessment = models.ForeignKey('Assessment', on_delete=models.CASCADE, related_name='submissions')
+    student = models.CharField(max_length=150)  # Store username as string
     contribution = models.IntegerField()
     teamwork = models.IntegerField()
     communication = models.IntegerField()
-    feedback = models.TextField()
+    feedback = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['assessment', 'student']  # One submission per student per assessment
 
     def __str__(self):
         return f"{self.assessment.title} - {self.student}"
@@ -68,14 +72,6 @@ class PeerAssessment(models.Model):
     
     def __str__(self):
         return self.title
-
-class Submission(models.Model):
-    assessment = models.ForeignKey(PeerAssessment, on_delete=models.CASCADE)
-    student = models.ForeignKey(User, on_delete=models.CASCADE)
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.student.username} - {self.assessment.title}"
 
 class CourseInvitation(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="invitations")

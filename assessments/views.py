@@ -2,20 +2,17 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from authentication.models import UserProfile, AssessmentProgress
-from .models import Assessment, AssessmentSubmission  # Import the Assessment and AssessmentSubmission models
-
+from assessments.models import Assessment, Course, Team, CourseInvitation, PeerAssessment, AssessmentSubmission
 
 from django.shortcuts import HttpResponse #imports for scheduler
 from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
-from assessments.models import Assessment, Course, Team, CourseInvitation
 from django.contrib.auth.models import User
 
 #imports for averages
 from django.http import JsonResponse
 from django.db.models import Avg
-from assessments.models import Assessment, AssessmentScore
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.conf import settings
@@ -195,19 +192,19 @@ def dashboard(request):
     
     today = timezone.now()
 
-    # Categorize assessments
+    # Update assessment categorization logic
     active_assessments = Assessment.objects.filter(
-        open_date__lte=today,  # Open date is before or equal to today
-        due_date__gt=today     # Due date is after today
-    ).order_by('due_date')
+        open_date__lte=today,  # Open date is in the past (already opened)
+        due_date__gt=today     # Due date is in the future
+    ).order_by('due_date')     # Order by due date ascending
 
     upcoming_assessments = Assessment.objects.filter(
-        open_date__gt=today  # Open date is in the future
-    ).order_by('open_date')
+        open_date__gt=today    # Open date is in the future (not yet opened)
+    ).order_by('open_date')    # Order by open date ascending
 
     closed_assessments = Assessment.objects.filter(
-        due_date__lte=today  # Due date is in the past
-    ).order_by('-due_date')
+        due_date__lte=today    # Due date is in the past
+    ).order_by('-due_date')    # Order by due date descending (most recent first)
 
     # Example data for new results notification
     new_results = True  # Set this to True if there are new results to notify the student
@@ -330,30 +327,48 @@ def load_progress(request, assessment_id):
 
 @login_required
 def submit_assessment(request, assessment_id):
-    """Submit the final assessment and clear progress data."""
     if request.method == 'POST':
-        assessment = get_object_or_404(Assessment, id=assessment_id)
-        student = request.user.username
-        contribution = int(request.POST['contribution'])
-        teamwork = int(request.POST['teamwork'])
-        communication = int(request.POST['communication'])
-        feedback = request.POST.get('feedback', '').strip()
+        print("\n=== ASSESSMENT SUBMISSION DEBUG ===")
+        print(f"Attempting to submit assessment ID: {assessment_id}")
+        print(f"Student: {request.user.username}")
+        
+        try:
+            assessment = get_object_or_404(Assessment, id=assessment_id)
+            print(f"Found assessment: {assessment.title}")
+            student = request.user
 
-        # Save the final submission
-        AssessmentSubmission.objects.create(
-            assessment=assessment,
-            student=student,
-            contribution=contribution,
-            teamwork=teamwork,
-            communication=communication,
-            feedback=feedback
-        )
+            # Print form data being submitted
+            print("\nForm Data:")
+            print(f"Contribution: {request.POST.get('contribution', 0)}")
+            print(f"Teamwork: {request.POST.get('teamwork', 0)}")
+            print(f"Communication: {request.POST.get('communication', 0)}")
+            print(f"Has feedback: {'Yes' if request.POST.get('feedback', '').strip() else 'No'}")
 
-        # Clear the progress data
-        AssessmentProgress.objects.filter(student=request.user, assessment=assessment).delete()
+            # Create the submission
+            submission = AssessmentSubmission.objects.create(
+                assessment=assessment,
+                student=student.username,
+                contribution=int(request.POST.get('contribution', 0)),
+                teamwork=int(request.POST.get('teamwork', 0)),
+                communication=int(request.POST.get('communication', 0)),
+                feedback=request.POST.get('feedback', '').strip()
+            )
+            print(f"\nSubmission created successfully. ID: {submission.id}")
 
-        messages.success(request, 'Assessment submitted successfully.')
-        return redirect('dashboard')
+            # Clear the progress data
+            deleted = AssessmentProgress.objects.filter(student=student, assessment=assessment).delete()
+            print(f"Cleared progress data: {deleted}")
+
+            print("=== SUBMISSION COMPLETE ===\n")
+            messages.success(request, 'Assessment submitted successfully.')
+            return redirect('dashboard')
+
+        except Exception as e:
+            print(f"\nERROR during submission: {str(e)}")
+            print("=== SUBMISSION FAILED ===\n")
+            messages.error(request, f"Error submitting assessment: {str(e)}")
+            return redirect('dashboard')
+
     return redirect('dashboard')
 
 @login_required
