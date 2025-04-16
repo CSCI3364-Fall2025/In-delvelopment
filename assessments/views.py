@@ -193,20 +193,22 @@ def dashboard(request):
     #     }
     # )
     
-    # Replace the hardcoded lists with database queries
+    today = timezone.now()
+
+    # Categorize assessments
     active_assessments = Assessment.objects.filter(
-        closed_date__isnull=True,
-        open_date__isnull=True
+        open_date__lte=today,  # Open date is before or equal to today
+        due_date__gt=today     # Due date is after today
     ).order_by('due_date')
-    
-    closed_assessments = Assessment.objects.filter(
-        closed_date__isnull=False
-    ).order_by('-closed_date')
-    
+
     upcoming_assessments = Assessment.objects.filter(
-        open_date__isnull=False
+        open_date__gt=today  # Open date is in the future
     ).order_by('open_date')
-    
+
+    closed_assessments = Assessment.objects.filter(
+        due_date__lte=today  # Due date is in the past
+    ).order_by('-due_date')
+
     # Example data for new results notification
     new_results = True  # Set this to True if there are new results to notify the student
 
