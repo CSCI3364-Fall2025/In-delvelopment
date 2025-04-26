@@ -90,3 +90,35 @@ class CourseInvitation(models.Model):
         
     def __str__(self):
         return f"Invitation to {self.course.name} for {self.email}"
+
+class LikertQuestion(models.Model):
+    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='likert_questions')
+    question_text = models.CharField(max_length=500)
+    order = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return self.question_text
+        
+class OpenEndedQuestion(models.Model):
+    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='open_ended_questions')
+    question_text = models.CharField(max_length=500)
+    order = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return self.question_text
+
+class LikertResponse(models.Model):
+    submission = models.ForeignKey('AssessmentSubmission', on_delete=models.CASCADE, related_name='likert_responses')
+    question = models.ForeignKey(LikertQuestion, on_delete=models.CASCADE)
+    rating = models.IntegerField()
+    
+    class Meta:
+        unique_together = ['submission', 'question']
+        
+class OpenEndedResponse(models.Model):
+    submission = models.ForeignKey('AssessmentSubmission', on_delete=models.CASCADE, related_name='open_ended_responses')
+    question = models.ForeignKey(OpenEndedQuestion, on_delete=models.CASCADE)
+    response_text = models.TextField()
+    
+    class Meta:
+        unique_together = ['submission', 'question']

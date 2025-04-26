@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Assessment Questions | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>Edit Questions: {{ assessment.title }}</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <h4 class="mb-3">Likert Scale Questions</h4>
+                        <div id="likert-questions">
+                            {% for question in likert_questions %}
+                            <div class="mb-3 likert-question">
+                                <div class="input-group">
+                                    <span class="input-group-text">Q{{ forloop.counter }}</span>
+                                    <input type="text" class="form-control" name="likert_question_{{ forloop.counter }}" 
+                                           value="{{ question.question_text }}" required>
+                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="mb-3 likert-question">
+                                <div class="input-group">
+                                    <span class="input-group-text">Q1</span>
+                                    <input type="text" class="form-control" name="likert_question_1" 
+                                           placeholder="Enter Likert scale question" required>
+                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="likert_count" name="likert_count" value="{{ likert_questions|length|default:1 }}">
+                        <button type="button" id="add-likert" class="btn btn-secondary mb-4">Add Likert Question</button>
+                        
+                        <h4 class="mb-3">Open-Ended Questions</h4>
+                        <div id="open-ended-questions">
+                            {% for question in open_ended_questions %}
+                            <div class="mb-3 open-ended-question">
+                                <div class="input-group">
+                                    <span class="input-group-text">Q{{ forloop.counter }}</span>
+                                    <input type="text" class="form-control" name="open_ended_question_{{ forloop.counter }}" 
+                                           value="{{ question.question_text }}" required>
+                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="mb-3 open-ended-question">
+                                <div class="input-group">
+                                    <span class="input-group-text">Q1</span>
+                                    <input type="text" class="form-control" name="open_ended_question_1" 
+                                           placeholder="Enter open-ended question" required>
+                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="open_ended_count" name="open_ended_count" value="{{ open_ended_questions|length|default:1 }}">
+                        <button type="button" id="add-open-ended" class="btn btn-secondary mb-4">Add Open-Ended Question</button>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Likert question
+    document.getElementById('add-likert').addEventListener('click', function() {
+        const container = document.getElementById('likert-questions');
+        const count = document.querySelectorAll('.likert-question').length + 1;
+        
+        const newQuestion = document.createElement('div');
+        newQuestion.className = 'mb-3 likert-question';
+        newQuestion.innerHTML = `
+            <div class="input-group">
+                <span class="input-group-text">Q${count}</span>
+                <input type="text" class="form-control" name="likert_question_${count}" 
+                       placeholder="Enter Likert scale question" required>
+                <button type="button" class="btn btn-danger remove-question">Remove</button>
+            </div>
+        `;
+        
+        container.appendChild(newQuestion);
+        document.getElementById('likert_count').value = count;
+    });
+    
+    // Add Open-ended question
+    document.getElementById('add-open-ended').addEventListener('click', function() {
+        const container = document.getElementById('open-ended-questions');
+        const count = document.querySelectorAll('.open-ended-question').length + 1;
+        
+        const newQuestion = document.createElement('div');
+        newQuestion.className = 'mb-3 open-ended-question';
+        newQuestion.innerHTML = `
+            <div class="input-group">
+                <span class="input-group-text">Q${count}</span>
+                <input type="text" class="form-control" name="open_ended_question_${count}" 
+                       placeholder="Enter open-ended question" required>
+                <button type="button" class="btn btn-danger remove-question">Remove</button>
+            </div>
+        `;
+        
+        container.appendChild(newQuestion);
+        document.getElementById('open_ended_count').value = count;
+    });
+    
+    // Remove question (delegated event)
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-question')) {
+            const questionType = e.target.closest('div.mb-3').classList.contains('likert-question') ? 'likert' : 'open-ended';
+            const container = questionType === 'likert' ? 'likert-questions' : 'open-ended-questions';
+            const countField = questionType === 'likert' ? 'likert_count' : 'open_ended_count';
+            
+            // Only remove if there's more than one question
+            const questions = document.querySelectorAll(`.${questionType}-question`);
+            if (questions.length > 1) {
+                e.target.closest('div.mb-3').remove();
+                
+                // Update question numbers and names
+                const remainingQuestions = document.querySelectorAll(`.${questionType}-question`);
+                remainingQuestions.forEach((q, i) => {
+                    const num = i + 1;
+                    q.querySelector('.input-group-text').textContent = `Q${num}`;
+                    q.querySelector('input').name = `${questionType === 'likert' ? 'likert_question' : 'open_ended_question'}_${num}`;
+                });
+                
+                // Update count
+                document.getElementById(countField).value = remainingQuestions.length;
+            } else {
+                alert('You must have at least one question of this type.');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

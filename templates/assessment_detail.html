@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load range_tags %} <!-- Load the custom template tag -->
+{% load assessment_filters %}
 
 {% block title %}Assessment Details | Peer Assessment System{% endblock %}
 
@@ -110,11 +111,41 @@
                                 </div>
                             </div>
 
+                            <!-- Custom Likert Questions -->
+                            {% for question in likert_questions %}
+                            <div class="mb-4">
+                                <label class="form-label">{{ question.question_text }}</label>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span>Poor</span>
+                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
+                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        {% for i in 5|range_filter %}
+                                        <div class="form-check mx-auto" style="z-index: 1;">
+                                            <input class="form-check-input" type="radio" name="likert_{{ question.id }}" value="{{ i }}" 
+                                                {% has_response_with_rating submission question i as has_response %}
+                                                {% if has_response %}checked{% endif %}>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <span>Excellent</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+
                             <!-- Open-Ended Question -->
                             <div class="mb-3">
                                 <label for="feedback" class="form-label">Give an overview of this member's role in the team:</label>
                                 <textarea id="feedback" name="feedback" class="form-control" rows="4" placeholder="Provide additional feedback here...">{% if submission %}{{ submission.feedback }}{% endif %}</textarea>
                             </div>
+
+                            <!-- Custom Open-Ended Questions -->
+                            {% for question in open_ended_questions %}
+                            <div class="mb-3">
+                                <label for="open_ended_{{ question.id }}" class="form-label">{{ question.question_text }}</label>
+                                <textarea id="open_ended_{{ question.id }}" name="open_ended_{{ question.id }}" class="form-control" rows="4" 
+                                    placeholder="Provide your answer here...">{% if submission %}{% get_open_ended_response submission question as response_text %}{{ response_text }}{% endif %}</textarea>
+                            </div>
+                            {% endfor %}
 
                             <div class="text-end">
                                 <button type="submit" class="btn btn-primary">Submit Assessment</button>

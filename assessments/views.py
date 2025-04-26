@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from authentication.models import UserProfile, AssessmentProgress
-from assessments.models import Assessment, Course, Team, CourseInvitation, PeerAssessment, AssessmentSubmission
+from assessments.models import Assessment, Course, Team, CourseInvitation, PeerAssessment, AssessmentSubmission, LikertQuestion, OpenEndedQuestion, LikertResponse, OpenEndedResponse
 
 from django.shortcuts import HttpResponse #imports for scheduler
 from django.utils import timezone
@@ -255,8 +255,12 @@ def view_assessment(request, assessment_id):
     if hasattr(request.user, 'teams') and request.user.teams.exists():
         team_members = request.user.teams.first().members.exclude(username=request.user.username)
 
+    # Get custom questions for this assessment
+    likert_questions = LikertQuestion.objects.filter(assessment=assessment).order_by('order')
+    open_ended_questions = OpenEndedQuestion.objects.filter(assessment=assessment).order_by('order')
+
     # Get team and class averages (if the assessment is closed)
-    if assessment.closed_date:
+    if assessment.due_date and assessment.due_date < timezone.now():
         team_usernames = team_members.values_list('username', flat=True)
         team_submissions = AssessmentSubmission.objects.filter(
             assessment=assessment, student__in=team_usernames
@@ -288,6 +292,8 @@ def view_assessment(request, assessment_id):
         'team_members': team_members,
         'team_avg': team_avg,
         'class_avg': class_avg,
+        'likert_questions': likert_questions,
+        'open_ended_questions': open_ended_questions,
     }
 
     return render(request, 'assessment_detail.html', context)
@@ -337,12 +343,13 @@ def submit_assessment(request, assessment_id):
             assessed_username = request.POST.get('student', '').strip()
             assessed_peer = User.objects.get(username=assessed_username)
 
+            # Get the standard fields
             contribution = int(request.POST.get('contribution', 0))
             teamwork = int(request.POST.get('teamwork', 0))
             communication = int(request.POST.get('communication', 0))
             feedback = request.POST.get('feedback', '').strip()
 
-            # ✅ Use update_or_create instead of create
+            # Create or update the submission
             submission, created = AssessmentSubmission.objects.update_or_create(
                 assessment=assessment,
                 student=student_username,
@@ -354,6 +361,28 @@ def submit_assessment(request, assessment_id):
                     'feedback': feedback
                 }
             )
+            
+            # Process Likert question responses
+            likert_questions = LikertQuestion.objects.filter(assessment=assessment)
+            for question in likert_questions:
+                rating = request.POST.get(f'likert_{question.id}', None)
+                if rating is not None:
+                    LikertResponse.objects.update_or_create(
+                        submission=submission,
+                        question=question,
+                        defaults={'rating': int(rating)}
+                    )
+            
+            # Process open-ended question responses
+            open_ended_questions = OpenEndedQuestion.objects.filter(assessment=assessment)
+            for question in open_ended_questions:
+                response_text = request.POST.get(f'open_ended_{question.id}', '').strip()
+                if response_text:
+                    OpenEndedResponse.objects.update_or_create(
+                        submission=submission,
+                        question=question,
+                        defaults={'response_text': response_text}
+                    )
 
             messages.success(request, "Assessment submitted successfully.")
             return redirect('dashboard')
@@ -847,7 +876,7 @@ class PeerAssessmentForm(forms.ModelForm):
 
 @login_required
 def create_peer_assessments(request):
-    """Allow professors to create a single peer assessment."""
+    """Allow professors to create a single peer assessment with custom questions."""
     if request.user.profile.role != "professor":
         messages.error(request, "Only professors can create peer assessments.")
         return redirect('dashboard')
@@ -855,8 +884,30 @@ def create_peer_assessments(request):
     if request.method == "POST":
         form = PeerAssessmentForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Peer assessment created successfully.")
+            # Save the assessment first
+            assessment = form.save()
+            
+            # Process Likert questions
+            likert_questions = request.POST.getlist('likert_questions[]')
+            for i, question_text in enumerate(likert_questions):
+                if question_text.strip():  # Only save non-empty questions
+                    LikertQuestion.objects.create(
+                        assessment=assessment,
+                        question_text=question_text,
+                        order=i
+                    )
+            
+            # Process open-ended questions
+            open_ended_questions = request.POST.getlist('open_ended_questions[]')
+            for i, question_text in enumerate(open_ended_questions):
+                if question_text.strip():  # Only save non-empty questions
+                    OpenEndedQuestion.objects.create(
+                        assessment=assessment,
+                        question_text=question_text,
+                        order=i
+                    )
+            
+            messages.success(request, "Peer assessment created successfully with custom questions.")
             return redirect('dashboard')
     else:
         form = PeerAssessmentForm()
@@ -1217,3 +1268,149 @@ def accept_invitation(request):
     
     # Redirect back to dashboard
     return redirect('dashboard')
+
+@login_required
+def edit_assessment_questions(request, assessment_id):
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if user is a professor and the assessment hasn't been released yet
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
+        messages.error(request, "Only professors can edit assessment questions.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    if timezone.now() > assessment.release_date:
+        messages.error(request, "Cannot edit questions after assessment has been released.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    # Get existing questions
+    likert_questions = LikertQuestion.objects.filter(assessment=assessment).order_by('order')
+    open_ended_questions = OpenEndedQuestion.objects.filter(assessment=assessment).order_by('order')
+    
+    if request.method == 'POST':
+        # Process form submission
+        try:
+            # Delete existing questions (we'll replace them)
+            LikertQuestion.objects.filter(assessment=assessment).delete()
+            OpenEndedQuestion.objects.filter(assessment=assessment).delete()
+            
+            # Process Likert questions
+            likert_count = int(request.POST.get('likert_count', 0))
+            for i in range(1, likert_count + 1):
+                question_text = request.POST.get(f'likert_question_{i}')
+                if question_text:
+                    LikertQuestion.objects.create(
+                        assessment=assessment,
+                        question_text=question_text,
+                        order=i
+                    )
+            
+            # Process open-ended questions
+            open_ended_count = int(request.POST.get('open_ended_count', 0))
+            for i in range(1, open_ended_count + 1):
+                question_text = request.POST.get(f'open_ended_question_{i}')
+                if question_text:
+                    OpenEndedQuestion.objects.create(
+                        assessment=assessment,
+                        question_text=question_text,
+                        order=i
+                    )
+            
+            # Send notification email
+            send_mail(
+                f'Assessment Questions Updated: {assessment.title}',
+                f'The questions for assessment "{assessment.title}" have been updated by {request.user.get_full_name() or request.user.username}.\n\n'
+                f'Please review the changes in the assessment system.',
+                settings.DEFAULT_FROM_EMAIL,
+                [request.user.email],  # Send to the professor who made the changes
+                fail_silently=False,
+            )
+            
+            messages.success(request, "Assessment questions updated successfully. Notification email sent.")
+            return redirect('view_assessment', assessment_id=assessment_id)
+            
+        except Exception as e:
+            messages.error(request, f"Error updating questions: {str(e)}")
+    
+    context = {
+        'assessment': assessment,
+        'likert_questions': likert_questions,
+        'open_ended_questions': open_ended_questions,
+    }
+    
+    return render(request, 'edit_assessment_questions.html', context)
+
+@login_required
+def view_team_comments(request, assessment_id, team_id=None):
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if user is a professor or a student in the team
+    is_professor = hasattr(request.user, 'profile') and request.user.profile.role == 'professor'
+    
+    if not is_professor:
+        # For students, only allow viewing their own team's comments
+        user_team = Team.objects.filter(course=assessment.course, members=request.user).first()
+        if not user_team:
+            messages.error(request, "You are not part of any team in this course.")
+            return redirect('view_assessment', assessment_id=assessment_id)
+        
+        if team_id and int(team_id) != user_team.id:
+            messages.error(request, "You can only view comments for your own team.")
+            return redirect('view_assessment', assessment_id=assessment_id)
+        
+        team = user_team
+    else:
+        # For professors, allow viewing any team's comments
+        if team_id:
+            team = get_object_or_404(Team, id=team_id, course=assessment.course)
+        else:
+            # If no team specified, show the first team
+            team = Team.objects.filter(course=assessment.course).first()
+            if not team:
+                messages.error(request, "No teams found for this course.")
+                return redirect('view_assessment', assessment_id=assessment_id)
+    
+    # Get all teams for the dropdown (for professors)
+    teams = Team.objects.filter(course=assessment.course) if is_professor else None
+    
+    # Get team members
+    team_members = team.members.all()
+    
+    # Get all submissions for this assessment and team
+    submissions = AssessmentSubmission.objects.filter(
+        assessment=assessment,
+        student__in=team_members,
+        peer__in=team_members
+    )
+    
+    # Organize comments by recipient
+    comments_by_recipient = {}
+    for member in team_members:
+        member_submissions = submissions.filter(peer=member)
+        
+        # Get open-ended responses
+        open_ended_responses = []
+        for submission in member_submissions:
+            responses = OpenEndedResponse.objects.filter(submission=submission)
+            for response in responses:
+                # Anonymize the reviewer for students
+                reviewer = submission.student.get_full_name() or submission.student.username
+                if not is_professor and submission.student != request.user:
+                    reviewer = "Anonymous Team Member"
+                
+                open_ended_responses.append({
+                    'question': response.question.question_text,
+                    'response': response.response_text,
+                    'reviewer': reviewer
+                })
+        
+        comments_by_recipient[member] = open_ended_responses
+    
+    context = {
+        'assessment': assessment,
+        'team': team,
+        'teams': teams,
+        'is_professor': is_professor,
+        'comments_by_recipient': comments_by_recipient,
+    }
+    
+    return render(request, 'team_comments.html', context)
