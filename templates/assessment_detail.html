@@ -166,14 +166,16 @@
                         <div class="card shadow">
                             <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
                                 <h4>Assessment Management</h4>
-                                {% if not assessment.is_published %}
+                                {% if not assessment.is_published and not is_active %}
                                     <span class="badge bg-success">Draft - Questions Can Be Edited</span>
-                                {% else %}
+                                {% elif assessment.is_published %}
                                     <span class="badge bg-danger">Published - Questions Cannot Be Modified</span>
+                                {% elif is_active %}
+                                    <span class="badge bg-warning">Active - Questions Cannot Be Modified</span>
                                 {% endif %}
                             </div>
                             <div class="card-body">
-                                {% if not assessment.is_published %}
+                                {% if not assessment.is_published and not is_active %}
                                     <form method="post" action="{% url 'edit_assessment_questions' assessment.id %}">
                                         {% csrf_token %}
                                         
@@ -282,7 +284,11 @@
                                     </script>
                                 {% else %}
                                     <div class="alert alert-warning">
-                                        This assessment has been published. Questions cannot be modified.
+                                        {% if assessment.is_published %}
+                                            This assessment has been published. Questions cannot be modified.
+                                        {% elif is_active %}
+                                            This assessment is currently active. Questions cannot be modified.
+                                        {% endif %}
                                     </div>
                                     <div class="mt-3">
                                         <a href="{% url 'dashboard' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back to Dashboard</a>

@@ -232,16 +232,16 @@
                     <tr>
                         <td>{{ assessment.id }}</td>
                         <td>{{ assessment.title }}</td>
-                        <td>{{ assessment.course }}</td>
+                        <td>{{ assessment.course.name }}</td>
                         <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
                         <td>{{ assessment.due_date|time:"H:i" }}</td>
                         <td>
-                            <a href="{% url 'view_assessment' assessment.id %}" class="btn maroon-btn">View Details</a>
-                            {% if user.role == "student" or user.role == "Student" %}
-                            <a href="{% url 'submit_assessment' assessment.id %}" class="btn btn-success">Submit
-                                Form</a>
-                            {% endif %}
+                            <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View Details</a>
                         </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No active assessments</td>
                     </tr>
                     {% endfor %}
                 </tbody>

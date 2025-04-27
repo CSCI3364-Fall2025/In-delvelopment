@@ -125,7 +125,12 @@ def dashboard(request):
 @login_required
 def view_assessment(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
-
+    
+    # Check if assessment is active (past release date) with null check
+    is_active = False
+    if assessment.release_date is not None:
+        is_active = timezone.now() >= assessment.release_date
+    
     # Load or create draft progress
     progress, _ = AssessmentProgress.objects.get_or_create(
         student=request.user,
@@ -183,6 +188,7 @@ def view_assessment(request, assessment_id):
         'likert_questions': likert_questions,
         'open_ended_questions': open_ended_questions,
         'now': timezone.now(),
+        'is_active': is_active,
     }
 
     return render(request, 'assessment_detail.html', context)
@@ -1191,6 +1197,11 @@ def edit_assessment_questions(request, assessment_id):
     # Check if assessment is already published
     if assessment.is_published:
         messages.error(request, "This assessment has already been published and cannot be modified.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    # Check if assessment is active (past release date) with null check
+    if assessment.release_date is not None and timezone.now() >= assessment.release_date:
+        messages.error(request, "This assessment is currently active and cannot be modified.")
         return redirect('view_assessment', assessment_id=assessment_id)
     
     if request.method == 'POST':

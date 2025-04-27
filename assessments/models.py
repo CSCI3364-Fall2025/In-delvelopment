@@ -39,8 +39,15 @@ class Assessment(models.Model):
 
     @property
     def is_editable(self):
-        """Assessment is editable if it's not published yet"""
-        return not self.is_published
+        """
+        Assessment is editable if it's not published yet and not active
+        (or if release_date is None)
+        """
+        if not self.is_published:
+            if self.release_date is None:
+                return True
+            return timezone.now() < self.release_date
+        return False
 
 class Team(models.Model):
     name = models.CharField(max_length=50, blank=True)
