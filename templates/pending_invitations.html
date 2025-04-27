@@ -45,8 +45,10 @@
                                             <form method="post" class="d-inline">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="invitation_id" value="{{ invitation.id }}">
-                                                <input type="hidden" name="action" value="accept">
-                                                <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                                                <div class="mb-2">
+                                                    <input type="text" name="enrollment_code" class="form-control form-control-sm" maxlength="8" placeholder="Enrollment Code" required>
+                                                </div>
+                                                <button type="submit" name="action" value="accept" class="btn btn-success btn-sm">Accept</button>
                                             </form>
                                             <form method="post" class="d-inline">
                                                 {% csrf_token %}
@@ -54,7 +56,7 @@
                                                 <input type="hidden" name="action" value="decline">
                                                 <button type="submit" class="btn btn-danger btn-sm">Decline</button>
                                             </form>
-                                        </td>
+                                        </td>                                        
                                     </tr>
                                     {% endfor %}
                                 </tbody>

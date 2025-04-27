@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+import random
+import string
+
 print("views.py loaded")
 
 def home(request):
@@ -74,121 +77,6 @@ def dashboard(request):
         'role': current_user.role,
     }
     
-    # # Get or create assessments
-    # assessment1, _ = Assessment.objects.get_or_create(
-    #     id=1, 
-    #     defaults={
-    #         'title': 'Peer Assessment 3', 
-    #         'course': Course.objects.get(), 
-    #         'due_date': '2025-03-21 23:59:00'
-    #     }
-    # )
-    # assessment2, _ = Assessment.objects.get_or_create(
-    #     id=2, 
-    #     defaults={
-    #         'title': 'Peer Assessment 1', 
-    #         'course': 'Software Engineering', 
-    #         'closed_date': '2025-02-12 23:59:00'
-    #     }
-    # )
-    # assessment3, _ = Assessment.objects.get_or_create(
-    #     id=3, 
-    #     defaults={
-    #         'title': 'Peer Assessment 2', 
-    #         'course': 'Software Engineering', 
-    #         'closed_date': '2025-02-24 23:59:00'
-    #     }
-    # )
-    # assessment4, _ = Assessment.objects.get_or_create(
-    #     id=4, 
-    #     defaults={
-    #         'title': 'Peer Assessment 4', 
-    #         'course': 'Software Engineering', 
-    #         'open_date': '2025-04-02 09:00:00'
-    #     }
-    # )
-    
-    # # Get or create submissions
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment2,
-    #     student='Julian Castro',
-    #     defaults={
-    #         'contribution': 4,
-    #         'teamwork': 4,
-    #         'communication': 4,
-    #         'feedback': 'Great job on the project!'
-    #     }
-    # )
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment2,
-    #     student='Alice',
-    #     defaults={
-    #         'contribution': 3,
-    #         'teamwork': 3,
-    #         'communication': 3,
-    #         'feedback': 'Needs improvement in communication.'
-    #     }
-    # )
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment2,
-    #     student='Bob',
-    #     defaults={
-    #         'contribution': 5,
-    #         'teamwork': 5,
-    #         'communication': 5,
-    #         'feedback': 'Excellent teamwork and contribution.'
-    #     }
-    # )
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment2,
-    #     student='Charlie',
-    #     defaults={
-    #         'contribution': 2,
-    #         'teamwork': 2,
-    #         'communication': 2,
-    #         'feedback': 'Average performance overall.'
-    #     }
-    # )
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment3,
-    #     student='Julian Castro',
-    #     defaults={
-    #         'contribution': 4,
-    #         'teamwork': 4,
-    #         'communication': 4,
-    #         'feedback': 'Great job on the project!'
-    #     }
-    # )
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment3,
-    #     student='Alice',
-    #     defaults={
-    #         'contribution': 3,
-    #         'teamwork': 3,
-    #         'communication': 3,
-    #         'feedback': 'Needs improvement in communication.'
-    #     }
-    # )
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment3,
-    #     student='Bob',
-    #     defaults={
-    #         'contribution': 5,
-    #         'teamwork': 5,
-    #         'communication': 5,
-    #         'feedback': 'Excellent teamwork and contribution.'
-    #     }
-    # )
-    # AssessmentSubmission.objects.get_or_create(
-    #     assessment=assessment3,
-    #     student='Charlie',
-    #     defaults={
-    #         'contribution': 2,
-    #         'teamwork': 2,
-    #         'communication': 2,
-    #         'feedback': 'Average performance overall.'
-    #     }
-    # )
     
     today = timezone.now()
 
@@ -669,6 +557,12 @@ def delete_team(request, course_name, team_pk):
     messages.success(request, f"Team deleted successfully.")
     return redirect('view_course', course_name=course_name)
 
+def generate_unique_enrollment_code():
+    while True:
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        if not CourseInvitation.objects.filter(enrollment_code=code).exists():
+            return code
+
 @login_required
 def invite_students(request):
     """Send invitation emails to students to join the system."""
@@ -718,11 +612,18 @@ def invite_students(request):
             emails_sent = 0
             
             for email in valid_emails:
+                # Generate a unique enrollment code
+                enrollment_code = generate_unique_enrollment_code()
+
                 # Create or update invitation record
                 invitation, created = CourseInvitation.objects.update_or_create(
                     course=course,
                     email=email,
-                    defaults={'invited_by': request.user, 'accepted': False}
+                    defaults={
+                        'invited_by': request.user,
+                        'accepted': False,
+                        'enrollment_code': enrollment_code
+                        }
                 )
                 
                 subject = "Invitation to Boston College Peer Assessment System"
@@ -730,10 +631,12 @@ def invite_students(request):
                     f"Dear Student,\n\n"
                     f"You have been invited by Professor {request.user.get_full_name() or request.user.username} "
                     f"to join the Boston College Peer Assessment System for {course.name}.\n\n"
+                    f"Your unique enrollment code is: {enrollment_code}\n\n"
                     f"Please visit {request.build_absolute_uri('/login/')} to log in with your BC credentials.\n\n"
-                    f"After logging in, you will see a notification to accept this course invitation.\n\n"
+                    f"After logging in, you will be prompted to enter your enrollment code to accept the invitation.\n\n"
                     "Best regards,\nPeer Assessment System"
                 )
+
                 
                 try:
                     # The send_mail function will now use our custom backend
@@ -760,6 +663,7 @@ def invite_students(request):
     # For GET requests, show the form with course selection
     courses = Course.objects.filter(created_by=request.user, is_active=True)
     return render(request, 'invite_students.html', {'courses': courses})
+
 
 @login_required
 def test_email(request):
@@ -1245,14 +1149,19 @@ def accept_invitation(request):
     
     invitation_id = request.POST.get('invitation_id')
     action = request.POST.get('action')
+    entered_code = request.POST.get('enrollment_code', '').strip()  # <- get the entered code
     
     try:
         invitation = CourseInvitation.objects.get(id=invitation_id, email=request.user.email)
         
         if action == 'accept':
-            # Add student to course
+            # Check if the entered code matches
+            if invitation.enrollment_code != entered_code:
+                messages.error(request, "Incorrect enrollment code. Please try again.")
+                return redirect('pending_invitations')
+            
+            # Code matches, accept the invitation
             invitation.course.students.add(request.user)
-            # Mark invitation as accepted
             invitation.accepted = True
             invitation.accepted_at = timezone.now()
             invitation.save()
@@ -1266,8 +1175,8 @@ def accept_invitation(request):
     except CourseInvitation.DoesNotExist:
         messages.error(request, "Invalid invitation.")
     
-    # Redirect back to dashboard
     return redirect('dashboard')
+
 
 @login_required
 def edit_assessment_questions(request, assessment_id):
