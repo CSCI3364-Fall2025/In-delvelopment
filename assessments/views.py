@@ -182,6 +182,7 @@ def view_assessment(request, assessment_id):
         'class_avg': class_avg,
         'likert_questions': likert_questions,
         'open_ended_questions': open_ended_questions,
+        'now': timezone.now(),
     }
 
     return render(request, 'assessment_detail.html', context)
@@ -1182,71 +1183,117 @@ def accept_invitation(request):
 def edit_assessment_questions(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
     
-    # Check if user is a professor and the assessment hasn't been released yet
+    # Check if user is a professor
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
-        messages.error(request, "Only professors can edit assessment questions.")
+        messages.error(request, "You don't have permission to edit assessment questions.")
         return redirect('view_assessment', assessment_id=assessment_id)
     
-    if timezone.now() > assessment.release_date:
-        messages.error(request, "Cannot edit questions after assessment has been released.")
+    # Check if assessment is already published
+    if assessment.is_published:
+        messages.error(request, "This assessment has already been published and cannot be modified.")
         return redirect('view_assessment', assessment_id=assessment_id)
-    
-    # Get existing questions
-    likert_questions = LikertQuestion.objects.filter(assessment=assessment).order_by('order')
-    open_ended_questions = OpenEndedQuestion.objects.filter(assessment=assessment).order_by('order')
     
     if request.method == 'POST':
-        # Process form submission
-        try:
-            # Delete existing questions (we'll replace them)
-            LikertQuestion.objects.filter(assessment=assessment).delete()
-            OpenEndedQuestion.objects.filter(assessment=assessment).delete()
+        action = request.POST.get('action', 'save')
+        
+        # Process Likert questions
+        likert_count = int(request.POST.get('likert_count', 0))
+        for i in range(1, likert_count + 1):
+            question_id = request.POST.get(f'likert_id_{i}')
+            question_text = request.POST.get(f'likert_text_{i}')
+            question_order = int(request.POST.get(f'likert_order_{i}', i))
             
-            # Process Likert questions
-            likert_count = int(request.POST.get('likert_count', 0))
-            for i in range(1, likert_count + 1):
-                question_text = request.POST.get(f'likert_question_{i}')
-                if question_text:
-                    LikertQuestion.objects.create(
-                        assessment=assessment,
-                        question_text=question_text,
-                        order=i
-                    )
+            if question_id == 'new':
+                # Create new question
+                LikertQuestion.objects.create(
+                    assessment=assessment,
+                    question_text=question_text,
+                    order=question_order
+                )
+            else:
+                # Update existing question
+                try:
+                    question = LikertQuestion.objects.get(id=question_id, assessment=assessment)
+                    question.question_text = question_text
+                    question.order = question_order
+                    question.save()
+                except LikertQuestion.DoesNotExist:
+                    # Question was deleted or doesn't belong to this assessment
+                    pass
+        
+        # Process Open-ended questions
+        open_ended_count = int(request.POST.get('open_ended_count', 0))
+        for i in range(1, open_ended_count + 1):
+            question_id = request.POST.get(f'open_ended_id_{i}')
+            question_text = request.POST.get(f'open_ended_text_{i}')
+            question_order = int(request.POST.get(f'open_ended_order_{i}', i))
             
-            # Process open-ended questions
-            open_ended_count = int(request.POST.get('open_ended_count', 0))
-            for i in range(1, open_ended_count + 1):
-                question_text = request.POST.get(f'open_ended_question_{i}')
-                if question_text:
-                    OpenEndedQuestion.objects.create(
-                        assessment=assessment,
-                        question_text=question_text,
-                        order=i
-                    )
+            if question_id == 'new':
+                # Create new question
+                OpenEndedQuestion.objects.create(
+                    assessment=assessment,
+                    question_text=question_text,
+                    order=question_order
+                )
+            else:
+                # Update existing question
+                try:
+                    question = OpenEndedQuestion.objects.get(id=question_id, assessment=assessment)
+                    question.question_text = question_text
+                    question.order = question_order
+                    question.save()
+                except OpenEndedQuestion.DoesNotExist:
+                    # Question was deleted or doesn't belong to this assessment
+                    pass
+        
+        # Delete questions that weren't included in the form
+        existing_likert_ids = [request.POST.get(f'likert_id_{i}') for i in range(1, likert_count + 1) 
+                              if request.POST.get(f'likert_id_{i}') != 'new']
+        LikertQuestion.objects.filter(assessment=assessment).exclude(id__in=existing_likert_ids).delete()
+        
+        existing_open_ended_ids = [request.POST.get(f'open_ended_id_{i}') for i in range(1, open_ended_count + 1)
+                                  if request.POST.get(f'open_ended_id_{i}') != 'new']
+        OpenEndedQuestion.objects.filter(assessment=assessment).exclude(id__in=existing_open_ended_ids).delete()
+        
+        # Handle publishing if requested
+        if action == 'publish':
+            assessment.is_published = True
+            assessment.save()
             
-            # Send notification email
+            # Send confirmation email about publishing
             send_mail(
-                f'Assessment Questions Updated: {assessment.title}',
-                f'The questions for assessment "{assessment.title}" have been updated by {request.user.get_full_name() or request.user.username}.\n\n'
-                f'Please review the changes in the assessment system.',
+                f'Assessment Published: {assessment.title}',
+                f'''You have successfully published the assessment "{assessment.title}" in course "{assessment.course.name}".
+                
+The assessment will be released to students on {assessment.release_date}.
+
+This is an automated message from the Peer Assessment System.''',
                 settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],  # Send to the professor who made the changes
+                [request.user.email],
                 fail_silently=False,
             )
             
-            messages.success(request, "Assessment questions updated successfully. Notification email sent.")
-            return redirect('view_assessment', assessment_id=assessment_id)
+            messages.success(request, "Assessment has been published successfully. A confirmation email has been sent.")
+        else:
+            # Send confirmation email about saving draft
+            send_mail(
+                f'Assessment Draft Updated: {assessment.title}',
+                f'''You have successfully updated the draft for assessment "{assessment.title}" in course "{assessment.course.name}".
+                
+The assessment is saved as a draft and can still be edited. It will be released to students on {assessment.release_date} if published.
+                
+This is an automated message from the Peer Assessment System.''',
+                settings.DEFAULT_FROM_EMAIL,
+                [request.user.email],
+                fail_silently=False,
+            )
             
-        except Exception as e:
-            messages.error(request, f"Error updating questions: {str(e)}")
+            messages.success(request, "Assessment draft has been saved successfully. A confirmation email has been sent.")
+            
+        return redirect('view_assessment', assessment_id=assessment_id)
     
-    context = {
-        'assessment': assessment,
-        'likert_questions': likert_questions,
-        'open_ended_questions': open_ended_questions,
-    }
-    
-    return render(request, 'edit_assessment_questions.html', context)
+    # If not POST, redirect back to the assessment view
+    return redirect('view_assessment', assessment_id=assessment_id)
 
 @login_required
 def view_team_comments(request, assessment_id, team_id=None):

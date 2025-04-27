@@ -26,6 +26,8 @@ class Assessment(models.Model):
     results_published = models.BooleanField(default=False)
     published_date = models.DateTimeField(null=True, blank=True)
     reminder_sent = models.BooleanField(default=False)
+    release_date = models.DateTimeField(null=True, blank=True)
+    is_published = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
@@ -34,6 +36,11 @@ class Assessment(models.Model):
         self.published = True
         self.publish_date = timezone.now()
         self.save()
+
+    @property
+    def is_editable(self):
+        """Assessment is editable if it's not published yet"""
+        return not self.is_published
 
 class Team(models.Model):
     name = models.CharField(max_length=50, blank=True)

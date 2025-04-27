@@ -35,4 +35,5 @@ urlpatterns = [
     path('pending-invitations/', views.pending_invitations, name='pending_invitations'),
     path('get-pending-invitations/', views.get_pending_invitations_json, name='get_pending_invitations_json'),
     path('accept-invitation/', views.accept_invitation, name='accept_invitation'),
+    path('assessment/<int:assessment_id>/edit-questions/', views.edit_assessment_questions, name='edit_assessment_questions'),
 ]
