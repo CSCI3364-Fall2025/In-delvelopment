@@ -19,8 +19,8 @@
     <form method="POST">
       {% csrf_token %}
       <div class="mb-3">
-        <label for="course_name" class="form-label">Course Name</label>
-        <input type="text" class="form-control" id="course_name" name="course_name" required>
+        <label for="course_name" class="form-label">Please Enter a Course Join Code</label>
+        <input type="text" class="form-control" id="enrollment_code" name="enrollment_code" required>
       </div>
       
       <button type="submit" class="btn gold-btn w-100">Enroll</button>
