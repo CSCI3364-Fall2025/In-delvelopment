@@ -2,7 +2,7 @@
 {% load range_tags %} <!-- Load the custom template tag -->
 {% load assessment_filters %}
 
-{% block title %}Assessment Details | Peer Assessment System{% endblock %}
+{% block title %}Assessment Details | AAA {% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -50,6 +50,7 @@
 
                     {% if user.profile.role == 'student' or user.profile.role == 'Student' %}
                     <div id="studentView" class="container">
+                        <!-- Student view content -->
                         <h2>Peer Assessment</h2>
                         <form method="post" action="{% url 'submit_assessment' assessment.id %}">
                             {% csrf_token %}
@@ -57,7 +58,8 @@
                                 <label for="student" class="form-label">Select Team Member:</label>
                                 <select id="student" name="student" class="form-select" required>
                                     {% for member in team_members %}
-                                        <option value="{{ member.username }}">{{ member.get_full_name|default:member.username }}</option>
+                                    <option value="{{ member.username }}">{{
+                                        member.get_full_name|default:member.username }}</option>
                                     {% endfor %}
                                     <option value="{{ request.user.username }}">Self</option>
                                 </select>
@@ -69,41 +71,50 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
-
+                                            <input class="form-check-input" type="radio" name="contribution"
+                                                value="{{ i }}" {% if submission and submission.contribution==i
+                                                %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
                                     <span>Excellent</span>
                                 </div>
                             </div>
+
                             <div class="mb-4">
                                 <label class="form-label">Rate Teamwork:</label>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
+                                            <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
+                                                {% if submission and submission.teamwork==i %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
                                     <span>Excellent</span>
                                 </div>
                             </div>
+
                             <div class="mb-4">
                                 <label class="form-label">Rate Communication:</label>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="communication" value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
+                                            <input class="form-check-input" type="radio" name="communication"
+                                                value="{{ i }}" {% if submission and submission.communication==i
+                                                %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -118,12 +129,13 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="likert_{{ question.id }}" value="{{ i }}" 
-                                                {% has_response_with_rating submission question i as has_response %}
-                                                {% if has_response %}checked{% endif %}>
+                                            <input class="form-check-input" type="radio" name="likert_{{ question.id }}"
+                                                value="{{ i }}" {% has_response_with_rating submission question i as
+                                                has_response %} {% if has_response %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -134,15 +146,19 @@
 
                             <!-- Open-Ended Question -->
                             <div class="mb-3">
-                                <label for="feedback" class="form-label">Give an overview of this member's role in the team:</label>
-                                <textarea id="feedback" name="feedback" class="form-control" rows="4" placeholder="Provide additional feedback here...">{% if submission %}{{ submission.feedback }}{% endif %}</textarea>
+                                <label for="feedback" class="form-label">Give an overview of this member's role in the
+                                    team:</label>
+                                <textarea id="feedback" name="feedback" class="form-control" rows="4"
+                                    placeholder="Provide additional feedback here...">{% if submission %}{{ submission.feedback }}{% endif %}</textarea>
                             </div>
 
                             <!-- Custom Open-Ended Questions -->
                             {% for question in open_ended_questions %}
                             <div class="mb-3">
-                                <label for="open_ended_{{ question.id }}" class="form-label">{{ question.question_text }}</label>
-                                <textarea id="open_ended_{{ question.id }}" name="open_ended_{{ question.id }}" class="form-control" rows="4" 
+                                <label for="open_ended_{{ question.id }}" class="form-label">{{ question.question_text
+                                    }}</label>
+                                <textarea id="open_ended_{{ question.id }}" name="open_ended_{{ question.id }}"
+                                    class="form-control" rows="4"
                                     placeholder="Provide your answer here...">{% if submission %}{% get_open_ended_response submission question as response_text %}{{ response_text }}{% endif %}</textarea>
                             </div>
                             {% endfor %}
@@ -163,78 +179,229 @@
 
                     {% if user.profile.role == 'professor' or user.profile.role == 'Professor' %}
                     <div id="professorView" class="container mt-4">
+                        <!-- Professor view content -->
                         <div class="card shadow">
                             <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
                                 <h4>Assessment Management</h4>
                                 {% if not assessment.is_published and not is_active %}
-                                    <span class="badge bg-success">Draft - Questions Can Be Edited</span>
+                                <span class="badge bg-success">Draft - Questions Can Be Edited</span>
                                 {% elif assessment.is_published %}
-                                    <span class="badge bg-danger">Published - Questions Cannot Be Modified</span>
+                                <span class="badge bg-danger">Published - Questions Cannot Be Modified</span>
                                 {% elif is_active %}
-                                    <span class="badge bg-warning">Active - Questions Cannot Be Modified</span>
+                                <span class="badge bg-warning">Active - Questions Cannot Be Modified</span>
                                 {% endif %}
                             </div>
                             <div class="card-body">
+                                <!-- Student Responses Section -->
+                                {% if teams %}
+                                <div class="mb-4">
+                                    <h5>Student Responses by Team</h5>
+                                    {% for team in teams %}
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6>{{ team.name|default:"Unnamed Team" }}</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% for member in team.members.all %}
+                                            <div class="student-response mb-3 p-3 border rounded">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6>{{ member.get_full_name|default:member.username }}</h6>
+                                                    <div class="score-input-group">
+                                                        <input type="number"
+                                                            class="form-control form-control-sm score-input me-2"
+                                                            style="width: 100px;" min="0" max="10" step="0.1"
+                                                            value="{{ member.student_score.score|default:'' }}"
+                                                            data-student-id="{{ member.id }}"
+                                                            data-team-id="{{ team.id }}"
+                                                            data-assessment-id="{{ assessment.id }}">
+                                                        <button class="btn btn-primary btn-sm submit-score">Submit
+                                                            Score</button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Show submissions received by this member -->
+                                                {% with received_submissions=member.assessed_submissions.all %}
+                                                {% if received_submissions %}
+                                                <div class="submissions-received mt-3">
+                                                    <h6>Feedback Received:</h6>
+                                                    {% for submission in received_submissions %}
+                                                    {% if submission.assessment == assessment %}
+                                                    <div class="submission-detail mt-2 p-2 border rounded">
+                                                        <p><strong>From:</strong> Anonymous Team Member</p>
+                                                        <ul class="list-unstyled">
+                                                            <li>Contribution: {{ submission.contribution }}/5</li>
+                                                            <li>Teamwork: {{ submission.teamwork }}/5</li>
+                                                            <li>Communication: {{ submission.communication }}/5</li>
+                                                        </ul>
+                                                        {% if submission.feedback %}
+                                                        <p><strong>Feedback:</strong> {{ submission.feedback }}</p>
+                                                        {% endif %}
+
+                                                        <!-- Show Likert responses -->
+                                                        {% if submission.likert_responses.exists %}
+                                                        <div class="likert-responses">
+                                                            <p><strong>Additional Ratings:</strong></p>
+                                                            {% for response in submission.likert_responses.all %}
+                                                            <p>{{ response.question.question_text }}: {{ response.rating
+                                                                }}/5</p>
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% endif %}
+
+                                                        <!-- Show Open-ended responses -->
+                                                        {% if submission.open_ended_responses.exists %}
+                                                        <div class="open-ended-responses">
+                                                            <p><strong>Additional Comments:</strong></p>
+                                                            {% for response in submission.open_ended_responses.all %}
+                                                            <p><em>{{ response.question.question_text }}</em><br>
+                                                                {{ response.response_text }}</p>
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                {% else %}
+                                                <p class="text-muted mt-2">No assessments received yet</p>
+                                                {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">No teams found for this assessment</div>
+                                {% endif %}
+
+                                <!-- Score submission handling script -->
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        const csrfToken = '{{ csrf_token }}';
+
+                                        document.querySelectorAll('.submit-score').forEach(button => {
+                                            button.addEventListener('click', function () {
+                                                const inputGroup = this.closest('.score-input-group');
+                                                const input = inputGroup.querySelector('.score-input');
+                                                const score = parseFloat(input.value);
+
+                                                if (isNaN(score) || score < 0 || score > 10) {
+                                                    alert('Please enter a valid score between 0 and 10');
+                                                    return;
+                                                }
+
+                                                submitScore({
+                                                    student_id: input.dataset.studentId,
+                                                    assessment_id: input.dataset.assessmentId,
+                                                    score: score
+                                                });
+                                            });
+                                        });
+
+                                        function submitScore(data) {
+                                            fetch('{% url "submit_student_score" %}', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                                    'X-CSRFToken': csrfToken
+                                                },
+                                                body: new URLSearchParams(data)
+                                            })
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    if (data.success) {
+                                                        alert(data.message);
+                                                    } else {
+                                                        throw new Error(data.error || 'Failed to submit score');
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    alert('Error: ' + error.message);
+                                                });
+                                        }
+                                    });
+                                </script>
+
                                 {% if not assessment.is_published and not is_active %}
-                                    <form method="post" action="{% url 'edit_assessment_questions' assessment.id %}">
-                                        {% csrf_token %}
-                                        
-                                        <h5 class="mb-3">Likert Scale Questions</h5>
-                                        <div id="likert-questions-container">
-                                            {% for question in likert_questions %}
-                                            <div class="mb-3 likert-question">
-                                                <div class="input-group">
-                                                    <input type="hidden" name="likert_id_{{ forloop.counter }}" value="{{ question.id }}">
-                                                    <input type="text" class="form-control" name="likert_text_{{ forloop.counter }}" 
-                                                           value="{{ question.question_text }}" required>
-                                                    <input type="number" class="form-control" name="likert_order_{{ forloop.counter }}" 
-                                                           value="{{ question.order }}" min="1" style="max-width: 100px;" required>
-                                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
-                                                </div>
+                                <form method="post" action="{% url 'edit_assessment_questions' assessment.id %}">
+                                    {% csrf_token %}
+
+                                    <h5 class="mb-3">Likert Scale Questions</h5>
+                                    <div id="likert-questions-container">
+                                        {% for question in likert_questions %}
+                                        <div class="mb-3 likert-question">
+                                            <div class="input-group">
+                                                <input type="hidden" name="likert_id_{{ forloop.counter }}"
+                                                    value="{{ question.id }}">
+                                                <input type="text" class="form-control"
+                                                    name="likert_text_{{ forloop.counter }}"
+                                                    value="{{ question.question_text }}" required>
+                                                <input type="number" class="form-control"
+                                                    name="likert_order_{{ forloop.counter }}"
+                                                    value="{{ question.order }}" min="1" style="max-width: 100px;"
+                                                    required>
+                                                <button type="button"
+                                                    class="btn btn-danger remove-question">Remove</button>
                                             </div>
-                                            {% endfor %}
                                         </div>
-                                        <button type="button" id="add-likert-question" class="btn btn-secondary mb-4">Add Likert Question</button>
-                                        
-                                        <h5 class="mb-3">Open-Ended Questions</h5>
-                                        <div id="open-ended-questions-container">
-                                            {% for question in open_ended_questions %}
-                                            <div class="mb-3 open-ended-question">
-                                                <div class="input-group">
-                                                    <input type="hidden" name="open_ended_id_{{ forloop.counter }}" value="{{ question.id }}">
-                                                    <input type="text" class="form-control" name="open_ended_text_{{ forloop.counter }}" 
-                                                           value="{{ question.question_text }}" required>
-                                                    <input type="number" class="form-control" name="open_ended_order_{{ forloop.counter }}" 
-                                                           value="{{ question.order }}" min="1" style="max-width: 100px;" required>
-                                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
-                                                </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button type="button" id="add-likert-question" class="btn btn-secondary mb-4">Add
+                                        Likert Question</button>
+
+                                    <h5 class="mb-3">Open-Ended Questions</h5>
+                                    <div id="open-ended-questions-container">
+                                        {% for question in open_ended_questions %}
+                                        <div class="mb-3 open-ended-question">
+                                            <div class="input-group">
+                                                <input type="hidden" name="open_ended_id_{{ forloop.counter }}"
+                                                    value="{{ question.id }}">
+                                                <input type="text" class="form-control"
+                                                    name="open_ended_text_{{ forloop.counter }}"
+                                                    value="{{ question.question_text }}" required>
+                                                <input type="number" class="form-control"
+                                                    name="open_ended_order_{{ forloop.counter }}"
+                                                    value="{{ question.order }}" min="1" style="max-width: 100px;"
+                                                    required>
+                                                <button type="button"
+                                                    class="btn btn-danger remove-question">Remove</button>
                                             </div>
-                                            {% endfor %}
                                         </div>
-                                        <button type="button" id="add-open-ended-question" class="btn btn-secondary mb-4">Add Open-Ended Question</button>
-                                        
-                                        <input type="hidden" id="likert-count" name="likert_count" value="{{ likert_questions|length }}">
-                                        <input type="hidden" id="open-ended-count" name="open_ended_count" value="{{ open_ended_questions|length }}">
-                                        
-                                        <div class="d-flex justify-content-between mt-4">
-                                            <button type="submit" name="action" value="save" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Save Draft</button>
-                                            <button type="submit" name="action" value="publish" class="btn btn-success">Save & Publish</button>
-                                        </div>
-                                    </form>
-                                    
-                                    <!-- JavaScript for adding/removing questions -->
-                                    <script>
-                                        document.addEventListener('DOMContentLoaded', function() {
-                                            let likertCount = {{ likert_questions|length }};
-                                            let openEndedCount = {{ open_ended_questions|length }};
-                                            
-                                            // Add Likert question
-                                            document.getElementById('add-likert-question').addEventListener('click', function() {
-                                                likertCount++;
-                                                const container = document.getElementById('likert-questions-container');
-                                                const div = document.createElement('div');
-                                                div.className = 'mb-3 likert-question';
-                                                div.innerHTML = `
+                                        {% endfor %}
+                                    </div>
+                                    <button type="button" id="add-open-ended-question"
+                                        class="btn btn-secondary mb-4">Add Open-Ended Question</button>
+
+                                    <input type="hidden" id="likert-count" name="likert_count"
+                                        value="{{ likert_questions|length }}">
+                                    <input type="hidden" id="open-ended-count" name="open_ended_count"
+                                        value="{{ open_ended_questions|length }}">
+
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <button type="submit" name="action" value="save" class="btn"
+                                            style="background-color: var(--bc-maroon); color: var(--bc-gold);">Save
+                                            Draft</button>
+                                        <button type="submit" name="action" value="publish" class="btn btn-success">Save
+                                            & Publish</button>
+                                    </div>
+                                </form>
+
+                                <!-- JavaScript for adding/removing questions -->
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        let likertCount = Number('{{ likert_questions|length }}');
+                                        let openEndedCount = Number('{{ open_ended_questions|length }}');
+                                    });
+
+                                    // Add Likert question
+                                    document.getElementById('add-likert-question').addEventListener('click', function () {
+                                        likertCount++;
+                                        const container = document.getElementById('likert-questions-container');
+                                        const div = document.createElement('div');
+                                        div.className = 'mb-3 likert-question';
+                                        div.innerHTML = `
                                                     <div class="input-group">
                                                         <input type="hidden" name="likert_id_${likertCount}" value="new">
                                                         <input type="text" class="form-control" name="likert_text_${likertCount}" 
@@ -244,17 +411,17 @@
                                                         <button type="button" class="btn btn-danger remove-question">Remove</button>
                                                     </div>
                                                 `;
-                                                container.appendChild(div);
-                                                document.getElementById('likert-count').value = likertCount;
-                                            });
-                                            
-                                            // Add Open-ended question
-                                            document.getElementById('add-open-ended-question').addEventListener('click', function() {
-                                                openEndedCount++;
-                                                const container = document.getElementById('open-ended-questions-container');
-                                                const div = document.createElement('div');
-                                                div.className = 'mb-3 open-ended-question';
-                                                div.innerHTML = `
+                                        container.appendChild(div);
+                                        document.getElementById('likert-count').value = likertCount;
+                                    });
+
+                                    // Add Open-ended question
+                                    document.getElementById('add-open-ended-question').addEventListener('click', function () {
+                                        openEndedCount++;
+                                        const container = document.getElementById('open-ended-questions-container');
+                                        const div = document.createElement('div');
+                                        div.className = 'mb-3 open-ended-question';
+                                        div.innerHTML = `
                                                     <div class="input-group">
                                                         <input type="hidden" name="open_ended_id_${openEndedCount}" value="new">
                                                         <input type="text" class="form-control" name="open_ended_text_${openEndedCount}" 
@@ -264,35 +431,36 @@
                                                         <button type="button" class="btn btn-danger remove-question">Remove</button>
                                                     </div>
                                                 `;
-                                                container.appendChild(div);
-                                                document.getElementById('open-ended-count').value = openEndedCount;
-                                            });
-                                            
-                                            // Remove question (delegated event)
-                                            document.addEventListener('click', function(e) {
-                                                if (e.target && e.target.classList.contains('remove-question')) {
-                                                    e.target.closest('.likert-question, .open-ended-question').remove();
-                                                    
-                                                    // Update counts
-                                                    const likertQuestions = document.querySelectorAll('.likert-question').length;
-                                                    const openEndedQuestions = document.querySelectorAll('.open-ended-question').length;
-                                                    document.getElementById('likert-count').value = likertQuestions;
-                                                    document.getElementById('open-ended-count').value = openEndedQuestions;
-                                                }
-                                            });
-                                        });
-                                    </script>
+                                        container.appendChild(div);
+                                        document.getElementById('open-ended-count').value = openEndedCount;
+                                    });
+
+                                    // Remove question (delegated event)
+                                    document.addEventListener('click', function (e) {
+                                        if (e.target && e.target.classList.contains('remove-question')) {
+                                            e.target.closest('.likert-question, .open-ended-question').remove();
+
+                                            // Update counts
+                                            const likertQuestions = document.querySelectorAll('.likert-question').length;
+                                            const openEndedQuestions = document.querySelectorAll('.open-ended-question').length;
+                                            document.getElementById('likert-count').value = likertQuestions;
+                                            document.getElementById('open-ended-count').value = openEndedQuestions;
+                                        }
+                                    });
+                                </script>
                                 {% else %}
-                                    <div class="alert alert-warning">
-                                        {% if assessment.is_published %}
-                                            This assessment has been published. Questions cannot be modified.
-                                        {% elif is_active %}
-                                            This assessment is currently active. Questions cannot be modified.
-                                        {% endif %}
-                                    </div>
-                                    <div class="mt-3">
-                                        <a href="{% url 'dashboard' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back to Dashboard</a>
-                                    </div>
+                                <div class="alert alert-warning">
+                                    {% if assessment.is_published %}
+                                    This assessment has been published. Questions cannot be modified.
+                                    {% elif is_active %}
+                                    This assessment is currently active. Questions cannot be modified.
+                                    {% endif %}
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'dashboard' %}" class="btn"
+                                        style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back to
+                                        Dashboard</a>
+                                </div>
                                 {% endif %}
                             </div>
                         </div>

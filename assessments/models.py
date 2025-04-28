@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone #for updates
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Course(models.Model):
@@ -137,3 +138,13 @@ class OpenEndedResponse(models.Model):
     
     class Meta:
         unique_together = ['submission', 'question']
+
+class StudentScore(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
+    score = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'assessment')

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from authentication.models import UserProfile, AssessmentProgress
-from assessments.models import Assessment, Course, Team, CourseInvitation, PeerAssessment, AssessmentSubmission, LikertQuestion, OpenEndedQuestion, LikertResponse, OpenEndedResponse
+from assessments.models import Assessment, Course, Team, CourseInvitation, PeerAssessment, AssessmentSubmission, LikertQuestion, OpenEndedQuestion, LikertResponse, OpenEndedResponse, StudentScore
 
 from django.shortcuts import HttpResponse #imports for scheduler
 from django.utils import timezone
@@ -1372,12 +1372,64 @@ def view_team_comments(request, assessment_id, team_id=None):
         
         comments_by_recipient[member] = open_ended_responses
     
+    # Get or create scores for each team member
+    member_scores = {}
+    for member in team_members:
+        score = StudentScore.objects.filter(
+            student=member,
+            assessment=assessment
+        ).first()
+        member_scores[member.id] = score.score if score else None
+
     context = {
         'assessment': assessment,
         'team': team,
         'teams': teams,
         'is_professor': is_professor,
         'comments_by_recipient': comments_by_recipient,
+        'member_scores': member_scores,  # Add scores to context
     }
     
     return render(request, 'team_comments.html', context)
+
+@login_required
+def get_team_members(request, team_id):
+    """AJAX endpoint to get team members"""
+    team = get_object_or_404(Team, id=team_id)
+    members = [{
+        'id': member.id,
+        'name': member.get_full_name() or member.username
+    } for member in team.members.all()]
+    return JsonResponse({'members': members})
+
+@login_required
+def submit_student_score(request):
+    """AJAX endpoint to submit a student's score"""
+    if request.method != 'POST' or not request.user.profile.role == 'professor':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    try:
+        assessment_id = request.POST.get('assessment_id')
+        student_id = request.POST.get('student_id')
+        score = float(request.POST.get('score'))
+        
+        if score < 0 or score > 10:
+            return JsonResponse({'error': 'Score must be between 0 and 10'}, status=400)
+            
+        assessment = get_object_or_404(Assessment, id=assessment_id)
+        student = get_object_or_404(User, id=student_id)
+        
+        # Save or update the student's score
+        student_score, created = StudentScore.objects.update_or_create(
+            student=student,
+            assessment=assessment,
+            defaults={'score': score}
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Score of {score} saved for {student.get_full_name() or student.username}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
