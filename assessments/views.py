@@ -787,6 +787,13 @@ class PeerAssessmentForm(forms.ModelForm):
         model = Assessment
         fields = ['title', 'course', 'open_date', 'due_date', 'self_assessment_required']  # Include the new field
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # pull the user from kwargs
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            # Filter the course field queryset
+            self.fields['course'].queryset = Course.objects.filter(created_by=user)
+
 @login_required
 def create_peer_assessments(request):
     """Allow professors to create a single peer assessment with custom questions."""
@@ -795,7 +802,7 @@ def create_peer_assessments(request):
         return redirect('dashboard')
 
     if request.method == "POST":
-        form = PeerAssessmentForm(request.POST)
+        form = PeerAssessmentForm(request.POST, user=request.user)
         if form.is_valid():
             # Save the assessment first
             assessment = form.save()
@@ -823,7 +830,7 @@ def create_peer_assessments(request):
             messages.success(request, "Peer assessment created successfully with custom questions.")
             return redirect('dashboard')
     else:
-        form = PeerAssessmentForm()
+        form = PeerAssessmentForm(user=request.user)
 
     return render(request, 'create_peer_assessments.html', {'form': form})
 

@@ -342,6 +342,12 @@
     {% else %}
     <div class="row p-2">
         <div class="col-auto">
+            <a href="{% url 'course_dashboard' %}" class="btn btn-lg gold-btn">View My Courses</a>
+        </div>
+        <div class="col-auto">
+            <a href="#" class="btn btn-lg gold-btn">View My Teams</a>
+        </div>
+        <div class="col-auto">
             <a class="btn btn-lg gold-btn" href="{% url 'enroll_in_course' %}">Enroll in a Course</a>
         </div>
     </div>
@@ -354,14 +360,10 @@
             </div>
         </div>
         <div class="col-auto">
-            <a href="{% url 'course_dashboard' %}" style="color: var(--bc-gold);">View My Courses</a>
+            <a href="#" style="color: var(--bc-gold);">About</a>
         </div>
         <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">View My Teams</a>
-        </div>
-        <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">Contact{% if user.role == "Student" %} A Professor{% else %}
-                Students{% endif %}</a>
+            <a href="#" style="color: var(--bc-gold);">Contact</a>
         </div>
         <div class="col-auto">
             {% if user.role == "student" or user.role == "Student" %}

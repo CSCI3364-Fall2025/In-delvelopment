@@ -46,13 +46,17 @@ def peer_assessment_due_date_reminder():
 def send_assignment_survey_email(subject, message, recipient_list):
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
 
-# @shared_task
-# def close_assessment():
+@shared_task
+def close_assessment():
 
-#     start_window = now() + timedelta(minutes=1)
-#     end_window = now() + timedelta(minutes=5)
+    start_window = now()
+    end_window = now() + timedelta(minutes=1)
 
-#     assessments = Assessment.objects.filter(
-#         due_date__gte = start_window,
-#         due_date__lte = end_window,
-#     )
+    assessments = Assessment.objects.filter(
+        due_date__gte = start_window,
+        due_date__lte = end_window,
+    )
+
+    for assessment in assessments:
+        assessment.closed_date = now()
+        assessment.save()

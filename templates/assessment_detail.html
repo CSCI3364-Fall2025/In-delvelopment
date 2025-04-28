@@ -76,8 +76,7 @@
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
                                             <input class="form-check-input" type="radio" name="contribution"
-                                                value="{{ i }}" {% if submission and submission.contribution==i
-                                                %}checked{% endif %}>
+                                                value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -95,7 +94,7 @@
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
                                             <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
-                                                {% if submission and submission.teamwork==i %}checked{% endif %}>
+                                                {% if submission and submission.teamwork == i %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -113,8 +112,7 @@
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
                                             <input class="form-check-input" type="radio" name="communication"
-                                                value="{{ i }}" {% if submission and submission.communication==i
-                                                %}checked{% endif %}>
+                                                value="{{ i }}" {% if submission and submission.communication == i %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -383,8 +381,7 @@
                                         <button type="submit" name="action" value="save" class="btn"
                                             style="background-color: var(--bc-maroon); color: var(--bc-gold);">Save
                                             Draft</button>
-                                        <button type="submit" name="action" value="publish" class="btn btn-success">Save
-                                            & Publish</button>
+                                        <button type="submit" name="action" value="publish" class="btn btn-success">Save & Publish</button>
                                     </div>
                                 </form>
 
