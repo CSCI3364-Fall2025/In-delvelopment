@@ -477,12 +477,31 @@ def course_dashboard(request):
         for i in range(int(num_teams)):
             Team.objects.create(course=new_course)
         new_course.save()
+        send_course_creation_email(request.user, new_course)
         messages.success(request, f"Successfully created course '{new_course.name}'")   
 
     return render(request, 'course_dashboard.html', {
         "user": user_data, "courses": request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
         "closed_courses": request.user.courses.filter(is_active=False)
     })
+
+def send_course_creation_email(professor, course):
+    subject = f"Course Created: {course.name}"
+    message = (
+        f"Dear {professor.get_full_name() or professor.username},\n\n"
+        f"You have successfully created the course \"{course.name}\" for {course.semester} {course.year}.\n\n"
+        f"Students can join this course using the enrollment code: {course.enrollment_code}\n\n"
+        "Please share this code with your students so they can enroll.\n\n"
+        "Best regards,\nYour Peer Assessment System Team"
+    )
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [professor.email],
+        fail_silently=False,
+    )
+
 
 @login_required
 def create_course(request):
