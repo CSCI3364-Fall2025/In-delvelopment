@@ -444,6 +444,12 @@ def professor_average_scores(request):
 
     return JsonResponse(results, safe=False)
 
+def generate_unique_enrollment_code():
+    while True:
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        if not CourseInvitation.objects.filter(enrollment_code=code).exists():
+            return code
+
 @login_required
 def course_dashboard(request):
 
@@ -465,6 +471,7 @@ def course_dashboard(request):
             semester=request.POST['semester'],
             description=request.POST['description'],
             created_by = request.user,
+            enrollment_code = generate_unique_enrollment_code()
         )
         num_teams = request.POST['numTeams']
         for i in range(int(num_teams)):
@@ -564,12 +571,6 @@ def delete_team(request, course_name, team_pk):
     messages.success(request, f"Team deleted successfully.")
     return redirect('view_course', course_name=course_name)
 
-def generate_unique_enrollment_code():
-    while True:
-        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-        if not CourseInvitation.objects.filter(enrollment_code=code).exists():
-            return code
-
 @login_required
 def invite_students(request):
     """Send invitation emails to students to join the system."""
@@ -619,8 +620,9 @@ def invite_students(request):
             emails_sent = 0
             
             for email in valid_emails:
-                # Generate a unique enrollment code
-                enrollment_code = generate_unique_enrollment_code()
+                # Get unique enrollment code
+                course = Course.objects.get(name=course_name)
+                enrollment_code = course.enrollment_code
 
                 # Create or update invitation record
                 invitation, created = CourseInvitation.objects.update_or_create(
@@ -1028,17 +1030,18 @@ def create_test_data(request):
 @login_required
 def enroll_in_course(request):
     if request.method == "POST":
-        course_name = request.POST.get("course_name", "").strip()
+        enrollment_code = request.POST.get("enrollment_code", "").strip()
         
-        if course_name:
+        if enrollment_code:
             try:
-                course = Course.objects.get(name=course_name)
+                course = Course.objects.get(enrollment_code=enrollment_code)
                 course.students.add(request.user)  # Enroll the student
-                return render(request, "course_details.html", {"message": "Course details coming soon"})
+                messages.success(request, f"Successfully enrolled in {course.name}!")
+                return redirect('view_course', course_name=course.name)
             except Course.DoesNotExist:
                 return render(request, "enroll.html", {"error": "Course not found!"})
         else:
-            return render(request, "enroll.html", {"error": "Please provide a course name."})
+            return render(request, "enroll.html", {"error": "Please provide a course join code."})
     
     return render(request, "enroll.html")
 
