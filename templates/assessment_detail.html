@@ -77,7 +77,7 @@
                                                 {% if submission and submission.contribution == i %}
                                                     <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" checked>
                                                 {% else %}
-                                                    <input class="form-check-input" type="radio" name="contribution" value="{{ i }}">
+                                                <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" required>
                                                 {% endif %}
                                             </div>
                                         {% endfor %}

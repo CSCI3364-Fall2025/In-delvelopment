@@ -260,13 +260,25 @@ def submit_assessment(request, assessment_id):
         try:
             assessment = get_object_or_404(Assessment, id=assessment_id)
             
-            # Create or update the submission
+            # Get contribution, teamwork, and communication values
+            contribution = request.POST.get('contribution')
+            teamwork = request.POST.get('teamwork')
+            communication = request.POST.get('communication')
+
+            # Safety check: Ensure all required ratings are provided
+            if not contribution or not teamwork or not communication:
+                messages.error(request, "All rating fields (Contribution, Teamwork, Communication) are required.")
+                return redirect('view_assessment', assessment_id=assessment.id)
+
+            # Create or update the main submission
             submission, created = AssessmentSubmission.objects.update_or_create(
                 assessment=assessment,
                 student=request.user.username,
                 defaults={
-                    'feedback': request.POST.get('feedback', '').strip()
-                    # Other default fields as needed
+                    'feedback': request.POST.get('feedback', '').strip(),
+                    'contribution': int(contribution),
+                    'teamwork': int(teamwork),
+                    'communication': int(communication),
                 }
             )
             
@@ -326,11 +338,14 @@ def submit_assessment(request, assessment_id):
             
             messages.success(request, "Assessment submitted successfully.")
             return redirect('dashboard')
-            
+        
         except Exception as e:
             messages.error(request, f"Error submitting assessment: {str(e)}")
-    
+            return redirect('view_assessment', assessment_id=assessment_id)
+
+    # If not POST, just redirect back safely
     return redirect('view_assessment', assessment_id=assessment_id)
+
 
 def get_teammates(user, course):
     """Helper function to get all teammates for a user in a course"""
