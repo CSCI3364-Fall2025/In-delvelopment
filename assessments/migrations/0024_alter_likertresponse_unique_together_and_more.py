@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('is_verified', models.BooleanField(default=False)),
                 ('verification_token', models.UUIDField(default=uuid.uuid4, editable=False, unique=True)),
-                ('token_expires_at', models.DateTimeField(default=assessments.models.get_default_value)),
+                ('token_expires_at', models.DateTimeField(default=assessments.models.default_val)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),

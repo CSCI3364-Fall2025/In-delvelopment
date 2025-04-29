@@ -10,6 +10,8 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
 from django.utils import timezone
 from assessments.models import Submission
+from django.contrib.auth import login
+from django.conf import settings
 
 #from authentication.views import login_view #test
 from .models import UserProfile
@@ -314,6 +316,27 @@ def verify_submission(request):
     sub.mark_verified()
     messages.success(request, "Your submission has been verified!")
     return redirect("submission_detail", pk=sub.pk)
-    
 
+# Additional login to create accounts not associated with BC
+def test_login(request):
     
+    if not settings.DEBUG:
+        return redirect('home')
+
+    if request.method == "POST":
+        email = request.POST['email']
+        role = request.POST['role']
+        
+        username = email.split('@')[0]
+        user, created = User.objects.get_or_create(username=username, defaults={'email': email})
+        
+        from .models import UserProfile  
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.role = role
+        profile.save()
+
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
+        return redirect('dashboard')
+
+    return render(request, 'debug/test_login.html')
