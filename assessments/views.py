@@ -91,35 +91,59 @@ def dashboard(request):
     ).order_by('open_date')    # Order by open date ascending
 
     closed_assessments = Assessment.objects.filter(
-        due_date__lte=today    # Due date is in the past
+        due_date__lte=today,
+        results_published = False    # Due date is in the past
     ).order_by('-due_date')    # Order by due date descending (most recent first)
 
-    # Example data for new results notification
-    new_results = True  # Set this to True if there are new results to notify the student
+    published_assessments = Assessment.objects.filter(
+        due_date__lte=today,
+        results_published = True
+    ).order_by('-due_date')
 
     # Check for pending invitations
     pending_invitations_count = CourseInvitation.objects.filter(
         email=request.user.email,
         accepted=False
     ).count()
-    
+
+    # Get active courses the user is enrolled in or created
+    user_courses = request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True)
+
+    # Query to check for any published assessments
+    new_results_exist = Assessment.objects.filter(
+        course__in=user_courses,
+        due_date__lte=today,
+        results_published=True
+    ).exists()
+
+    if new_results_exist and not request.session.get('new_results_alert_shown', False):
+        new_results = True
+        request.session['new_results_alert_shown'] = True
+    else:
+        new_results = False
+
+
     context = {
         'user': user_data,
         'active_assessments': active_assessments,
         'closed_assessments': closed_assessments,
         'upcoming_assessments': upcoming_assessments,
+        'published_results': published_assessments,
         'num_uncompleted_assessments': active_assessments.count(),
         'num_assessment_results': closed_assessments.count(),
+        'num_published_results': published_assessments.count(),
         'new_results': new_results,
         'request': request,
-        'active_courses': request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
+        'active_courses': user_courses,
         'active_teams': request.user.teams.filter(is_active=True),
         'pending_invitations_count': pending_invitations_count,
         'now': timezone.now(),
     }
     
-    # Add welcome message
-    messages.success(request, f"Welcome {user_data['preferred_name']} - {user_data['role']}!")
+    # Add welcome message (only once)
+    if not request.session.get('welcome_message_shown', False):
+        messages.success(request, f"Welcome {user_data['preferred_name']} - {user_data['role']}!")
+        request.session['welcome_message_shown'] = True
     
     return render(request, 'dashboard.html', context)
 

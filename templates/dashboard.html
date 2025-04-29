@@ -17,9 +17,9 @@
     </div>
     {% endif %}
 
-    {% if user.role == 'student' or user.role == 'Student' and new_results %}
+    {% if user.role|lower == 'student' and new_results %}
     <div class="alert alert-info alert-dismissible fade show" role="alert">
-        New assessment results have been published! <a href="#" class="alert-link">View Results</a>
+        New assessment results have been published! <a href="{% url 'view_all_published_results' %}" class="alert-link">View Results</a>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
@@ -30,42 +30,39 @@
         </div>
         <div class="row" id="pending_assessments">
             <div class="col-auto">
-                {% if user.role == "professor" or user.role == "Professor" %}
-                <!-- Eventually implement logic -->
-                <p>You have 16{{ total_incomplete_assignments }} students who still need to complete 'Peer Assessment
-                    3'.</p>
-                {% else %}
                 {% if num_uncompleted_assessments == 0 %}
-                <p>You have no pending peer assessments.</p>
+                    <p>There are no active peer assessments.</p>
                 {% else %}
-                <p>You have {{ num_uncompleted_assessments }} assessment(s) to complete.</p>
-                {% endif %}
+                    <p>There are currently {{ num_uncompleted_assessments }} active assessment{% if num_uncompleted_assessments > 1 %}s{% endif %}.</p>
                 {% endif %}
             </div>
             <div class="col-auto">
-                {% if user.profile.role == 'professor' or user.role == "Professor" %}
+                {% if user.role == 'professor' or user.role == 'Professor' %}
                 <a href="{% url 'course_dashboard' %}" style="color: var(--bc-gold);">Manage Courses and Teams</a>
                 {% else %}
-                <a href="#" style="color: var(--bc-gold);">View All Active Assessments</a>
+                <a href="#assessment-summary-container" style="color: var(--bc-gold);">View All Active Assessments</a>
                 {% endif %}
             </div>
         </div>
         <div class="row" id="published_results">
             <div class="col-auto">
                 {% if user.role == "professor" or user.role == "Professor" %}
-                <!-- Eventually implement logic -->
-                <p>You have 1 unreturned assessment(s) to grade.</p>
+                    {% if num_assessment_results == 0 %}
+                        <p>You have no assessments results to return.</p>
+                    {% else %}
+                        <p>You have {{ num_assessment_results }} unreturned assessment{% if num_assessment_results > 1 %}s{% endif %} to grade.</p>
+                    {% endif %}
                 {% else %}
-                {% if num_assessment_results == 0 %}
-                <p>You have no assessment results to view.</p>
-                {% else %}
-                <p>You have {{ num_assessment_results }} returned assessment(s) to view.</p>
-                {% endif %}
+                    {% if num_published_results == 0 %}
+                        <p>You have no assessment results to view.</p>
+                    {% else %}
+                        <p>You have {{ num_assessment_results }} returned assessment{% if num_assessment_results > 1 %}s{% endif %} to view.</p>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="col-auto">
                 {% if user.role == "professor" or user.role == "Professor" %}
-                <a href="#" style="color: var(--bc-gold);">Grade And Return Assessments</a>
+                <a href="#assessment-summary-container" style="color: var(--bc-gold);">Grade And Return Assessments</a>
                 {% else %}
                 <a href="{% url 'view_all_published_results' %}" style="color: var(--bc-gold);">View All Published
                     Results</a>
