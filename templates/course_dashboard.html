@@ -46,7 +46,7 @@
                             <div class="col-auto">
                                 <h6 class="fw-lighter">{{ course.created_by.get_full_name }}</h6>
                             </div>
-                            {% if request.user == course.created_by and user.role == "professor" %}
+                            {% if request.user == course.created_by and user.role|lower == "professor" %}
                             <div class="col-auto">
                                 <h6 class="fw-lighter" style="font-style: italic; color: red;">You are the professor for this course.</h6>
                             </div>

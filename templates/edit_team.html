@@ -66,11 +66,9 @@
                 </div>
                 <div class="col">
                     <select name="addMembers" id="addMembers" class="form-select" multiple>
-                        <option value="None" selected>Choose students to add to team.</option>
+                        <option value="" selected hidden disabled>Choose students to add to team.</option>
                         {% for student in students %}
-                            {% if student not in team.members.all %}
                             <option value="{{ student.pk }}">{{ student.get_full_name }}</option>
-                            {% endif %}
                         {% endfor %}
                     </select>
                 </div>
@@ -86,7 +84,7 @@
                 </div>
                 <div class="col">
                     <select name="removeMembers" id="removeMembers" class="form-select" multiple>
-                        <option value="None" selected>Choose students to remove from team.</option>
+                        <option value="" disabled selected hidden>Choose students to remove from team.</option>
                         {% for student in team_members %}
                             <option value="{{ student.pk }}">{{ student.get_full_name }}</option>
                         {% endfor %}

@@ -107,7 +107,10 @@ def dashboard(request):
     ).count()
 
     # Get active courses the user is enrolled in or created
-    user_courses = request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True)
+    if request.user.profile.role == "professor":
+        user_courses = request.user.created_courses.filter(is_active=True)
+    else:
+        user_courses = request.user.courses.filter(is_active=True)
 
     # Query to check for any published assessments
     new_results_exist = Assessment.objects.filter(
@@ -546,8 +549,13 @@ def course_dashboard(request):
         send_course_creation_email(request.user, new_course)
         messages.success(request, f"Successfully created course '{new_course.name}'")   
 
+    if request.user.profile.role == "professor":
+        courses = request.user.created_courses.filter(is_active=True)
+    else:
+        courses = request.user.courses.filter(is_active=True)
+
     return render(request, 'course_dashboard.html', {
-        "user": user_data, "courses": request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
+        "user": user_data, "courses": courses,
         "closed_courses": request.user.courses.filter(is_active=False)
     })
 
@@ -592,21 +600,21 @@ def view_course(request, course_name):
             # teams are being updated
             team = Team.objects.get(pk=request.POST['team_pk'])
             team_name = request.POST['teamName']
-            new_members = request.POST['addMembers']
-            remove_members = request.POST['removeMembers']
+            new_members = request.POST.getlist('addMembers')
+            remove_members = request.POST.getlist('removeMembers')
             print(new_members)
             print(remove_members)
 
             team.name = team_name
-            if new_members != "None":
+            if new_members != None:
                 for member_pk in new_members:
-                    if member_pk != "Choose students to add to team.":
+                    if member_pk != None:
                         student = User.objects.get(pk=member_pk)
                         team.members.add(student)
             
-            if remove_members != "None":
+            if remove_members != None:
                 for member_pk in remove_members:
-                    if member_pk != "Choose students to remove from team.":
+                    if member_pk != None:
                         student = User.objects.get(pk=member_pk)
                         team.members.remove(student)
 
@@ -641,9 +649,13 @@ def edit_team(request, course_name, team_pk):
     team = Team.objects.get(pk=team_pk)
     course = Course.objects.get(name=course_name)
 
+    course_students = course.students.all()
+    students_on_teams = User.objects.filter(teams__course=course).distinct()
+    eligible_students = course_students.exclude(pk__in=students_on_teams.values_list('pk', flat=True))
+
     return render(request, 'edit_team.html', {
         "team": team, "course": course,
-        "students": course.students.all(),
+        "students": eligible_students,
         "team_members": team.members.all()
     })
 

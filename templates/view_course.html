@@ -56,7 +56,7 @@
                 <div class="row">
                     <h5>
                         {% if team.name == "" %}
-                        <i>(Unnamed Team)</i>:
+                        <i>(Unnamed Team)</i>
                         {% else %}
                         {{ team.name }}:
                         {% endif %}
@@ -78,7 +78,7 @@
                 </div>
                 <div class="row mt-2">
                     <div class="col-auto">
-                        {% if course.created_by == request.user and user.role == "professor" %}
+                        {% if course.created_by == request.user and user.role|lower == "professor" %}
                             <a href="{% url 'edit_team' course.name team.pk %}" class="btn maroon-btn">Edit Team</a>
                         {% elif team in request.user.teams.all %}
                             <a href="#" class="btn maroon-btn">Contact Team</a>
@@ -90,7 +90,7 @@
             </div>
         {% endfor %}
         {% endif %}
-        {% if course.created_by == request.user and user.role == "professor" %}
+        {% if course.created_by == request.user and user.role|lower == "professor" %}
         <div class="row m-3 justify-content-between">
             <div class="col-auto align-self-center">
                 <h6 class="fw-lighter">To delete a team, click on <b>'Edit Team'</b> then <b>'Delete Team'</b> to remove the desired team. To add more teams, click on the <b>'Add Teams'</b> button.</h6>
@@ -142,7 +142,7 @@
                 </tbody>
             </table>
         {% endif %}
-        {% if course.created_by == request.user and user.role == "professor" %}
+        {% if course.created_by == request.user and user.role|lower == "professor" %}
         <div class="row m-3 justify-content-between">
             <div class="col-auto align-self-center">
                 <h6 class="fw-lighter">To create a new assessment, click on the <b>'Create Assessment'</b> button.</h6>
@@ -169,7 +169,7 @@
             </div>
             {% endfor %}
         {% endif %}
-        {% if course.created_by == request.user and user.role == "professor" %}
+        {% if course.created_by == request.user and user.role|lower == "professor" %}
         <div class="row m-3 justify-content-between">
             <div class="col-auto align-self-center">
                 <h6 class="fw-lighter">To add students to a course, click on the <b>'Invite Students'</b> button. Alternatively, you can invite students directly to teams. </h6>
@@ -181,7 +181,7 @@
         </div>
         {% endif %}
     </div>
-    {% if course.created_by == request.user and user.role == "professor" %}
+    {% if course.created_by == request.user and user.role|lower == "professor" %}
     <div class="row m-3 justify-content-end">
         <div class="col align-self-center">
             <h6 class="fw-lighter">To de-activate the course, click on <b>'Edit Course'</b>, then <b>'De-Activate Course'</b>. Once a course is de-activated, it can still be re-activated.</h6>
