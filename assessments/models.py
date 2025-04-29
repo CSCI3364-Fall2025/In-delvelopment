@@ -117,7 +117,8 @@ class CourseInvitation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     accepted = models.BooleanField(default=False)
     accepted_at = models.DateTimeField(null=True, blank=True)
-    enrollment_code = models.CharField(max_length=8, unique=True, null=True, blank=True)
+    enrollment_code = models.CharField(max_length=8, null=True, blank=True)
+
     
     class Meta:
         unique_together = ['course', 'email']
