@@ -17,7 +17,7 @@ class Course(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_courses")
     students = models.ManyToManyField(User, related_name="courses", blank=True)
     is_active = models.BooleanField(default=True)
-    enrollment_code = models.CharField(max_length=8, unique=True, null=True, blank=True)
+    enrollment_code = models.CharField(max_length=8, unique=True, null=True, blank=True, editable=False)
 
     def __str__(self):
         return f"{self.course_code}: {self.name}"    
@@ -153,6 +153,10 @@ class StudentScore(models.Model):
 
     class Meta:
         unique_together = ('student', 'assessment')
+
+def default_val():
+    return timezone.now() + timedelta(hours=24)
+
 class Submission(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
@@ -164,8 +168,9 @@ class Submission(models.Model):
     verification_token = models.UUIDField(
         default=uuid.uuid4, editable=False, unique=True
     )
+    
     token_expires_at = models.DateTimeField(
-        default=lambda: timezone.now() + timedelta(hours=24)
+        default = default_val
     )
 
     def mark_verified(self):
