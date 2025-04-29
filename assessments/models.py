@@ -43,6 +43,12 @@ class Assessment(models.Model):
         self.publish_date = timezone.now()
         self.save()
 
+    def publish_now(self):
+        """Publish the assessment immediately"""
+        self.release_date = timezone.now()
+        self.is_published = True
+        self.save()
+
     @property
     def is_editable(self):
         """
@@ -54,6 +60,13 @@ class Assessment(models.Model):
                 return True
             return timezone.now() < self.release_date
         return False
+
+    @property
+    def is_scheduled(self):
+        """Check if the assessment is published but scheduled for future release"""
+        return (self.is_published and 
+                self.release_date is not None and 
+                self.release_date > timezone.now())
 
 class Team(models.Model):
     name = models.CharField(max_length=50, blank=True)
