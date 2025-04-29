@@ -1646,3 +1646,22 @@ def delete_assessment(request, assessment_id):
         logger.error(f"Error deleting assessment {assessment_id}: {str(e)}")
         messages.error(request, f"An error occurred while deleting the assessment: {str(e)}")
         return redirect('view_assessment', assessment_id=assessment_id)
+
+@login_required
+def view_course_invitations(request, course_id):
+    """Allow professors to view pending and accepted invitations for a course."""
+    course = get_object_or_404(Course, id=course_id)
+
+    # Ensure that the request.user is the professor who created the course
+    if course.created_by != request.user:
+        messages.error(request, "You are not authorized to view invitations for this course.")
+        return redirect('dashboard')
+
+    invitations = CourseInvitation.objects.filter(course=course).order_by('-created_at')
+
+    context = {
+        'course': course,
+        'invitations': invitations
+    }
+
+    return render(request, 'course_invitations.html', context)

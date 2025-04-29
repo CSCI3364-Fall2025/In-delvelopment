@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Course Invitations{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Invitations for {{ course.name }}</h2>
+
+    {% if invitations %}
+        <table class="table table-striped mt-4">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Sent At</th>
+                    <th>Accepted At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invitation in invitations %}
+                    <tr>
+                        <td>{{ invitation.email }}</td>
+                        <td>
+                            {% if invitation.accepted %}
+                                <span class="badge bg-success">Accepted</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ invitation.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            {% if invitation.accepted_at %}
+                                {{ invitation.accepted_at|date:"M d, Y H:i" }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No invitations found for this course.</p>
+    {% endif %}
+</div>
+{% endblock %}

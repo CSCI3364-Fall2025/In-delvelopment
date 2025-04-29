@@ -1,6 +1,6 @@
 from django.urls import path
 from assessments.views import send_deadline_notifications_view
-from .views import student_average_score, professor_average_scores, save_progress, load_progress
+from .views import student_average_score, professor_average_scores, save_progress, load_progress, view_course_invitations
 from . import views
 
 urlpatterns = [
@@ -39,4 +39,5 @@ urlpatterns = [
     path('assessment/submit_student_score/', views.submit_student_score, name='submit_student_score'),
     path('assessment/<int:assessment_id>/publish-now/', views.publish_assessment_now, name='publish_assessment_now'),
     path('assessment/<int:assessment_id>/delete/', views.delete_assessment, name='delete_assessment'),
+    path('courses/<int:course_id>/invitations/', view_course_invitations, name='view_course_invitations'),
 ]
