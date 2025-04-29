@@ -3,6 +3,9 @@ from django.utils.timezone import now, timedelta
 from assessments.models import Assessment
 from django.core.mail import send_mail
 from django.conf import settings
+from django.urls import reverse
+from django.template.loader import render_to_string
+from assessments.models import Submission
 
 @shared_task
 def peer_assessment_due_date_reminder():
@@ -60,3 +63,25 @@ def close_assessment():
     for assessment in assessments:
         assessment.closed_date = now()
         assessment.save()
+@shared_task
+def send_submission_verification_email(submission_id):
+    sub = Submission.objects.get(pk=submission_id)
+    if sub.is_verified:
+        return
+
+    verify_url = settings.SITE_URL + reverse("verify_submission") + f"?token={sub.verification_token}"
+    subject = "Please verify your submission"
+    html_body = render_to_string("emails/submission_verification.html", {
+        "user": sub.user,
+        "verify_url": verify_url,
+        "expires_at": sub.token_expires_at,
+    })
+
+    send_mail(
+        subject,
+        "",  # plaintext fallback
+        settings.DEFAULT_FROM_EMAIL,
+        [sub.user.email],
+        html_message=html_body,
+        fail_silently=False,
+    )

@@ -1,7 +1,11 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone #for updates
 from django.core.validators import MinValueValidator, MaxValueValidator
+from datetime import timedelta
+from django.conf import settings
+from django.db import models
 
 
 class Course(models.Model):
@@ -149,3 +153,23 @@ class StudentScore(models.Model):
 
     class Meta:
         unique_together = ('student', 'assessment')
+class Submission(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # ─── Verification fields ───────────────────────
+    is_verified = models.BooleanField(default=False)
+    verification_token = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True
+    )
+    token_expires_at = models.DateTimeField(
+        default=lambda: timezone.now() + timedelta(hours=24)
+    )
+
+    def mark_verified(self):
+        self.is_verified = True
+        self.verification_token = None
+        self.token_expires_at = None
+        self.save()

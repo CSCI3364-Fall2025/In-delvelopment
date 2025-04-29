@@ -8,6 +8,9 @@ from django.contrib import messages #test
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
+from django.utils import timezone
+from assessments.models import Submission
+
 #from authentication.views import login_view #test
 from .models import UserProfile
 
@@ -295,6 +298,22 @@ def reauth_google(request):
             debug_info['refresh_token_preview'] = token.token_secret[:5] + '...' if token.token_secret else None
     
     return render(request, 'reauth_google.html', {'debug_info': debug_info})
+    
+def verify_submission(request):
+    token = request.GET.get("token")
+    try:
+        sub = Submission.objects.get(verification_token=token)
+    except Submission.DoesNotExist:
+        messages.error(request, "Invalid verification link.")
+        return redirect("home")
+
+    if sub.token_expires_at < timezone.now():
+        messages.error(request, "This link has expired.")
+        return redirect("home")
+
+    sub.mark_verified()
+    messages.success(request, "Your submission has been verified!")
+    return redirect("submission_detail", pk=sub.pk)
     
 
     

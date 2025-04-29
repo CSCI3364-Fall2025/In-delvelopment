@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <p>Hi {{ user.get_full_name }},</p>
+    <p>
+      Thanks for your submission!<br>
+      Please verify it by clicking below before {{ expires_at|date:"DATETIME_FORMAT" }}:
+    </p>
+    <p><a href="{{ verify_url }}">Verify my submission</a></p>
+    <p>— The Ctrl-Alt-Elite Team</p>
+  </body>
+</html>

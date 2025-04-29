@@ -119,3 +119,9 @@ class AuthenticationConfig(AppConfig):
         except Exception as e:
             # This might happen if the database tables don't exist yet
             print(f"Could not set up OAuth configuration: {e}")
+
+
+class AuthenticationConfig(AppConfig):
+    name = "authentication"
+    def ready(self):
+        import authentication.signals  # noqa

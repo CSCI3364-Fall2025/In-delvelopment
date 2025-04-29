@@ -37,4 +37,5 @@ urlpatterns = [
     path('accept-invitation/', views.accept_invitation, name='accept_invitation'),
     path('assessment/<int:assessment_id>/edit-questions/', views.edit_assessment_questions, name='edit_assessment_questions'),
     path('assessment/submit_student_score/', views.submit_student_score, name='submit_student_score'),
+
 ]

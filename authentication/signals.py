@@ -1,10 +1,13 @@
 from django.dispatch import receiver
 from allauth.account.signals import user_signed_up
 from django.db.models.signals import pre_save
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from assessments.models import Assessment, User, Course
 from django.core.mail import send_mail
 from django.conf import settings
-
+from assessments.models import Submission
+from .tasks import send_submission_verification_email
 
 @receiver(user_signed_up)
 def set_user_role(sender, request, user, **kwargs):
@@ -43,3 +46,7 @@ def send_assignment_published_email(sender, instance, **kwargs):
                     "Best regards,\nYour Course Team"
                 )
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, student_emails)
+@receiver(post_save, sender=Submission)
+def send_verification_on_create(sender, instance, created, **kwargs):
+    if created and not instance.is_verified:
+        send_submission_verification_email.delay(instance.id)
