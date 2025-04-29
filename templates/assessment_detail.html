@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% load range_tags %} <!-- Load the custom template tag -->
+{% load range_tags %}
 {% load assessment_filters %}
 
-{% block title %}Assessment Details | AAA {% endblock %}
+{% block title %}Assessment Details | AAA{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -50,7 +50,6 @@
 
                     {% if user.profile.role == 'student' or user.profile.role == 'Student' %}
                     <div id="studentView" class="container">
-                        <!-- Student view content -->
                         <h2>Peer Assessment</h2>
                         <form method="post" action="{% url 'submit_assessment' assessment.id %}">
                             {% csrf_token %}
@@ -65,7 +64,6 @@
                                 </select>
                             </div>
 
-                            <!-- Likert Scale Questions -->
                             <div class="mb-4">
                                 <label class="form-label">Rate Contribution:</label>
                                 <div class="d-flex align-items-center justify-content-between">
@@ -76,7 +74,8 @@
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
                                             <input class="form-check-input" type="radio" name="contribution"
-                                                value="{{ i }}" {% if submission and submission.contribution == i %}checked{% endif %}>
+                                                value="{{ i }}" {% if submission and submission.contribution==i
+                                                %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -94,7 +93,7 @@
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
                                             <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
-                                                {% if submission and submission.teamwork == i %}checked{% endif %}>
+                                                {% if submission and submission.teamwork==i %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -112,7 +111,8 @@
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
                                             <input class="form-check-input" type="radio" name="communication"
-                                                value="{{ i }}" {% if submission and submission.communication == i %}checked{% endif %}>
+                                                value="{{ i }}" {% if submission and submission.communication==i
+                                                %}checked{% endif %}>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -120,7 +120,6 @@
                                 </div>
                             </div>
 
-                            <!-- Custom Likert Questions -->
                             {% for question in likert_questions %}
                             <div class="mb-4">
                                 <label class="form-label">{{ question.question_text }}</label>
@@ -142,19 +141,17 @@
                             </div>
                             {% endfor %}
 
-                            <!-- Open-Ended Question -->
                             <div class="mb-3">
-                                <label for="feedback" class="form-label">Give an overview of this member's role in the
-                                    team:</label>
+                                <label for="feedback" class="form-label">Give an overview of this member's role in
+                                    the team:</label>
                                 <textarea id="feedback" name="feedback" class="form-control" rows="4"
                                     placeholder="Provide additional feedback here...">{% if submission %}{{ submission.feedback }}{% endif %}</textarea>
                             </div>
 
-                            <!-- Custom Open-Ended Questions -->
                             {% for question in open_ended_questions %}
                             <div class="mb-3">
-                                <label for="open_ended_{{ question.id }}" class="form-label">{{ question.question_text
-                                    }}</label>
+                                <label for="open_ended_{{ question.id }}" class="form-label">{{
+                                    question.question_text }}</label>
                                 <textarea id="open_ended_{{ question.id }}" name="open_ended_{{ question.id }}"
                                     class="form-control" rows="4"
                                     placeholder="Provide your answer here...">{% if submission %}{% get_open_ended_response submission question as response_text %}{{ response_text }}{% endif %}</textarea>
@@ -177,7 +174,6 @@
 
                     {% if user.profile.role == 'professor' or user.profile.role == 'Professor' %}
                     <div id="professorView" class="container mt-4">
-                        <!-- Professor view content -->
                         <div class="card shadow">
                             <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
                                 <h4>Assessment Management</h4>
@@ -190,7 +186,6 @@
                                 {% endif %}
                             </div>
                             <div class="card-body">
-                                <!-- Student Responses Section -->
                                 {% if teams %}
                                 <div class="mb-4">
                                     <h5>Student Responses by Team</h5>
@@ -212,12 +207,12 @@
                                                             data-student-id="{{ member.id }}"
                                                             data-team-id="{{ team.id }}"
                                                             data-assessment-id="{{ assessment.id }}">
-                                                        <button class="btn btn-primary btn-sm submit-score">Submit
-                                                            Score</button>
+                                                        <button class="btn btn-primary btn-sm submit-score">
+                                                            Submit Score
+                                                        </button>
                                                     </div>
                                                 </div>
 
-                                                <!-- Show submissions received by this member -->
                                                 {% with received_submissions=member.assessed_submissions.all %}
                                                 {% if received_submissions %}
                                                 <div class="submissions-received mt-3">
@@ -225,34 +220,49 @@
                                                     {% for submission in received_submissions %}
                                                     {% if submission.assessment == assessment %}
                                                     <div class="submission-detail mt-2 p-2 border rounded">
-                                                        <p><strong>From:</strong> Anonymous Team Member</p>
+                                                        <p><strong>From:</strong>
+                                                            Anonymous Team Member</p>
                                                         <ul class="list-unstyled">
-                                                            <li>Contribution: {{ submission.contribution }}/5</li>
-                                                            <li>Teamwork: {{ submission.teamwork }}/5</li>
-                                                            <li>Communication: {{ submission.communication }}/5</li>
+                                                            <li>Contribution:
+                                                                {{ submission.contribution }}/5
+                                                            </li>
+                                                            <li>Teamwork:
+                                                                {{ submission.teamwork }}/5
+                                                            </li>
+                                                            <li>Communication:
+                                                                {{ submission.communication }}/5
+                                                            </li>
                                                         </ul>
                                                         {% if submission.feedback %}
-                                                        <p><strong>Feedback:</strong> {{ submission.feedback }}</p>
+                                                        <p><strong>Feedback:</strong>
+                                                            {{ submission.feedback }}</p>
                                                         {% endif %}
 
-                                                        <!-- Show Likert responses -->
                                                         {% if submission.likert_responses.exists %}
                                                         <div class="likert-responses">
-                                                            <p><strong>Additional Ratings:</strong></p>
+                                                            <p>
+                                                                <strong>Additional
+                                                                    Ratings:</strong>
+                                                            </p>
                                                             {% for response in submission.likert_responses.all %}
-                                                            <p>{{ response.question.question_text }}: {{ response.rating
-                                                                }}/5</p>
+                                                            <p>{{ response.question.question_text }}:
+                                                                {{ response.rating }}/5
+                                                            </p>
                                                             {% endfor %}
                                                         </div>
                                                         {% endif %}
 
-                                                        <!-- Show Open-ended responses -->
                                                         {% if submission.open_ended_responses.exists %}
                                                         <div class="open-ended-responses">
-                                                            <p><strong>Additional Comments:</strong></p>
+                                                            <p>
+                                                                <strong>Additional
+                                                                    Comments:</strong>
+                                                            </p>
                                                             {% for response in submission.open_ended_responses.all %}
-                                                            <p><em>{{ response.question.question_text }}</em><br>
-                                                                {{ response.response_text }}</p>
+                                                            <p>
+                                                                <em>{{ response.question.question_text }}</em><br>
+                                                                {{ response.response_text }}
+                                                            </p>
                                                             {% endfor %}
                                                         </div>
                                                         {% endif %}
@@ -261,7 +271,8 @@
                                                     {% endfor %}
                                                 </div>
                                                 {% else %}
-                                                <p class="text-muted mt-2">No assessments received yet</p>
+                                                <p class="text-muted mt-2">No assessments
+                                                    received yet</p>
                                                 {% endif %}
                                                 {% endwith %}
                                             </div>
@@ -274,7 +285,6 @@
                                 <div class="alert alert-info">No teams found for this assessment</div>
                                 {% endif %}
 
-                                <!-- Score submission handling script -->
                                 <script>
                                     document.addEventListener('DOMContentLoaded', function () {
                                         const csrfToken = '{{ csrf_token }}';
@@ -312,7 +322,8 @@
                                                     if (data.success) {
                                                         alert(data.message);
                                                     } else {
-                                                        throw new Error(data.error || 'Failed to submit score');
+                                                        throw new Error(data.error ||
+                                                            'Failed to submit score');
                                                     }
                                                 })
                                                 .catch(error => {
@@ -379,26 +390,29 @@
 
                                     <div class="d-flex justify-content-between mt-4">
                                         <button type="submit" name="action" value="save" class="btn"
-                                            style="background-color: var(--bc-maroon); color: var(--bc-gold);">Save
-                                            Draft</button>
-                                        <button type="submit" name="action" value="publish" class="btn btn-success">Save & Publish</button>
+                                            style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                                            Save Draft</button>
+                                        <button type="submit" name="action" value="publish" class="btn btn-success">Save
+                                            &
+                                            Publish</button>
                                     </div>
                                 </form>
 
-                                <!-- JavaScript for adding/removing questions -->
                                 <script>
                                     document.addEventListener('DOMContentLoaded', function () {
                                         let likertCount = Number('{{ likert_questions|length }}');
                                         let openEndedCount = Number('{{ open_ended_questions|length }}');
-                                    });
 
-                                    // Add Likert question
-                                    document.getElementById('add-likert-question').addEventListener('click', function () {
-                                        likertCount++;
-                                        const container = document.getElementById('likert-questions-container');
-                                        const div = document.createElement('div');
-                                        div.className = 'mb-3 likert-question';
-                                        div.innerHTML = `
+
+                                        // Add Likert question
+                                        document.getElementById('add-likert-question').addEventListener('click',
+                                            function () {
+                                                likertCount++;
+                                                const container = document.getElementById(
+                                                    'likert-questions-container');
+                                                const div = document.createElement('div');
+                                                div.className = 'mb-3 likert-question';
+                                                div.innerHTML = `
                                                     <div class="input-group">
                                                         <input type="hidden" name="likert_id_${likertCount}" value="new">
                                                         <input type="text" class="form-control" name="likert_text_${likertCount}" 
@@ -408,17 +422,20 @@
                                                         <button type="button" class="btn btn-danger remove-question">Remove</button>
                                                     </div>
                                                 `;
-                                        container.appendChild(div);
-                                        document.getElementById('likert-count').value = likertCount;
-                                    });
+                                                container.appendChild(div);
+                                                document.getElementById('likert-count').value = likertCount;
+                                            });
 
-                                    // Add Open-ended question
-                                    document.getElementById('add-open-ended-question').addEventListener('click', function () {
-                                        openEndedCount++;
-                                        const container = document.getElementById('open-ended-questions-container');
-                                        const div = document.createElement('div');
-                                        div.className = 'mb-3 open-ended-question';
-                                        div.innerHTML = `
+                                        // Add Open-ended question
+                                        document.getElementById('add-open-ended-question').addEventListener(
+                                            'click',
+                                            function () {
+                                                openEndedCount++;
+                                                const container = document.getElementById(
+                                                    'open-ended-questions-container');
+                                                const div = document.createElement('div');
+                                                div.className = 'mb-3 open-ended-question';
+                                                div.innerHTML = `
                                                     <div class="input-group">
                                                         <input type="hidden" name="open_ended_id_${openEndedCount}" value="new">
                                                         <input type="text" class="form-control" name="open_ended_text_${openEndedCount}" 
@@ -428,21 +445,28 @@
                                                         <button type="button" class="btn btn-danger remove-question">Remove</button>
                                                     </div>
                                                 `;
-                                        container.appendChild(div);
-                                        document.getElementById('open-ended-count').value = openEndedCount;
-                                    });
+                                                container.appendChild(div);
+                                                document.getElementById('open-ended-count').value =
+                                                    openEndedCount;
+                                            });
 
-                                    // Remove question (delegated event)
-                                    document.addEventListener('click', function (e) {
-                                        if (e.target && e.target.classList.contains('remove-question')) {
-                                            e.target.closest('.likert-question, .open-ended-question').remove();
+                                        // Remove question (delegated event)
+                                        document.addEventListener('click', function (e) {
+                                            if (e.target && e.target.classList.contains('remove-question')) {
+                                                e.target.closest(
+                                                    '.likert-question, .open-ended-question').remove();
 
-                                            // Update counts
-                                            const likertQuestions = document.querySelectorAll('.likert-question').length;
-                                            const openEndedQuestions = document.querySelectorAll('.open-ended-question').length;
-                                            document.getElementById('likert-count').value = likertQuestions;
-                                            document.getElementById('open-ended-count').value = openEndedQuestions;
-                                        }
+                                                // Update counts
+                                                const likertQuestions = document.querySelectorAll(
+                                                    '.likert-question').length;
+                                                const openEndedQuestions = document.querySelectorAll(
+                                                    '.open-ended-question').length;
+                                                document.getElementById('likert-count').value =
+                                                    likertQuestions;
+                                                document.getElementById('open-ended-count').value =
+                                                    openEndedQuestions;
+                                            }
+                                        });
                                     });
                                 </script>
                                 {% else %}
@@ -455,7 +479,8 @@
                                 </div>
                                 <div class="mt-3">
                                     <a href="{% url 'dashboard' %}" class="btn"
-                                        style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back to
+                                        style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back
+                                        to
                                         Dashboard</a>
                                 </div>
                                 {% endif %}
