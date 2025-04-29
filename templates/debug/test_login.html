@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Testing Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select" name="role" required>
+                <option value="Student">Student</option>
+                <option value="Professor">Professor</option>
+            </select>
+        </div>
+        <!-- <div class="mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" name="firstName" required>
+        </div>
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" name="lastName" required>
+        </div> -->
+        <button type="submit" class="btn btn-primary">Log in as this test user</button>
+    </form>
+</div>
+{% endblock %}
