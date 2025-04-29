@@ -126,36 +126,66 @@ class CourseInvitation(models.Model):
         return f"Invitation to {self.course.name} for {self.email}"
 
 class LikertQuestion(models.Model):
+    QUESTION_TYPE_CHOICES = [
+        ('team', 'Team Question (Overall)'),
+        ('individual', 'Individual Question (Per Teammate)'),
+    ]
+    
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='likert_questions')
-    question_text = models.CharField(max_length=500)
+    question_text = models.CharField(max_length=500)  # Match existing field type
     order = models.IntegerField(default=0)
+    question_type = models.CharField(max_length=10, choices=QUESTION_TYPE_CHOICES, default='team')
     
     def __str__(self):
+        if len(self.question_text) > 30:
+            return f"{self.question_text[:30]}..."
         return self.question_text
-        
+
 class OpenEndedQuestion(models.Model):
+    QUESTION_TYPE_CHOICES = [
+        ('team', 'Team Question (Overall)'),
+        ('individual', 'Individual Question (Per Teammate)'),
+    ]
+    
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='open_ended_questions')
-    question_text = models.CharField(max_length=500)
+    question_text = models.CharField(max_length=500)  # Match existing field type
     order = models.IntegerField(default=0)
+    question_type = models.CharField(max_length=10, choices=QUESTION_TYPE_CHOICES, default='team')
     
     def __str__(self):
+        if len(self.question_text) > 30:
+            return f"{self.question_text[:30]}..."
         return self.question_text
 
 class LikertResponse(models.Model):
     submission = models.ForeignKey('AssessmentSubmission', on_delete=models.CASCADE, related_name='likert_responses')
     question = models.ForeignKey(LikertQuestion, on_delete=models.CASCADE)
     rating = models.IntegerField()
+    teammate = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, 
+                                related_name='likert_evaluations')
     
     class Meta:
-        unique_together = ['submission', 'question']
+        unique_together = ('submission', 'question', 'teammate')
         
+    def __str__(self):
+        if self.teammate:
+            return f"Response to {self.question} for {self.teammate.username}: {self.rating}"
+        return f"Response to {self.question}: {self.rating}"
+
 class OpenEndedResponse(models.Model):
     submission = models.ForeignKey('AssessmentSubmission', on_delete=models.CASCADE, related_name='open_ended_responses')
     question = models.ForeignKey(OpenEndedQuestion, on_delete=models.CASCADE)
     response_text = models.TextField()
+    teammate = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True,
+                                related_name='open_ended_evaluations')
     
     class Meta:
-        unique_together = ['submission', 'question']
+        unique_together = ('submission', 'question', 'teammate')
+    
+    def __str__(self):
+        if self.teammate:
+            return f"Response to {self.question} for {self.teammate.username}"
+        return f"Response to {self.question}"
 
 class StudentScore(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -166,6 +196,10 @@ class StudentScore(models.Model):
 
     class Meta:
         unique_together = ('student', 'assessment')
+
+def get_default_value():
+    return "some_value"
+
 class Submission(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
@@ -178,7 +212,7 @@ class Submission(models.Model):
         default=uuid.uuid4, editable=False, unique=True
     )
     token_expires_at = models.DateTimeField(
-        default=lambda: timezone.now() + timedelta(hours=24)
+        default=get_default_value
     )
 
     def mark_verified(self):

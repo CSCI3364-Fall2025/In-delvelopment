@@ -11,62 +11,145 @@
                     <h3>Edit Questions: {{ assessment.title }}</h3>
                 </div>
                 <div class="card-body p-4">
-                    <form method="post">
+                    <form method="post" action="{% url 'edit_assessment_questions' assessment.id %}">
                         {% csrf_token %}
                         
-                        <h4 class="mb-3">Likert Scale Questions</h4>
-                        <div id="likert-questions">
-                            {% for question in likert_questions %}
-                            <div class="mb-3 likert-question">
-                                <div class="input-group">
-                                    <span class="input-group-text">Q{{ forloop.counter }}</span>
-                                    <input type="text" class="form-control" name="likert_question_{{ forloop.counter }}" 
-                                           value="{{ question.question_text }}" required>
-                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h3>Edit Assessment Questions</h3>
+                            </div>
+                            <div class="card-body">
+                                <h4 class="mb-3">Likert Scale Questions</h4>
+                                
+                                {% for question in likert_questions %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row mb-2">
+                                            <div class="col-md-8">
+                                                <label class="form-label">Question Text</label>
+                                                <input type="hidden" name="likert_id_{{ forloop.counter }}" value="{{ question.id }}">
+                                                <textarea class="form-control" name="likert_text_{{ forloop.counter }}" rows="2" required>{{ question.question_text }}</textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Order</label>
+                                                <input type="number" class="form-control" name="likert_order_{{ forloop.counter }}" value="{{ question.order }}" min="1">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Question Type</label>
+                                                <select class="form-select" name="likert_type_{{ forloop.counter }}">
+                                                    <option value="team" {% if question.question_type == 'team' %}selected{% endif %}>Team Overall</option>
+                                                    <option value="individual" {% if question.question_type == 'individual' %}selected{% endif %}>Per Teammate</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <button type="submit" name="delete_likert" value="{{ question.id }}" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash me-1"></i>Delete Question
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <!-- Add new Likert question -->
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h5>Add New Likert Question</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-2">
+                                            <div class="col-md-8">
+                                                <label class="form-label">Question Text</label>
+                                                <input type="hidden" name="likert_id_{{ likert_questions|length|add:1 }}" value="new">
+                                                <textarea class="form-control" name="likert_text_{{ likert_questions|length|add:1 }}" rows="2"></textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Order</label>
+                                                <input type="number" class="form-control" name="likert_order_{{ likert_questions|length|add:1 }}" value="{{ likert_questions|length|add:1 }}" min="1">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Question Type</label>
+                                                <select class="form-select" name="likert_type_{{ likert_questions|length|add:1 }}">
+                                                    <option value="team">Team Overall</option>
+                                                    <option value="individual">Per Teammate</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" name="likert_count" value="{{ likert_questions|length|add:1 }}">
+                                
+                                <h4 class="mb-3 mt-5">Open-Ended Questions</h4>
+                                
+                                {% for question in open_ended_questions %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row mb-2">
+                                            <div class="col-md-8">
+                                                <label class="form-label">Question Text</label>
+                                                <input type="hidden" name="open_ended_id_{{ forloop.counter }}" value="{{ question.id }}">
+                                                <textarea class="form-control" name="open_ended_text_{{ forloop.counter }}" rows="2" required>{{ question.question_text }}</textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Order</label>
+                                                <input type="number" class="form-control" name="open_ended_order_{{ forloop.counter }}" value="{{ question.order }}" min="1">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Question Type</label>
+                                                <select class="form-select" name="open_ended_type_{{ forloop.counter }}">
+                                                    <option value="team" {% if question.question_type == 'team' %}selected{% endif %}>Team Overall</option>
+                                                    <option value="individual" {% if question.question_type == 'individual' %}selected{% endif %}>Per Teammate</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <button type="submit" name="delete_open_ended" value="{{ question.id }}" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash me-1"></i>Delete Question
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <!-- Add new Open-ended question -->
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h5>Add New Open-Ended Question</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-2">
+                                            <div class="col-md-8">
+                                                <label class="form-label">Question Text</label>
+                                                <input type="hidden" name="open_ended_id_{{ open_ended_questions|length|add:1 }}" value="new">
+                                                <textarea class="form-control" name="open_ended_text_{{ open_ended_questions|length|add:1 }}" rows="2"></textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Order</label>
+                                                <input type="number" class="form-control" name="open_ended_order_{{ open_ended_questions|length|add:1 }}" value="{{ open_ended_questions|length|add:1 }}" min="1">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Question Type</label>
+                                                <select class="form-select" name="open_ended_type_{{ open_ended_questions|length|add:1 }}">
+                                                    <option value="team">Team Overall</option>
+                                                    <option value="individual">Per Teammate</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" name="open_ended_count" value="{{ open_ended_questions|length|add:1 }}">
+                                
+                                <div class="mt-4">
+                                    <button type="submit" name="action" value="save" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Questions
+                                    </button>
+                                    <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-secondary ms-2">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Assessment
+                                    </a>
                                 </div>
                             </div>
-                            {% empty %}
-                            <div class="mb-3 likert-question">
-                                <div class="input-group">
-                                    <span class="input-group-text">Q1</span>
-                                    <input type="text" class="form-control" name="likert_question_1" 
-                                           placeholder="Enter Likert scale question" required>
-                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <input type="hidden" id="likert_count" name="likert_count" value="{{ likert_questions|length|default:1 }}">
-                        <button type="button" id="add-likert" class="btn btn-secondary mb-4">Add Likert Question</button>
-                        
-                        <h4 class="mb-3">Open-Ended Questions</h4>
-                        <div id="open-ended-questions">
-                            {% for question in open_ended_questions %}
-                            <div class="mb-3 open-ended-question">
-                                <div class="input-group">
-                                    <span class="input-group-text">Q{{ forloop.counter }}</span>
-                                    <input type="text" class="form-control" name="open_ended_question_{{ forloop.counter }}" 
-                                           value="{{ question.question_text }}" required>
-                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <div class="mb-3 open-ended-question">
-                                <div class="input-group">
-                                    <span class="input-group-text">Q1</span>
-                                    <input type="text" class="form-control" name="open_ended_question_1" 
-                                           placeholder="Enter open-ended question" required>
-                                    <button type="button" class="btn btn-danger remove-question">Remove</button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <input type="hidden" id="open_ended_count" name="open_ended_count" value="{{ open_ended_questions|length|default:1 }}">
-                        <button type="button" id="add-open-ended" class="btn btn-secondary mb-4">Add Open-Ended Question</button>
-                        
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -74,76 +157,4 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add Likert question
-    document.getElementById('add-likert').addEventListener('click', function() {
-        const container = document.getElementById('likert-questions');
-        const count = document.querySelectorAll('.likert-question').length + 1;
-        
-        const newQuestion = document.createElement('div');
-        newQuestion.className = 'mb-3 likert-question';
-        newQuestion.innerHTML = `
-            <div class="input-group">
-                <span class="input-group-text">Q${count}</span>
-                <input type="text" class="form-control" name="likert_question_${count}" 
-                       placeholder="Enter Likert scale question" required>
-                <button type="button" class="btn btn-danger remove-question">Remove</button>
-            </div>
-        `;
-        
-        container.appendChild(newQuestion);
-        document.getElementById('likert_count').value = count;
-    });
-    
-    // Add Open-ended question
-    document.getElementById('add-open-ended').addEventListener('click', function() {
-        const container = document.getElementById('open-ended-questions');
-        const count = document.querySelectorAll('.open-ended-question').length + 1;
-        
-        const newQuestion = document.createElement('div');
-        newQuestion.className = 'mb-3 open-ended-question';
-        newQuestion.innerHTML = `
-            <div class="input-group">
-                <span class="input-group-text">Q${count}</span>
-                <input type="text" class="form-control" name="open_ended_question_${count}" 
-                       placeholder="Enter open-ended question" required>
-                <button type="button" class="btn btn-danger remove-question">Remove</button>
-            </div>
-        `;
-        
-        container.appendChild(newQuestion);
-        document.getElementById('open_ended_count').value = count;
-    });
-    
-    // Remove question (delegated event)
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-question')) {
-            const questionType = e.target.closest('div.mb-3').classList.contains('likert-question') ? 'likert' : 'open-ended';
-            const container = questionType === 'likert' ? 'likert-questions' : 'open-ended-questions';
-            const countField = questionType === 'likert' ? 'likert_count' : 'open_ended_count';
-            
-            // Only remove if there's more than one question
-            const questions = document.querySelectorAll(`.${questionType}-question`);
-            if (questions.length > 1) {
-                e.target.closest('div.mb-3').remove();
-                
-                // Update question numbers and names
-                const remainingQuestions = document.querySelectorAll(`.${questionType}-question`);
-                remainingQuestions.forEach((q, i) => {
-                    const num = i + 1;
-                    q.querySelector('.input-group-text').textContent = `Q${num}`;
-                    q.querySelector('input').name = `${questionType === 'likert' ? 'likert_question' : 'open_ended_question'}_${num}`;
-                });
-                
-                // Update count
-                document.getElementById(countField).value = remainingQuestions.length;
-            } else {
-                alert('You must have at least one question of this type.');
-            }
-        }
-    });
-});
-</script>
 {% endblock %}

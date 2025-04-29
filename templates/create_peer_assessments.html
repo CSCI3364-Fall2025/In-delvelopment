@@ -5,40 +5,61 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <h3>Create Peer Assessment</h3>
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-center py-3" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3><i class="fas fa-clipboard-list me-2"></i>Create Peer Assessment</h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <form method="post" id="peer-assessment-form">
                         {% csrf_token %}
-                        {{ form.as_p }}
-
-                        <!-- Single Dummy Self-Assessment Checkbox -->
-                        <div class="form-check mb-4">
-                            <label class="form-check-label" for="self-assessment-required"></label>
+                        
+                        <div class="card mb-4 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Assessment Details</h5>
+                            </div>
+                            <div class="card-body">
+                                {{ form.as_p }}
+                            </div>
                         </div>
 
-                        <div id="likert-questions-container" class="mb-4">
-                            <h5>Likert Questions</h5>
-                            <!-- Likert questions will be dynamically added here -->
+                        <div class="card mb-4 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Likert Scale Questions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="likert-questions-container" class="mb-3">
+                                    <p class="text-muted fst-italic">Add questions that students will rate on a scale of 1-5</p>
+                                    <!-- Likert questions will be dynamically added here -->
+                                </div>
+                                <button type="button" class="btn btn-sm mb-3 maroon-btn" id="add-likert-question">
+                                    <i class="fas fa-plus me-2"></i>Add Likert Question
+                                </button>
+                            </div>
                         </div>
-                        <button type="button" class="btn btn-outline-primary mb-3" id="add-likert-question">
-                            Add Likert Question
-                        </button>
 
-                        <div id="open-ended-questions-container" class="mb-4">
-                            <h5>Open-Ended Questions</h5>
-                            <!-- Open-ended questions will be dynamically added here -->
+                        <div class="card mb-4 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-comment-alt me-2"></i>Open-Ended Questions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="open-ended-questions-container" class="mb-3">
+                                    <p class="text-muted fst-italic">Add questions that require written responses</p>
+                                    <!-- Open-ended questions will be dynamically added here -->
+                                </div>
+                                <button type="button" class="btn btn-sm mb-3 maroon-btn" id="add-open-ended-question">
+                                    <i class="fas fa-plus me-2"></i>Add Open-Ended Question
+                                </button>
+                            </div>
                         </div>
-                        <button type="button" class="btn btn-outline-primary mb-3" id="add-open-ended-question">
-                            Add Open-Ended Question
-                        </button>
 
-                        <div class="mt-4">
-                            <button type="submit" class="btn btn-primary">Save Assessment</button>
-                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn maroon-btn">
+                                <i class="fas fa-save me-2"></i>Save Assessment
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -55,10 +76,31 @@
         function addLikertQuestion() {
             const questionCount = likertContainer.querySelectorAll('.likert-question').length + 1;
             const likertQuestion = `
-                <div class="mb-3 likert-question">
-                    <label for="likert-question-${questionCount}" class="form-label">Likert Question ${questionCount}:</label>
-                    <input type="text" name="likert_questions[]" id="likert-question-${questionCount}" class="form-control" placeholder="Enter your Likert question here" required>
-                    <button type="button" class="btn btn-danger btn-sm mt-2 remove-likert-question">Remove</button>
+                <div class="mb-3 likert-question card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title">Likert Question ${questionCount}</h6>
+                            <button type="button" class="btn btn-sm btn-danger remove-likert-question">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <label for="likert-question-${questionCount}" class="form-label">Question Text:</label>
+                            <input type="text" name="likert_questions[]" id="likert-question-${questionCount}" 
+                                class="form-control" placeholder="Enter your Likert question here" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Question Type:</label>
+                            <select name="likert_question_types[]" class="form-select">
+                                <option value="team">Team Overall</option>
+                                <option value="individual">Per Teammate</option>
+                            </select>
+                        </div>
+                        <div class="mt-2 text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <span class="fst-italic">Students will rate this on a scale of 1-5</span>
+                        </div>
+                    </div>
                 </div>
             `;
             likertContainer.insertAdjacentHTML('beforeend', likertQuestion);
@@ -67,22 +109,50 @@
         function addOpenEndedQuestion() {
             const questionCount = openEndedContainer.querySelectorAll('.open-ended-question').length + 1;
             const openEndedQuestion = `
-                <div class="mb-3 open-ended-question">
-                    <label for="open-ended-question-${questionCount}" class="form-label">Open-Ended Question ${questionCount}:</label>
-                    <input type="text" name="open_ended_questions[]" id="open-ended-question-${questionCount}" class="form-control" placeholder="Enter your open-ended question here" required>
-                    <button type="button" class="btn btn-danger btn-sm mt-2 remove-open-ended-question">Remove</button>
+                <div class="mb-3 open-ended-question card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title">Open-Ended Question ${questionCount}</h6>
+                            <button type="button" class="btn btn-sm btn-danger remove-open-ended-question">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <label for="open-ended-question-${questionCount}" class="form-label">Question Text:</label>
+                            <input type="text" name="open_ended_questions[]" id="open-ended-question-${questionCount}" 
+                                class="form-control" placeholder="Enter your open-ended question here" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Question Type:</label>
+                            <select name="open_ended_question_types[]" class="form-select">
+                                <option value="team">Team Overall</option>
+                                <option value="individual">Per Teammate</option>
+                            </select>
+                        </div>
+                        <div class="mt-2 text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <span class="fst-italic">Students will provide a written response</span>
+                        </div>
+                    </div>
                 </div>
             `;
             openEndedContainer.insertAdjacentHTML('beforeend', openEndedQuestion);
         }
 
         function removeQuestion(event) {
-            if (event.target.classList.contains('remove-likert-question')) {
-                event.target.closest('.likert-question').remove();
-            } else if (event.target.classList.contains('remove-open-ended-question')) {
-                event.target.closest('.open-ended-question').remove();
+            const target = event.target.closest('.btn');
+            if (!target) return;
+            
+            if (target.classList.contains('remove-likert-question')) {
+                target.closest('.likert-question').remove();
+            } else if (target.classList.contains('remove-open-ended-question')) {
+                target.closest('.open-ended-question').remove();
             }
         }
+
+        // Add at least one question of each type by default
+        addLikertQuestion();
+        addOpenEndedQuestion();
 
         document.getElementById('add-likert-question').addEventListener('click', addLikertQuestion);
         document.getElementById('add-open-ended-question').addEventListener('click', addOpenEndedQuestion);

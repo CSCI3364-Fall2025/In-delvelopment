@@ -235,60 +235,86 @@ def submit_assessment(request, assessment_id):
     if request.method == 'POST':
         try:
             assessment = get_object_or_404(Assessment, id=assessment_id)
-            student_username = request.user.username
-            assessed_username = request.POST.get('student', '').strip()
-            assessed_peer = User.objects.get(username=assessed_username)
-
-            # Get the standard fields
-            contribution = int(request.POST.get('contribution', 0))
-            teamwork = int(request.POST.get('teamwork', 0))
-            communication = int(request.POST.get('communication', 0))
-            feedback = request.POST.get('feedback', '').strip()
-
+            
             # Create or update the submission
             submission, created = AssessmentSubmission.objects.update_or_create(
                 assessment=assessment,
-                student=student_username,
+                student=request.user.username,
                 defaults={
-                    'assessed_peer': assessed_peer,
-                    'contribution': contribution,
-                    'teamwork': teamwork,
-                    'communication': communication,
-                    'feedback': feedback
+                    'feedback': request.POST.get('feedback', '').strip()
+                    # Other default fields as needed
                 }
             )
             
             # Process Likert question responses
             likert_questions = LikertQuestion.objects.filter(assessment=assessment)
             for question in likert_questions:
-                rating = request.POST.get(f'likert_{question.id}', None)
-                if rating is not None:
-                    LikertResponse.objects.update_or_create(
-                        submission=submission,
-                        question=question,
-                        defaults={'rating': int(rating)}
-                    )
+                if question.question_type == 'team':
+                    # Team question (overall)
+                    rating = request.POST.get(f'likert_{question.id}', None)
+                    if rating is not None:
+                        LikertResponse.objects.update_or_create(
+                            submission=submission,
+                            question=question,
+                            teammate=None,
+                            defaults={'rating': int(rating)}
+                        )
+                else:
+                    # Individual question (per teammate)
+                    teammates = get_teammates(request.user, assessment.course)
+                    for teammate in teammates:
+                        if teammate.username != request.user.username:  # Skip self-assessment
+                            rating = request.POST.get(f'likert_{question.id}_{teammate.id}', None)
+                            if rating is not None:
+                                LikertResponse.objects.update_or_create(
+                                    submission=submission,
+                                    question=question,
+                                    teammate=teammate,
+                                    defaults={'rating': int(rating)}
+                                )
             
             # Process open-ended question responses
             open_ended_questions = OpenEndedQuestion.objects.filter(assessment=assessment)
             for question in open_ended_questions:
-                response_text = request.POST.get(f'open_ended_{question.id}', '').strip()
-                if response_text:
-                    OpenEndedResponse.objects.update_or_create(
-                        submission=submission,
-                        question=question,
-                        defaults={'response_text': response_text}
-                    )
-
+                if question.question_type == 'team':
+                    # Team question (overall)
+                    response_text = request.POST.get(f'open_ended_{question.id}', '').strip()
+                    if response_text:
+                        OpenEndedResponse.objects.update_or_create(
+                            submission=submission,
+                            question=question,
+                            teammate=None,
+                            defaults={'response_text': response_text}
+                        )
+                else:
+                    # Individual question (per teammate)
+                    teammates = get_teammates(request.user, assessment.course)
+                    for teammate in teammates:
+                        if teammate.username != request.user.username:  # Skip self-assessment
+                            response_text = request.POST.get(f'open_ended_{question.id}_{teammate.id}', '').strip()
+                            if response_text:
+                                OpenEndedResponse.objects.update_or_create(
+                                    submission=submission,
+                                    question=question,
+                                    teammate=teammate,
+                                    defaults={'response_text': response_text}
+                                )
+            
             messages.success(request, "Assessment submitted successfully.")
             return redirect('dashboard')
-
-        except User.DoesNotExist:
-            messages.error(request, "Selected team member does not exist.")
+            
         except Exception as e:
             messages.error(request, f"Error submitting assessment: {str(e)}")
-
+    
     return redirect('view_assessment', assessment_id=assessment_id)
+
+def get_teammates(user, course):
+    """Helper function to get all teammates for a user in a course"""
+    teams = Team.objects.filter(course=course, members=user)
+    if teams.exists():
+        team = teams.first()
+        return team.members.all()
+    return User.objects.none()
 
 @login_required
 def view_all_published_results(request):
@@ -829,22 +855,38 @@ def create_peer_assessments(request):
             
             # Process Likert questions
             likert_questions = request.POST.getlist('likert_questions[]')
+            likert_question_types = request.POST.getlist('likert_question_types[]')
+            
             for i, question_text in enumerate(likert_questions):
                 if question_text.strip():  # Only save non-empty questions
+                    # Get the question type, default to 'team' if not provided
+                    question_type = 'team'
+                    if i < len(likert_question_types):
+                        question_type = likert_question_types[i]
+                    
                     LikertQuestion.objects.create(
                         assessment=assessment,
                         question_text=question_text,
-                        order=i
+                        order=i,
+                        question_type=question_type
                     )
             
             # Process open-ended questions
             open_ended_questions = request.POST.getlist('open_ended_questions[]')
+            open_ended_question_types = request.POST.getlist('open_ended_question_types[]')
+            
             for i, question_text in enumerate(open_ended_questions):
                 if question_text.strip():  # Only save non-empty questions
+                    # Get the question type, default to 'team' if not provided
+                    question_type = 'team'
+                    if i < len(open_ended_question_types):
+                        question_type = open_ended_question_types[i]
+                    
                     OpenEndedQuestion.objects.create(
                         assessment=assessment,
                         question_text=question_text,
-                        order=i
+                        order=i,
+                        question_type=question_type
                     )
             
             messages.success(request, "Peer assessment created successfully with custom questions.")
@@ -1219,37 +1261,64 @@ def accept_invitation(request):
 def edit_assessment_questions(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
     
-    # Check if user is a professor
+    # Check if user is a professor and has permission to edit this assessment
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
-        messages.error(request, "You don't have permission to edit assessment questions.")
+        messages.error(request, "Only professors can edit assessment questions.")
         return redirect('view_assessment', assessment_id=assessment_id)
     
-    # Check if assessment is already published
-    if assessment.is_published:
-        messages.error(request, "This assessment has already been published and cannot be modified.")
+    if assessment.course.created_by != request.user:
+        messages.error(request, "You don't have permission to edit this assessment.")
         return redirect('view_assessment', assessment_id=assessment_id)
     
-    # Check if assessment is active (past release date) with null check
-    if assessment.release_date is not None and timezone.now() >= assessment.release_date:
-        messages.error(request, "This assessment is currently active and cannot be modified.")
+    # Check if assessment is editable
+    if not assessment.is_editable:
+        messages.error(request, "This assessment is no longer editable.")
         return redirect('view_assessment', assessment_id=assessment_id)
+    
+    # Get existing questions
+    likert_questions = LikertQuestion.objects.filter(assessment=assessment).order_by('order')
+    open_ended_questions = OpenEndedQuestion.objects.filter(assessment=assessment).order_by('order')
     
     if request.method == 'POST':
-        action = request.POST.get('action', 'save')
+        # Check for delete actions first
+        if 'delete_likert' in request.POST:
+            question_id = request.POST.get('delete_likert')
+            try:
+                question = LikertQuestion.objects.get(id=question_id, assessment=assessment)
+                question.delete()
+                messages.success(request, "Likert question deleted successfully.")
+                return redirect('edit_assessment_questions', assessment_id=assessment_id)
+            except LikertQuestion.DoesNotExist:
+                pass
+        
+        if 'delete_open_ended' in request.POST:
+            question_id = request.POST.get('delete_open_ended')
+            try:
+                question = OpenEndedQuestion.objects.get(id=question_id, assessment=assessment)
+                question.delete()
+                messages.success(request, "Open-ended question deleted successfully.")
+                return redirect('edit_assessment_questions', assessment_id=assessment_id)
+            except OpenEndedQuestion.DoesNotExist:
+                pass
         
         # Process Likert questions
         likert_count = int(request.POST.get('likert_count', 0))
         for i in range(1, likert_count + 1):
             question_id = request.POST.get(f'likert_id_{i}')
-            question_text = request.POST.get(f'likert_text_{i}')
+            question_text = request.POST.get(f'likert_text_{i}', '').strip()
             question_order = int(request.POST.get(f'likert_order_{i}', i))
+            question_type = request.POST.get(f'likert_type_{i}', 'team')
             
+            if not question_text:
+                continue  # Skip empty questions
+                
             if question_id == 'new':
                 # Create new question
                 LikertQuestion.objects.create(
                     assessment=assessment,
                     question_text=question_text,
-                    order=question_order
+                    order=question_order,
+                    question_type=question_type
                 )
             else:
                 # Update existing question
@@ -1257,24 +1326,29 @@ def edit_assessment_questions(request, assessment_id):
                     question = LikertQuestion.objects.get(id=question_id, assessment=assessment)
                     question.question_text = question_text
                     question.order = question_order
+                    question.question_type = question_type
                     question.save()
                 except LikertQuestion.DoesNotExist:
-                    # Question was deleted or doesn't belong to this assessment
                     pass
         
         # Process Open-ended questions
         open_ended_count = int(request.POST.get('open_ended_count', 0))
         for i in range(1, open_ended_count + 1):
             question_id = request.POST.get(f'open_ended_id_{i}')
-            question_text = request.POST.get(f'open_ended_text_{i}')
+            question_text = request.POST.get(f'open_ended_text_{i}', '').strip()
             question_order = int(request.POST.get(f'open_ended_order_{i}', i))
+            question_type = request.POST.get(f'open_ended_type_{i}', 'team')
             
+            if not question_text:
+                continue  # Skip empty questions
+                
             if question_id == 'new':
                 # Create new question
                 OpenEndedQuestion.objects.create(
                     assessment=assessment,
                     question_text=question_text,
-                    order=question_order
+                    order=question_order,
+                    question_type=question_type
                 )
             else:
                 # Update existing question
@@ -1282,59 +1356,21 @@ def edit_assessment_questions(request, assessment_id):
                     question = OpenEndedQuestion.objects.get(id=question_id, assessment=assessment)
                     question.question_text = question_text
                     question.order = question_order
+                    question.question_type = question_type
                     question.save()
                 except OpenEndedQuestion.DoesNotExist:
-                    # Question was deleted or doesn't belong to this assessment
                     pass
         
-        # Delete questions that weren't included in the form
-        existing_likert_ids = [request.POST.get(f'likert_id_{i}') for i in range(1, likert_count + 1) 
-                              if request.POST.get(f'likert_id_{i}') != 'new']
-        LikertQuestion.objects.filter(assessment=assessment).exclude(id__in=existing_likert_ids).delete()
-        
-        existing_open_ended_ids = [request.POST.get(f'open_ended_id_{i}') for i in range(1, open_ended_count + 1)
-                                  if request.POST.get(f'open_ended_id_{i}') != 'new']
-        OpenEndedQuestion.objects.filter(assessment=assessment).exclude(id__in=existing_open_ended_ids).delete()
-        
-        # Handle publishing if requested
-        if action == 'publish':
-            assessment.is_published = True
-            assessment.save()
-            
-            # Send confirmation email about publishing
-            send_mail(
-                f'Assessment Published: {assessment.title}',
-                f'''You have successfully published the assessment "{assessment.title}" in course "{assessment.course.name}".
-                
-The assessment will be released to students on {assessment.release_date}.
-
-This is an automated message from the Peer Assessment System.''',
-                settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],
-                fail_silently=False,
-            )
-            
-            messages.success(request, "Assessment has been published successfully. A confirmation email has been sent.")
-        else:
-            # Send confirmation email about saving draft
-            send_mail(
-                f'Assessment Draft Updated: {assessment.title}',
-                f'''You have successfully updated the draft for assessment "{assessment.title}" in course "{assessment.course.name}".
-                
-The assessment is saved as a draft and can still be edited. It will be released to students on {assessment.release_date} if published.
-                
-This is an automated message from the Peer Assessment System.''',
-                settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],
-                fail_silently=False,
-            )
-            
-            messages.success(request, "Assessment draft has been saved successfully. A confirmation email has been sent.")
-            
+        messages.success(request, "Assessment questions updated successfully.")
         return redirect('view_assessment', assessment_id=assessment_id)
     
-    # If not POST, redirect back to the assessment view
-    return redirect('view_assessment', assessment_id=assessment_id)
+    context = {
+        'assessment': assessment,
+        'likert_questions': likert_questions,
+        'open_ended_questions': open_ended_questions,
+    }
+    
+    return render(request, 'edit_assessment_questions.html', context)
 
 @login_required
 def view_team_comments(request, assessment_id, team_id=None):
