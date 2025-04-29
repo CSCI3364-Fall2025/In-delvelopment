@@ -10,7 +10,7 @@ admin.site.register(Course)
 admin.site.register(Team)
 admin.site.register(Assessment)
 
-# 🔥 Inlines for showing related data
+# Inlines for showing related data
 class LikertResponseInline(admin.TabularInline):
     model = LikertResponse
     extra = 0
