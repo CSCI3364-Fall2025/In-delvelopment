@@ -114,7 +114,8 @@ def dashboard(request):
         'request': request,
         'active_courses': request.user.courses.filter(is_active=True) | request.user.created_courses.filter(is_active=True),
         'active_teams': request.user.teams.filter(is_active=True),
-        'pending_invitations_count': pending_invitations_count
+        'pending_invitations_count': pending_invitations_count,
+        'now': timezone.now(),
     }
     
     # Add welcome message
@@ -1462,3 +1463,126 @@ def submit_student_score(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+def publish_assessment_now(request, assessment_id):
+    """Immediately publish an assessment that was scheduled for later release"""
+    # Check if user is a professor
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
+        messages.error(request, "Only professors can publish assessments.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    if request.method != 'POST':
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if the user has permission to modify this assessment
+    if assessment.course.created_by != request.user:
+        messages.error(request, "You don't have permission to modify this assessment.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    # Check if the assessment is already active
+    if assessment.release_date and assessment.release_date <= timezone.now():
+        messages.info(request, "This assessment is already active.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    # Update the assessment to be immediately published
+    current_time = timezone.now()
+    assessment.release_date = current_time
+    assessment.open_date = current_time  # Update open_date as well
+    assessment.is_published = True
+    
+    # If this is a draft assessment, ensure it's properly published
+    if not assessment.published_date:
+        assessment.published_date = current_time
+    
+    assessment.save()
+    
+    # Send notification email to the professor
+    send_mail(
+        f'Assessment Published Now: {assessment.title}',
+        f'''You have successfully published the assessment "{assessment.title}" in course "{assessment.course.name}" immediately.
+        
+Students can now access this assessment.
+
+This is an automated message from the Peer Assessment System.''',
+        settings.DEFAULT_FROM_EMAIL,
+        [request.user.email],
+        fail_silently=False,
+    )
+    
+    # Optionally, send notifications to students
+    try:
+        students = User.objects.filter(
+            profile__role='student',
+            teams__course=assessment.course
+        ).distinct()
+        
+        for student in students:
+            send_mail(
+                f'New Assessment Available: {assessment.title}',
+                f'''A new assessment "{assessment.title}" is now available in your course "{assessment.course.name}".
+                
+Please log in to the Peer Assessment System to complete this assessment.
+
+Due date: {assessment.due_date.strftime("%Y-%m-%d %H:%M") if assessment.due_date else "Not specified"}
+
+This is an automated message from the Peer Assessment System.''',
+                settings.DEFAULT_FROM_EMAIL,
+                [student.email],
+                fail_silently=False,
+            )
+    except Exception as e:
+        logger.error(f"Error sending student notifications: {str(e)}")
+        # Continue execution even if student notifications fail
+    
+    messages.success(request, "Assessment has been published and is now visible to students.")
+    return redirect('view_assessment', assessment_id=assessment_id)
+
+@login_required
+def delete_assessment(request, assessment_id):
+    """Delete an assessment and all associated data"""
+    # Check if user is a professor
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
+        messages.error(request, "Only professors can delete assessments.")
+        return redirect('dashboard')
+    
+    if request.method != 'POST':
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if the user has permission to delete this assessment
+    if assessment.course.created_by != request.user:
+        messages.error(request, "You don't have permission to delete this assessment.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    course = assessment.course
+    assessment_title = assessment.title
+    
+    # Delete the assessment and all related data
+    try:
+        # Delete all related objects
+        LikertResponse.objects.filter(question__assessment=assessment).delete()
+        OpenEndedResponse.objects.filter(question__assessment=assessment).delete()
+        LikertQuestion.objects.filter(assessment=assessment).delete()
+        OpenEndedQuestion.objects.filter(assessment=assessment).delete()
+        AssessmentSubmission.objects.filter(assessment=assessment).delete()
+        StudentScore.objects.filter(assessment=assessment).delete()
+        
+        # Finally delete the assessment itself
+        assessment.delete()
+        
+        messages.success(
+            request, 
+            f"Assessment '{assessment_title}' has been permanently deleted along with all associated data."
+        )
+        
+        # Redirect to the course page
+        return redirect('view_course', course_name=course.name)
+        
+    except Exception as e:
+        logger.error(f"Error deleting assessment {assessment_id}: {str(e)}")
+        messages.error(request, f"An error occurred while deleting the assessment: {str(e)}")
+        return redirect('view_assessment', assessment_id=assessment_id)
