@@ -25,6 +25,8 @@ from django.utils.safestring import mark_safe
 
 import random
 import string
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 print("views.py loaded")
 
@@ -153,72 +155,116 @@ def dashboard(request):
 @login_required
 def view_assessment(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id)
+    now = timezone.now()
     
-    # Check if assessment is active (past release date) with null check
-    is_active = False
-    if assessment.release_date is not None:
-        is_active = timezone.now() >= assessment.release_date
+    # Check if assessment is active or published
+    is_active = assessment.open_date <= now and assessment.due_date > now
     
-    # Load or create draft progress
-    progress, _ = AssessmentProgress.objects.get_or_create(
-        student=request.user,
-        assessment=assessment
-    )
-
-    # Fetch the latest submission (if it exists) by this student for this assessment
-    existing_submission = AssessmentSubmission.objects.filter(
-        assessment=assessment,
-        student=request.user.username  # stored as CharField
-    ).first()
-
-    # Get team members (excluding self) – customize this based on your Team model
+    # Get the user's team for this assessment's course
+    team = None
+    teams = []
+    
+    if hasattr(request.user, 'teams'):
+        for user_team in request.user.teams.all():
+            if user_team.course == assessment.course:
+                team = user_team
+                break
+    
+    # For professors, get all teams in the course
+    if hasattr(request.user, 'profile') and request.user.profile.role == 'professor':
+        teams = Team.objects.filter(course=assessment.course)
+    
+    # Get team members if user is in a team
     team_members = []
-    if hasattr(request.user, 'teams') and request.user.teams.exists():
-        team_members = request.user.teams.first().members.exclude(username=request.user.username)
-
-    # Get custom questions for this assessment
+    teammates = []
+    if team:
+        team_members = team.members.all()
+        teammates = [member for member in team_members if member != request.user]
+    
+    # Get existing submission if any
+    submission = None
+    if request.user.is_authenticated:
+        try:
+            submission = AssessmentSubmission.objects.filter(
+                assessment=assessment,
+                student=request.user.username
+            ).first()
+        except AssessmentSubmission.DoesNotExist:
+            pass
+    
+    # Get likert and open-ended questions
     likert_questions = LikertQuestion.objects.filter(assessment=assessment).order_by('order')
     open_ended_questions = OpenEndedQuestion.objects.filter(assessment=assessment).order_by('order')
-
-    # Get team and class averages (if the assessment is closed)
-    if assessment.due_date and assessment.due_date < timezone.now():
-        team_usernames = team_members.values_list('username', flat=True)
+    
+    # Calculate team and class averages
+    team_avg = {
+        'contribution': 0,
+        'teamwork': 0,
+        'communication': 0
+    }
+    
+    class_avg = {
+        'contribution': 0,
+        'teamwork': 0,
+        'communication': 0
+    }
+    
+    # Calculate team averages if team exists
+    if team:
         team_submissions = AssessmentSubmission.objects.filter(
-            assessment=assessment, student__in=team_usernames
+            assessment=assessment,
+            student__in=[member.username for member in team_members]
         )
-        class_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
-
-        team_avg = {
-            'contribution': team_submissions.aggregate(Avg('contribution'))['contribution__avg'] or "N/A",
-            'teamwork': team_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or "N/A",
-            'communication': team_submissions.aggregate(Avg('communication'))['communication__avg'] or "N/A",
+        
+        if team_submissions.exists():
+            team_avg['contribution'] = team_submissions.aggregate(Avg('contribution'))['contribution__avg'] or 0
+            team_avg['teamwork'] = team_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or 0
+            team_avg['communication'] = team_submissions.aggregate(Avg('communication'))['communication__avg'] or 0
+    
+    # Calculate class averages
+    all_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
+    if all_submissions.exists():
+        class_avg['contribution'] = all_submissions.aggregate(Avg('contribution'))['contribution__avg'] or 0
+        class_avg['teamwork'] = all_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or 0
+        class_avg['communication'] = all_submissions.aggregate(Avg('communication'))['communication__avg'] or 0
+    
+    # Format averages to 2 decimal places
+    for key in team_avg:
+        team_avg[key] = round(team_avg[key], 2)
+        class_avg[key] = round(class_avg[key], 2)
+    
+    # Prepare teams data for JavaScript
+    teams_data = []
+    for team_obj in teams:
+        team_data = {
+            'id': team_obj.id,
+            'name': team_obj.name,
+            'members': [
+                {
+                    'id': member.id,
+                    'name': member.get_full_name() or member.username
+                }
+                for member in team_obj.members.all()
+            ]
         }
-
-        class_avg = {
-            'contribution': class_submissions.aggregate(Avg('contribution'))['contribution__avg'] or "N/A",
-            'teamwork': class_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or "N/A",
-            'communication': class_submissions.aggregate(Avg('communication'))['communication__avg'] or "N/A",
-        }
-    else:
-        team_avg = class_avg = {
-            'contribution': "N/A",
-            'teamwork': "N/A",
-            'communication': "N/A",
-        }
-
+        teams_data.append(team_data)
+    
     context = {
         'assessment': assessment,
-        'progress': progress,
-        'submission': existing_submission,
+        'team': team,
+        'teams': teams,
         'team_members': team_members,
-        'team_avg': team_avg,
-        'class_avg': class_avg,
+        'teammates': teammates,
+        'submission': submission,
         'likert_questions': likert_questions,
         'open_ended_questions': open_ended_questions,
-        'now': timezone.now(),
         'is_active': is_active,
+        'now': now,
+        'team_avg': team_avg,
+        'class_avg': class_avg,
+        'teams_json': json.dumps(teams_data, cls=DjangoJSONEncoder),
     }
-
+    
     return render(request, 'assessment_detail.html', context)
 
 @login_required

@@ -60,9 +60,9 @@
                                     <label class="form-label">Select Team</label>
                                     <select class="form-select" id="teamSelect">
                                         <option value="">Choose team...</option>
-                                        <option value="1">Team Alpha</option>
-                                        <option value="2">Team Beta</option>
-                                        <option value="3">Team Gamma</option>
+                                        {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                                 <div class="flex-grow-1">
@@ -86,34 +86,62 @@
                     </div>
 
                     <script>
-                        const teamMembers = {
-                            '1': ['John D.', 'Sarah M.', 'Mike R.'],
-                            '2': ['Emily K.', 'David L.', 'Lisa P.'],
-                            '3': ['Alex W.', 'Chris B.', 'Maria S.']
-                        };
-
-                        document.getElementById('teamSelect').addEventListener('change', function () {
-                            const memberSelect = document.getElementById('memberSelect');
-                            memberSelect.innerHTML = '<option value="">Select member...</option>';
-
-                            const members = teamMembers[this.value] || [];
-                            members.forEach(member => {
-                                memberSelect.add(new Option(member, member));
+                        document.addEventListener('DOMContentLoaded', function() {
+                            // Get teams data from the backend
+                            const teams = JSON.parse('{{ teams_json|escapejs }}');
+                            
+                            document.getElementById('teamSelect').addEventListener('change', function () {
+                                const memberSelect = document.getElementById('memberSelect');
+                                memberSelect.innerHTML = '<option value="">Select member...</option>';
+                                
+                                const teamId = this.value;
+                                if (!teamId) return;
+                                
+                                // Find the selected team and its members
+                                const selectedTeam = teams.find(team => team.id.toString() === teamId);
+                                if (selectedTeam && selectedTeam.members) {
+                                    selectedTeam.members.forEach(member => {
+                                        memberSelect.add(new Option(member.name, member.id));
+                                    });
+                                }
                             });
                         });
-
+                        
                         function submitEvaluation() {
                             const team = document.getElementById('teamSelect').value;
                             const member = document.getElementById('memberSelect').value;
                             const score = document.getElementById('scoreInput').value;
-
+                            
                             if (!team || !member || !score) {
                                 alert('Please fill in all fields');
                                 return;
                             }
-
-                            console.log('Evaluation submitted:', { team, member, score });
-                            // Backend submission would go here
+                            
+                            // Send data to the backend using fetch API
+                            fetch('{% url "submit_student_score" %}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                },
+                                body: new URLSearchParams({
+                                    'assessment_id': '{{ assessment.id }}',
+                                    'student_id': member,
+                                    'score': score
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    alert(data.message);
+                                    // Optionally refresh the page or update UI
+                                } else {
+                                    throw new Error(data.error || 'Failed to submit score');
+                                }
+                            })
+                            .catch(error => {
+                                alert('Error: ' + error.message);
+                            });
                         }
                     </script>
 
@@ -230,9 +258,10 @@
                                                     <div class="form-check mx-auto" style="z-index: 1;">
                                                         <input class="form-check-input" type="radio"
                                                             name="likert_{{ question.id }}_{{ teammate.id }}"
-                                                            value="{{ i }}" {% has_response_with_rating_for_teammate
-                                                            submission question teammate i as has_response %} {% if
-                                                            has_response %}checked{% endif %} required>
+                                                            value="{{ i }}" 
+                                                            {% has_response_with_rating_for_teammate submission question teammate i as has_response %} 
+                                                            {% if has_response %}checked{% endif %} 
+                                                            required>
                                                     </div>
                                                     {% endfor %}
                                                 </div>
@@ -315,15 +344,6 @@
                                 {% endif %}
                             </div>
                             <div class="card-body">
-                                <!-- Debug information -->
-                                <div class="alert alert-secondary mb-4">
-                                    <h5>Debug Information</h5>
-                                    <p>is_published: {{ assessment.is_published }}</p>
-                                    <p>release_date: {{ assessment.release_date }}</p>
-                                    <p>now: {{ now }}</p>
-                                    <p>is_scheduled: {{ assessment.is_scheduled }}</p>
-                                </div>
-
                                 <!-- For published assessments scheduled for future release -->
                                 {% if assessment.is_scheduled %}
                                 <div class="alert alert-info mb-4">
@@ -343,8 +363,7 @@
                                 {% endif %}
 
                                 <!-- For draft assessments with future release date -->
-                                {% if not assessment.is_published and assessment.release_date and
-                                assessment.release_date > now %}
+                                {% if not assessment.is_published and assessment.release_date and assessment.release_date > now %}
                                 <div class="alert alert-info mb-4">
                                     <h5>Assessment Status: Draft with Future Release Date</h5>
                                     <p>This assessment will be released to students on {{
@@ -749,4 +768,5 @@
         }
     });
 </script>
+
 {% endblock %}
