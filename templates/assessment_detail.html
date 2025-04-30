@@ -50,6 +50,73 @@
                         </table>
                     </div>
 
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Quick Evaluation</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex gap-3 flex-wrap align-items-end">
+                                <div class="flex-grow-1">
+                                    <label class="form-label">Select Team</label>
+                                    <select class="form-select" id="teamSelect">
+                                        <option value="">Choose team...</option>
+                                        <option value="1">Team Alpha</option>
+                                        <option value="2">Team Beta</option>
+                                        <option value="3">Team Gamma</option>
+                                    </select>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <label class="form-label">Team Member</label>
+                                    <select class="form-select" id="memberSelect">
+                                        <option value="">Select team first...</option>
+                                    </select>
+                                </div>
+                                <div style="width: 120px;">
+                                    <label class="form-label">Score</label>
+                                    <input type="number" class="form-control" id="scoreInput" min="0" max="10"
+                                        step="0.1" placeholder="0.0">
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary" onclick="submitEvaluation()">
+                                        Submit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        const teamMembers = {
+                            '1': ['John D.', 'Sarah M.', 'Mike R.'],
+                            '2': ['Emily K.', 'David L.', 'Lisa P.'],
+                            '3': ['Alex W.', 'Chris B.', 'Maria S.']
+                        };
+
+                        document.getElementById('teamSelect').addEventListener('change', function () {
+                            const memberSelect = document.getElementById('memberSelect');
+                            memberSelect.innerHTML = '<option value="">Select member...</option>';
+
+                            const members = teamMembers[this.value] || [];
+                            members.forEach(member => {
+                                memberSelect.add(new Option(member, member));
+                            });
+                        });
+
+                        function submitEvaluation() {
+                            const team = document.getElementById('teamSelect').value;
+                            const member = document.getElementById('memberSelect').value;
+                            const score = document.getElementById('scoreInput').value;
+
+                            if (!team || !member || !score) {
+                                alert('Please fill in all fields');
+                                return;
+                            }
+
+                            console.log('Evaluation submitted:', { team, member, score });
+                            // Backend submission would go here
+                        }
+                    </script>
+
                     {% if user.profile.role == 'student' or user.profile.role == 'Student' %}
                     <div id="studentView" class="container">
                         <h2>Peer Assessment</h2>
@@ -59,7 +126,8 @@
                                 <label for="student" class="form-label">Select Team Member:</label>
                                 <select id="student" name="student" class="form-select" required>
                                     {% for member in team_members %}
-                                    <option value="{{ member.username }}">{{ member.get_full_name|default:member.username }}</option>
+                                    <option value="{{ member.username }}">{{
+                                        member.get_full_name|default:member.username }}</option>
                                     {% endfor %}
                                     <option value="{{ request.user.username }}">Self</option>
                                 </select>
@@ -70,18 +138,16 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute"
-                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
-                                            <div class="form-check mx-auto" style="z-index: 1;">
-                                                {% if submission and submission.contribution == i %}
-                                                    <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" checked>
-                                                {% else %}
-                                                <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" required>
-                                                {% endif %}
-                                            </div>
+                                        <div class="form-check mx-auto" style="z-index: 1;">
+                                            {% if submission and submission.contribution == i %}
+                                            <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" checked required>
+                                            {% else %}
+                                            <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" required>
+                                            {% endif %}
+                                        </div>
                                         {% endfor %}
-                                                                                
                                     </div>
                                     <span>Excellent</span>
                                 </div>
@@ -92,14 +158,13 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute"
-                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
-                                            <div class="form-check mx-auto" style="z-index: 1;">
-                                                <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
-                                                {% if submission and submission.teamwork == i %}checked{% endif %}>
-                                            </div>
-                                        {% endfor %}   
+                                        <div class="form-check mx-auto" style="z-index: 1;">
+                                            <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
+                                                {% if submission and submission.teamwork == i %}checked{% endif %} required>
+                                        </div>
+                                        {% endfor %}
                                     </div>
                                     <span>Excellent</span>
                                 </div>
@@ -110,15 +175,13 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute"
-                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
-                                            <div class="form-check mx-auto" style="z-index: 1;">
-                                                <input class="form-check-input" type="radio" name="communication" value="{{ i }}"
-                                                {% if submission and submission.communication == i %}checked{% endif %}>
-                                            </div>
+                                        <div class="form-check mx-auto" style="z-index: 1;">
+                                            <input class="form-check-input" type="radio" name="communication" value="{{ i }}"
+                                                {% if submission and submission.communication == i %}checked{% endif %} required>
+                                        </div>
                                         {% endfor %}
-                                        
                                     </div>
                                     <span>Excellent</span>
                                 </div>
@@ -128,18 +191,19 @@
                             {% for question in likert_questions %}
                             <div class="mb-4">
                                 <label class="form-label">{{ question.question_text|safe }}</label>
-                                
+
                                 {% if question.question_type == 'team' %}
                                 <!-- Team question (overall) -->
                                 <div class="d-flex align-items-center justify-content-between">
                                     <span>Poor</span>
                                     <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                        <hr class="w-100 position-absolute"
+                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                         {% for i in 5|range_filter %}
                                         <div class="form-check mx-auto" style="z-index: 1;">
                                             <input class="form-check-input" type="radio" name="likert_{{ question.id }}"
-                                                value="{{ i }}" {% has_response_with_rating submission question i as has_response %} 
-                                                {% if has_response %}checked{% endif %} required>
+                                                value="{{ i }}" {% has_response_with_rating submission question i as
+                                                has_response %} {% if has_response %}checked{% endif %} required>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -155,16 +219,20 @@
                                         {% for teammate in teammates %}
                                         {% if teammate.username != request.user.username %}
                                         <div class="mb-3">
-                                            <label class="form-label">{{ teammate.get_full_name|default:teammate.username }}</label>
+                                            <label class="form-label">{{
+                                                teammate.get_full_name|default:teammate.username }}</label>
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span>Poor</span>
                                                 <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                                    <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
+                                                    <hr class="w-100 position-absolute"
+                                                        style="top: 50%; z-index: 0; border: 1px solid #ccc;">
                                                     {% for i in 5|range_filter %}
                                                     <div class="form-check mx-auto" style="z-index: 1;">
-                                                        <input class="form-check-input" type="radio" name="likert_{{ question.id }}_{{ teammate.id }}"
-                                                            value="{{ i }}" {% has_response_with_rating_for_teammate submission question teammate i as has_response %} 
-                                                            {% if has_response %}checked{% endif %} required>
+                                                        <input class="form-check-input" type="radio"
+                                                            name="likert_{{ question.id }}_{{ teammate.id }}"
+                                                            value="{{ i }}" {% has_response_with_rating_for_teammate
+                                                            submission question teammate i as has_response %} {% if
+                                                            has_response %}checked{% endif %} required>
                                                     </div>
                                                     {% endfor %}
                                                 </div>
@@ -183,10 +251,11 @@
                             {% for question in open_ended_questions %}
                             <div class="mb-4">
                                 <label class="form-label">{{ question.question_text|safe }}</label>
-                                
+
                                 {% if question.question_type == 'team' %}
                                 <!-- Team question (overall) -->
-                                <textarea class="form-control" name="open_ended_{{ question.id }}" rows="4" required>{% if submission %}{% get_open_ended_response submission question as response %}{{ response }}{% endif %}</textarea>
+                                <textarea class="form-control" name="open_ended_{{ question.id }}" rows="4"
+                                    required>{% if submission %}{% get_open_ended_response submission question as response %}{{ response }}{% endif %}</textarea>
                                 {% else %}
                                 <!-- Individual question (per teammate) -->
                                 <div class="card">
@@ -197,8 +266,11 @@
                                         {% for teammate in teammates %}
                                         {% if teammate.username != request.user.username %}
                                         <div class="mb-3">
-                                            <label class="form-label">{{ teammate.get_full_name|default:teammate.username }}</label>
-                                            <textarea class="form-control" name="open_ended_{{ question.id }}_{{ teammate.id }}" rows="4" required>{% if submission %}{% get_open_ended_response_for_teammate submission question teammate as response %}{{ response }}{% endif %}</textarea>
+                                            <label class="form-label">{{
+                                                teammate.get_full_name|default:teammate.username }}</label>
+                                            <textarea class="form-control"
+                                                name="open_ended_{{ question.id }}_{{ teammate.id }}" rows="4"
+                                                required>{% if submission %}{% get_open_ended_response_for_teammate submission question teammate as response %}{{ response }}{% endif %}</textarea>
                                         </div>
                                         {% endif %}
                                         {% endfor %}
@@ -251,49 +323,61 @@
                                     <p>now: {{ now }}</p>
                                     <p>is_scheduled: {{ assessment.is_scheduled }}</p>
                                 </div>
-                                
+
                                 <!-- For published assessments scheduled for future release -->
                                 {% if assessment.is_scheduled %}
                                 <div class="alert alert-info mb-4">
                                     <h5>Assessment Status: Scheduled for Release</h5>
-                                    <p>This assessment is published but not yet visible to students. It will be released on {{ assessment.release_date|date:"F d, Y" }} at {{ assessment.release_date|time:"H:i" }}.</p>
-                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}" class="mt-2">
+                                    <p>This assessment is published but not yet visible to students. It will be released
+                                        on {{ assessment.release_date|date:"F d, Y" }} at {{
+                                        assessment.release_date|time:"H:i" }}.</p>
+                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}"
+                                        class="mt-2">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
+                                        <button type="submit" class="btn btn-success"
+                                            onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
                                             <i class="fas fa-rocket me-2"></i>Publish Now
                                         </button>
                                     </form>
                                 </div>
                                 {% endif %}
-                                
+
                                 <!-- For draft assessments with future release date -->
-                                {% if not assessment.is_published and assessment.release_date and assessment.release_date > now %}
+                                {% if not assessment.is_published and assessment.release_date and
+                                assessment.release_date > now %}
                                 <div class="alert alert-info mb-4">
                                     <h5>Assessment Status: Draft with Future Release Date</h5>
-                                    <p>This assessment will be released to students on {{ assessment.release_date|date:"F d, Y" }} at {{ assessment.release_date|time:"H:i" }} if published.</p>
-                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}" class="mt-2">
+                                    <p>This assessment will be released to students on {{
+                                        assessment.release_date|date:"F d, Y" }} at {{
+                                        assessment.release_date|time:"H:i" }} if published.</p>
+                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}"
+                                        class="mt-2">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
+                                        <button type="submit" class="btn btn-success"
+                                            onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
                                             <i class="fas fa-rocket me-2"></i>Publish Now
                                         </button>
                                     </form>
                                 </div>
                                 {% endif %}
-                                
+
                                 <!-- For draft assessments without a release date -->
                                 {% if not assessment.is_published and not assessment.release_date %}
                                 <div class="alert alert-info mb-4">
                                     <h5>Assessment Status: Draft</h5>
-                                    <p>This assessment is in draft mode and has no scheduled release date. You can publish it immediately to make it visible to students.</p>
-                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}" class="mt-2">
+                                    <p>This assessment is in draft mode and has no scheduled release date. You can
+                                        publish it immediately to make it visible to students.</p>
+                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}"
+                                        class="mt-2">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
+                                        <button type="submit" class="btn btn-success"
+                                            onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
                                             <i class="fas fa-rocket me-2"></i>Publish Now
                                         </button>
                                     </form>
                                 </div>
                                 {% endif %}
-                                
+
                                 {% if teams %}
                                 <div class="mb-4">
                                     <h5>Student Responses by Team</h5>
@@ -465,7 +549,8 @@
                                         </div>
                                         {% endfor %}
                                     </div>
-                                    <button type="button" id="add-likert-question" class="btn mb-4" style="background-color: var(--bc-maroon); color: white;">
+                                    <button type="button" id="add-likert-question" class="btn mb-4"
+                                        style="background-color: var(--bc-maroon); color: white;">
                                         <i class="fas fa-plus me-2"></i>Add Likert Question
                                     </button>
 
@@ -489,7 +574,8 @@
                                         </div>
                                         {% endfor %}
                                     </div>
-                                    <button type="button" id="add-open-ended-question" class="btn mb-4" style="background-color: var(--bc-maroon); color: white;">
+                                    <button type="button" id="add-open-ended-question" class="btn mb-4"
+                                        style="background-color: var(--bc-maroon); color: white;">
                                         <i class="fas fa-plus me-2"></i>Add Open-Ended Question
                                     </button>
 
@@ -601,7 +687,8 @@
                                     <div class="card border-danger">
                                         <div class="card-body">
                                             <h6 class="card-title text-danger">Delete Assessment</h6>
-                                            <p>This action cannot be undone. All data associated with this assessment will be permanently deleted.</p>
+                                            <p>This action cannot be undone. All data associated with this assessment
+                                                will be permanently deleted.</p>
                                             <button type="button" class="btn btn-danger delete-assessment-btn">
                                                 <i class="fas fa-trash-alt me-2"></i>Delete Assessment
                                             </button>
@@ -619,45 +706,47 @@
 </div>
 
 <!-- Delete Assessment Confirmation Modal -->
-<div class="modal fade" id="deleteAssessmentModal" tabindex="-1" aria-labelledby="deleteAssessmentModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="deleteAssessmentModalLabel">Confirm Deletion</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Are you sure you want to delete this assessment?</p>
-        <p class="text-danger"><strong>Warning:</strong> This action cannot be undone and will permanently delete:</p>
-        <ul>
-          <li>All assessment questions</li>
-          <li>All student submissions</li>
-          <li>All peer review data</li>
-          <li>All scores and comments</li>
-        </ul>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <form id="deleteAssessmentForm" method="post" action="{% url 'delete_assessment' assessment.id %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger">Delete Permanently</button>
-        </form>
-      </div>
+<div class="modal fade" id="deleteAssessmentModal" tabindex="-1" aria-labelledby="deleteAssessmentModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteAssessmentModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this assessment?</p>
+                <p class="text-danger"><strong>Warning:</strong> This action cannot be undone and will permanently
+                    delete:</p>
+                <ul>
+                    <li>All assessment questions</li>
+                    <li>All student submissions</li>
+                    <li>All peer review data</li>
+                    <li>All scores and comments</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteAssessmentForm" method="post" action="{% url 'delete_assessment' assessment.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-  // Replace the onclick confirm with modal trigger
-  document.addEventListener('DOMContentLoaded', function() {
-    const deleteButton = document.querySelector('.delete-assessment-btn');
-    if (deleteButton) {
-      deleteButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteAssessmentModal'));
-        deleteModal.show();
-      });
-    }
-  });
+    // Replace the onclick confirm with modal trigger
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButton = document.querySelector('.delete-assessment-btn');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function (e) {
+                e.preventDefault();
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteAssessmentModal'));
+                deleteModal.show();
+            });
+        }
+    });
 </script>
 {% endblock %}
