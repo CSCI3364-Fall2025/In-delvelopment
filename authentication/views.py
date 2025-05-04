@@ -14,7 +14,7 @@ from django.contrib.auth import login
 from django.conf import settings
 
 #from authentication.views import login_view #test
-from .models import UserProfile
+from .models import UserProfile, ReportedError
 
 
 # Create your views here.
@@ -340,3 +340,16 @@ def test_login(request):
         return redirect('dashboard')
 
     return render(request, 'debug/test_login.html')
+
+@login_required
+def report_issue(request):
+
+    if request.method == "POST":
+        user = request.user
+        error = request.POST.get('issue')
+
+        ReportedError.objects.create(user=user, error=error)
+        messages.success(request, "Thank you! Your issue has been submitted to the admin team.")
+        return redirect('dashboard')
+
+    return render(request, 'report_issue.html')

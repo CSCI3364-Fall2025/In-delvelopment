@@ -43,4 +43,5 @@ urlpatterns = [
     ])),
     path('reauth-google/', auth_views.reauth_google, name='reauth_google'),
     path('about/', views.about, name='about'),
+    path('report-issue', auth_views.report_issue, name='report_issue'),
 ]
