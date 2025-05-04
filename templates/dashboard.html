@@ -272,6 +272,10 @@
                             <a href="{% url 'view_comments' assessment.id %}" class="btn maroon-btn">View Comments</a>
                         </td>
                     </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No closed assessments</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -361,13 +365,6 @@
         </div>
         <div class="col-auto">
             <a href="#" style="color: var(--bc-gold);">Contact</a>
-        </div>
-        <div class="col-auto">
-            {% if user.role == "student" or user.role == "Student" %}
-            <a href="{% url 'student_average' %}" style="color: var(--bc-gold);">Average Score</a>
-            {% else %}
-            <a href="{% url 'professor_average' %}" style="color: var(--bc-gold);">Average Score</a>
-            {% endif %}
         </div>
         <div class="col-auto">
             <a href="#" style="color: var(--bc-gold);">Report an Issue</a>

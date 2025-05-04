@@ -79,29 +79,6 @@ def dashboard(request):
         'role': current_user.role,
     }
     
-    
-    today = timezone.now()
-
-    # Update assessment categorization logic
-    active_assessments = Assessment.objects.filter(
-        open_date__lte=today,  # Open date is in the past (already opened)
-        due_date__gt=today     # Due date is in the future
-    ).order_by('due_date')     # Order by due date ascending
-
-    upcoming_assessments = Assessment.objects.filter(
-        open_date__gt=today    # Open date is in the future (not yet opened)
-    ).order_by('open_date')    # Order by open date ascending
-
-    closed_assessments = Assessment.objects.filter(
-        due_date__lte=today,
-        results_published = False    # Due date is in the past
-    ).order_by('-due_date')    # Order by due date descending (most recent first)
-
-    published_assessments = Assessment.objects.filter(
-        due_date__lte=today,
-        results_published = True
-    ).order_by('-due_date')
-
     # Check for pending invitations
     pending_invitations_count = CourseInvitation.objects.filter(
         email=request.user.email,
@@ -113,6 +90,35 @@ def dashboard(request):
         user_courses = request.user.created_courses.filter(is_active=True)
     else:
         user_courses = request.user.courses.filter(is_active=True)
+
+    today = timezone.now()
+
+    active_assessments = Assessment.objects.filter(
+        open_date__lte = today,
+        due_date__gte = today,
+        is_closed = False,
+        course__in = user_courses
+    ).order_by('due_date')
+
+    upcoming_assessments = Assessment.objects.filter(
+        open_date__gt=today,
+        is_closed = False,
+        course__in = user_courses   
+    ).order_by('open_date')    
+
+    closed_assessments = Assessment.objects.filter(
+        due_date__lte=today,
+        results_published = False,    
+        is_closed = True,
+        course__in = user_courses,
+    ).order_by('-due_date')  
+
+    published_assessments = Assessment.objects.filter(
+        due_date__lte=today,
+        is_closed = True,
+        results_published = True,
+        course__in = user_courses
+    ).order_by('-due_date')
 
     # Query to check for any published assessments
     new_results_exist = Assessment.objects.filter(
@@ -126,7 +132,6 @@ def dashboard(request):
         request.session['new_results_alert_shown'] = True
     else:
         new_results = False
-
 
     context = {
         'user': user_data,
