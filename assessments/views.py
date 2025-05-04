@@ -1743,3 +1743,6 @@ def view_course_invitations(request, course_id):
     }
 
     return render(request, 'course_invitations.html', context)
+
+def about(request):
+    return render(request, 'about.html')

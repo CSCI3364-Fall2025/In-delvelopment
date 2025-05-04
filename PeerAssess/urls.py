@@ -42,4 +42,5 @@ urlpatterns = [
         #add more debug views here in the future
     ])),
     path('reauth-google/', auth_views.reauth_google, name='reauth_google'),
+    path('about/', views.about, name='about'),
 ]

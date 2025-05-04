@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold" style="color: var(--bc-maroon);">About the Peer Assessment System</h1>
+        <p class="lead text-muted">Empowering teams through fair and transparent peer feedback</p>
+    </div>
+
+    <div class="row">
+        <h3 class="text-uppercase" style="color: var(--bc-maroon);">Background</h3>
+        <p>
+            &emsp; The Peer Assessment System was developed incrementally throughout the course <b>CSCI3356 Software Engineering </b>
+            during Boston College's spring semester in 2025. Our team, Ctrl-Alt-Elite, consisted of 5 members:
+            Julian Castro, Abraham Gonzalez Diaz, Wesley Lawson, Rafeed Mahmood, and Junhao Yan.
+        </p>
+    </div>
+    <div class="row py-2">
+        <h3 class="text-uppercase" style="color: var(--bc-maroon);">Summary of Functionality</h3>
+        <p>
+            &emsp; Developing our peer-review application, we fully met every critical requirement laid out by the course. 
+            User authentication employs Google OAuth and restricts logins to @bc.edu addresses; once signed in, individuals 
+            are designated as either professors or students. Professors can create courses, specifying year, semester, and any 
+            number of groups or teams, and then invite students via time-limited email links. Within each course, instructors 
+            may define multiple peer assessments per semester, each with configurable publication and closing dates and a custom mix 
+            of Likert-scale and open-ended questions. A flag controls whether students evaluate themselves as well as teammates. 
+            On the scheduled publication date, the system opens the assessment form and sends notification emails. When closing, it 
+            locks submissions and issues a closing alert. Students are given these notifications via email, which adjust in real time 
+            depending on the assignment. After the deadline, professors review and moderate responses, publish the results, and trigger 
+            notification emails so that students can view their quantitative averages alongside anonymized, alphabetically sorted qualitative feedback. 
+            Professors also have the flexibility to update assignments after an initial publication, which allows for them to update reviews 
+            depending on changing class needs. 
+            <br>
+            &emsp; On the non-functional side, we adhered strictly to the prescribed technology stack, 
+            Django for the backend and plain HTML, CSS, and Bootstrap for the frontend, without introducing any additional frameworks. 
+            We also used Google OAuth implementation as requested, adhering to the requirement of needing a BC email. This can be scaled 
+            to other schools through the same methodology. 
+        </p>
+    </div>
+    <div class="ro py-2">
+        <h3 class="text-uppercase" style="color: var(--bc-maroon);">Github</h3>
+        <p>
+            &emsp; If you wish to learn more about how the project was created, please check out the project repo. 
+            <a href="#">Github: Ctrl-Alt-Elite Peer Assessment System</a>
+        </p>
+    </div>
+
+
+    <div class="mt-5 text-center">
+        <img src="https://cdn.glitch.global/9e3885b8-8790-4d39-9ef6-fe5e1b4e9eec/logo.png?v=1745746980682" alt="Logo" style="height: 120px;">
+        <p class="mt-3 text-muted">© 2025 Ctrl Alt Elite – Peer Assessment System</p>
+    </div>
+</div>
+{% endblock %}
