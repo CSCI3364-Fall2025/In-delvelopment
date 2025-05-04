@@ -52,17 +52,16 @@ def send_assignment_survey_email(subject, message, recipient_list):
 @shared_task
 def close_assessment():
 
-    start_window = now()
-    end_window = now() + timedelta(minutes=1)
-
     assessments = Assessment.objects.filter(
-        due_date__gte = start_window,
-        due_date__lte = end_window,
+        due_date__lte = now(),
+        is_closed = False
     )
 
     for assessment in assessments:
         assessment.closed_date = now()
+        assessment.is_closed = True
         assessment.save()
+
 @shared_task
 def send_submission_verification_email(submission_id):
     sub = Submission.objects.get(pk=submission_id)

@@ -38,7 +38,7 @@
 
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <!-- Bootstrap JS functionality for alerts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <header>
@@ -68,11 +68,11 @@
         
     </header>
     
-    <main>
+    <main class="flex-fill">
         {% block content %}{% endblock %}
     </main>
     
-    <footer>
+    <footer class="mt-auto">
         <nav class="navbar" style="background-color: var(--bc-maroon);">
             <div class="container-fluid">
                 <img class="navbar-brand" src="https://cdn.glitch.global/9e3885b8-8790-4d39-9ef6-fe5e1b4e9eec/logo.png?v=1745746980682" alt="Ctrl Alt Elite Logo" style="height: 100px; color: var(--bc-gold);">
