@@ -3,52 +3,48 @@
 {% block title %}Login Error | Peer Assessment System{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <h3>Login Error</h3>
-                </div>
-                <div class="card-body p-4 text-center">
-                    <div class="mb-4">
-                        {% if error_type == 'non_bc_email' %}
-                            <div class="alert alert-danger">
-                                <h4 class="alert-heading">Access Restricted</h4>
-                                <p>The email address <strong>{{ email }}</strong> is not a Boston College email.</p>
-                                <hr>
-                                <p class="mb-0">Only Boston College (@bc.edu) email addresses are allowed to access this system.</p>
-                            </div>
-                        {% elif error_type == 'no_email' %}
-                            <div class="alert alert-danger">
-                                <h4 class="alert-heading">Email Not Found</h4>
-                                <p>We couldn't retrieve an email address from your Google account.</p>
-                                <hr>
-                                <p class="mb-0">Please ensure your Google account has a valid email address associated with it.</p>
-                            </div>
-                        {% else %}
-                            <div class="alert alert-danger">
-                                <h4 class="alert-heading">Authentication Error</h4>
-                                <p>There was a problem with your login attempt.</p>
-                                <hr>
-                                <p class="mb-0">Please try again or contact support if the issue persists.</p>
-                            </div>
-                        {% endif %}
+<div class="form-container">
+    <div class="bc-card">
+        <div class="bc-card-header">
+            <h3>Login Error</h3>
+        </div>
+        <div class="bc-card-body p-4 text-center">
+            <div class="mb-4">
+                {% if error_type == 'non_bc_email' %}
+                    <div class="alert alert-danger">
+                        <h4 class="alert-heading">Access Restricted</h4>
+                        <p>The email address <strong>{{ email }}</strong> is not a Boston College email.</p>
+                        <hr>
+                        <p class="mb-0">Only Boston College (@bc.edu) email addresses are allowed to access this system.</p>
                     </div>
-                    
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'login' %}" class="btn gold-btn btn-lg">
-                            Try Again
-                        </a>
-                        <a href="{% url 'home' %}" class="btn btn-outline-secondary">
-                            Return to Home
-                        </a>
+                {% elif error_type == 'no_email' %}
+                    <div class="alert alert-danger">
+                        <h4 class="alert-heading">Email Not Found</h4>
+                        <p>We couldn't retrieve an email address from your Google account.</p>
+                        <hr>
+                        <p class="mb-0">Please ensure your Google account has a valid email address associated with it.</p>
                     </div>
-                </div>
-                <div class="card-footer text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <small>Peer Assessment System - Ctrl Alt Elite</small>
-                </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <h4 class="alert-heading">Authentication Error</h4>
+                        <p>There was a problem with your login attempt.</p>
+                        <hr>
+                        <p class="mb-0">Please try again or contact support if the issue persists.</p>
+                    </div>
+                {% endif %}
             </div>
+            
+            <div class="d-grid gap-2">
+                <a href="{% url 'login' %}" class="btn gold-btn btn-lg">
+                    Try Again
+                </a>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                    Return to Home
+                </a>
+            </div>
+        </div>
+        <div class="bc-card-footer">
+            <small>Peer Assessment System - Ctrl Alt Elite</small>
         </div>
     </div>
 </div>

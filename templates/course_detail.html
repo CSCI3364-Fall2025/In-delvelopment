@@ -47,7 +47,7 @@
                         <td>{{ assessment.title }}</td>
                         <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
                         <td>
-                            <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-primary">View Details</a>
+                            <a href="{% url 'view_assessment' assessment.id %}" class="view-btn">View Details</a>
                             <a href="{% url 'submit_assessment' assessment.id %}" class="btn btn-success">Submit Assessment</a>
                         </td>
                     </tr>

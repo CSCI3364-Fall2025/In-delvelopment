@@ -5,25 +5,34 @@
 {% block title %}Enroll in a Course{% endblock %}
 
 {% block content %}
-  <div class="container mt-5">
-    <h2 class="text-center mb-4">Enroll in a Course</h2>
-    
-    <!-- Display error message if exists -->
-    {% if error %}
-      <div class="alert alert-danger" role="alert">
-        {{ error }}
-      </div>
-    {% endif %}
+<div class="form-container">
+    <div class="bc-card">
+        <div class="bc-card-header">
+            <h3>Enroll in a Course</h3>
+        </div>
+        <div class="bc-card-body">
+            <!-- Display error message if exists -->
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
 
-    <!-- Enrollment form -->
-    <form method="POST">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label for="course_name" class="form-label">Please Enter a Course Join Code</label>
-        <input type="text" class="form-control" id="enrollment_code" name="enrollment_code" required>
-      </div>
-      
-      <button type="submit" class="btn gold-btn w-100">Enroll</button>
-    </form>
-  </div>
+            <!-- Enrollment form -->
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="enrollment_code" class="bc-form-label">Please Enter a Course Join Code</label>
+                    <input type="text" class="form-control form-control-lg" id="enrollment_code" name="enrollment_code" required>
+                    <div class="form-text text-muted">Enter the code provided by your professor</div>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn gold-btn btn-lg">Enroll</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

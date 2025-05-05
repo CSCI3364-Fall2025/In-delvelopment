@@ -3,55 +3,51 @@
 {% block title %}All Published Results | Peer Assessment System{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow">
-                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <h3>Your Published Assessment Results</h3>
-                </div>
-                <div class="card-body p-4">
-                    {% if student_assessments %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Assessment</th>
-                                    <th>Course</th>
-                                    <th>Published Date</th>
-                                    <th>Average Score</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in student_assessments %}
-                                <tr>
-                                    <td>{{ item.assessment.title }}</td>
-                                    <td>{{ item.assessment.course }}</td>
-                                    <td>{{ item.assessment.published_date|date:"M d, Y" }}</td>
-                                    <td>
-                                        {% with avg_score=item.submission.contribution|add:item.submission.teamwork|add:item.submission.communication|floatformat:2 %}
-                                        {{ avg_score|floatformat:2 }} / 5.0
-                                        {% endwith %}
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'view_published_results' item.assessment.id %}" class="btn btn-sm btn-primary">View Details</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <p>You don't have any published assessment results yet.</p>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="text-center mt-4">
-                        <a href="{% url 'dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
-                    </div>
-                </div>
+<div class="wide-form-container">
+    <div class="bc-card">
+        <div class="bc-card-header">
+            <h3>Your Published Assessment Results</h3>
+        </div>
+        <div class="bc-card-body">
+            {% if student_assessments %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                        <tr>
+                            <th>Assessment</th>
+                            <th>Course</th>
+                            <th>Published Date</th>
+                            <th>Average Score</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in student_assessments %}
+                        <tr>
+                            <td>{{ item.assessment.title }}</td>
+                            <td>{{ item.assessment.course }}</td>
+                            <td>{{ item.assessment.published_date|date:"M d, Y" }}</td>
+                            <td>
+                                {% with avg_score=item.submission.contribution|add:item.submission.teamwork|add:item.submission.communication|floatformat:2 %}
+                                {{ avg_score|floatformat:2 }} / 5.0
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <a href="{% url 'view_published_results' item.assessment.id %}" class="btn btn-sm view-btn">View Details</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">You don't have any published assessment results yet.</p>
+            </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'dashboard' %}" class="btn maroon-btn">Back to Dashboard</a>
             </div>
         </div>
     </div>

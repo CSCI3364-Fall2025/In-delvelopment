@@ -131,7 +131,7 @@
                         <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
                         <td>{{ assessment.due_date|time:"H:i" }}</td>
                         <td>
-                            <a href="{% url 'view_assessment' assessment.id %}" class="btn maroon-btn">View Details</a>
+                            <a href="{% url 'view_assessment' assessment.id %}" class="view-btn">View Details</a>
                             {% if user.role == "student" or user.role == "Student" %}
                             <a href="{% url 'submit_assessment' assessment.id %}" class="btn btn-success">Submit
                                 Form</a>

@@ -204,3 +204,35 @@ thead th {
         font-size: 14px;
     }
 }
+
+.gold-btn, .maroon-btn {
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.gold-btn:active, .maroon-btn:active {
+    transform: scale(0.98);
+}
+
+/* Update the view-btn class to ensure it's properly styled */
+.view-btn {
+    background-color: var(--bc-gold);
+    color: white !important; /* !important to override any default link styling */
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+}
+
+.view-btn:hover {
+    background-color: #9b885a;
+    color: white !important;
+    text-decoration: none;
+}
+
+.view-btn:active {
+    transform: scale(0.98);
+}

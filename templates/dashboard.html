@@ -233,7 +233,7 @@
                         <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
                         <td>{{ assessment.due_date|time:"H:i" }}</td>
                         <td>
-                            <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View Details</a>
+                            <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm gold-btn">View Details</a>
                         </td>
                     </tr>
                     {% empty %}
@@ -269,7 +269,7 @@
                         <td>{{ assessment.closed_date|time:"g:i a" }}</td>
                         <td>N/A</td>
                         <td>
-                            <a href="{% url 'view_comments' assessment.id %}" class="btn maroon-btn">View Comments</a>
+                            <a href="{% url 'view_comments' assessment.id %}" class="btn btn-sm gold-btn">View Comments</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -303,7 +303,7 @@
                             <td>{{ assessment.open_date|time:"h:i a" }}</td>
                             {% if user.role == 'professor' %}
                             <td>
-                                <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View Details</a>
+                                <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm gold-btn">View Details</a>
                             </td>
                             {% endif %}
                         </tr>
