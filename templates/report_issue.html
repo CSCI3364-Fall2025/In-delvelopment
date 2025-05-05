@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Report an Issue{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row m-2 py-3">
+        <h1>Report An Issue</h1>
+    </div>
+    <div class="row" id="reportIssueContainer">
+        <form method="post">
+        {% csrf_token %}
+            <div class="row p-2">
+                <label for="issue" class="form-label">Please enter a detailed description of the issue you are experiencing:</label>
+                <textarea name="issue" id="issue" class="form-control" required placeholder="Enter description here"></textarea>
+            </div>
+            <div class="row justify-content-end">
+                <div class="col py-2 align-self-end">
+                    <i class="fw-lighter">Thank you for taking the time to report an error. Doing so helps us 
+                    improve our website significantly.</i>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-lg maroon-btn">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

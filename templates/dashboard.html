@@ -48,7 +48,7 @@
             <div class="col-auto">
                 {% if user.role == "professor" or user.role == "Professor" %}
                     {% if num_assessment_results == 0 %}
-                        <p>You have no assessments results to return.</p>
+                        <p>You have no assessment results to return.</p>
                     {% else %}
                         <p>You have {{ num_assessment_results }} unreturned assessment{% if num_assessment_results > 1 %}s{% endif %} to grade.</p>
                     {% endif %}
@@ -272,6 +272,10 @@
                             <a href="{% url 'view_comments' assessment.id %}" class="btn btn-sm gold-btn">View Comments</a>
                         </td>
                     </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No closed assessments</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -324,13 +328,13 @@
     {% if user.role == "professor" or user.role == "Professor" %}
     <div class="row p-2">
         <div class="col-auto">
+            <a href="{% url 'course_dashboard' %}" class="btn btn-lg maroon-btn">Manage Courses</a>
+        </div>
+        <div class="col-auto">
             <a href="{% url 'create_course' %}" class="btn btn-lg maroon-btn">Create New Course</a>
         </div>
         <div class="col-auto">
             <a href="{% url 'create_peer_assessments' %}" class="btn btn-lg maroon-btn">Create New Assessment</a>
-        </div>
-        <div class="col-auto">
-            <a href="{% url 'course_dashboard' %}" class="btn btn-lg maroon-btn">Manage Courses</a>
         </div>
         <div class="col-auto">
             <a href="{% url 'invite_students' %}" class="btn btn-lg maroon-btn">Invite Students</a>
@@ -342,7 +346,7 @@
             <a href="{% url 'course_dashboard' %}" class="btn btn-lg gold-btn">View My Courses</a>
         </div>
         <div class="col-auto">
-            <a href="#" class="btn btn-lg gold-btn">View My Teams</a>
+            <a href="{% url 'team_dashboard' %}" class="btn btn-lg gold-btn">View My Teams</a>
         </div>
         <div class="col-auto">
             <a class="btn btn-lg gold-btn" href="{% url 'enroll_in_course' %}">Enroll in a Course</a>
@@ -357,20 +361,13 @@
             </div>
         </div>
         <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">About</a>
+            <a href="{% url 'about' %}" style="color: var(--bc-gold);">About</a>
         </div>
         <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">Contact</a>
+            <a href="#" style="color: var(--bc-gold);">GitHub</a>
         </div>
         <div class="col-auto">
-            {% if user.role == "student" or user.role == "Student" %}
-            <a href="{% url 'student_average' %}" style="color: var(--bc-gold);">Average Score</a>
-            {% else %}
-            <a href="{% url 'professor_average' %}" style="color: var(--bc-gold);">Average Score</a>
-            {% endif %}
-        </div>
-        <div class="col-auto">
-            <a href="#" style="color: var(--bc-gold);">Report an Issue</a>
+            <a href="{% url 'report_issue' %}" style="color: var(--bc-gold);">Report an Issue</a>
         </div>
     </div>
     <div class="row mt-3">

@@ -3,10 +3,18 @@
 {% block title %}Course Invitations{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Invitations for {{ course.name }}</h2>
-
-    {% if invitations %}
+<div class="container">
+    <div class="row pt-3 justify-content-between">
+        <div class="col">
+            <h2>Invitations for {{ course.name }}</h2>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'view_course' course.name %}" class="btn btn-secondary rounded-pill">Back to Course</a>
+        </div>
+        
+    </div>
+    <div class="row">
+        {% if invitations %}
         <table class="table table-striped mt-4">
             <thead>
                 <tr>
@@ -39,8 +47,9 @@
                 {% endfor %}
             </tbody>
         </table>
-    {% else %}
-        <p>No invitations found for this course.</p>
-    {% endif %}
+        {% else %}
+            <p>No invitations found for this course.</p>
+        {% endif %} 
+    </div>
 </div>
 {% endblock %}

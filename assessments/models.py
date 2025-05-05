@@ -27,6 +27,7 @@ class Assessment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="assessments")
     due_date = models.DateTimeField(null=True, blank=True)
     closed_date = models.DateTimeField(null=True, blank=True)
+    is_closed = models.BooleanField(default=False)
     open_date = models.DateTimeField(null=True, blank=True)
     self_assessment_required = models.BooleanField(default=False)  # New field
     results_published = models.BooleanField(default=False)

@@ -80,10 +80,6 @@
                     <div class="col-auto">
                         {% if course.created_by == request.user and user.role|lower == "professor" %}
                             <a href="{% url 'edit_team' course.name team.pk %}" class="btn maroon-btn">Edit Team</a>
-                        {% elif team in request.user.teams.all %}
-                            <a href="#" class="btn maroon-btn">Contact Team</a>
-                        {% else %}
-                            <a href="#" class="btn maroon-btn">Request to Join Team</a>
                         {% endif %}
                     </div>
                 </div>
@@ -163,19 +159,23 @@
              <i>There are currently no students enrolled in this course.</i>
         </div>
         {% else %}
-            {% for student in students %}
-            <div class="row mt-1">
-                <h6 class="fw-lighter">{{ student.get_full_name }} (<a href="#">{{ student.email }}</a>);</h6>
-            </div>
-            {% endfor %}
+        <div class="row mt-1">
+            <h6 class="fw-lighter">
+                {% for student in students %}
+                {{ student.get_full_name }} (<a href="#">{{ student.email }}</a>);
+                {% endfor %}
+            </h6>
+        </div>
         {% endif %}
         {% if course.created_by == request.user and user.role|lower == "professor" %}
-        <div class="row m-3 justify-content-between">
-            <div class="col-auto align-self-center">
+        <div class="row m-3 pt-3 justify-content-between">
+            <div class="col align-self-center">
                 <h6 class="fw-lighter">To add students to a course, click on the <b>'Invite Students'</b> button. Alternatively, you can invite students directly to teams. </h6>
             </div>
             <div class="col-auto">
                 <a href="{% url 'invite_students' %}" class="btn maroon-btn btn-lg">Invite Students</a>
+            </div>
+            <div class="col-auto">
                 <a href="{% url 'view_course_invitations' course.id %}" class="btn maroon-btn btn-lg">View Invitations</a>
             </div>
         </div>
@@ -184,10 +184,10 @@
     {% if course.created_by == request.user and user.role|lower == "professor" %}
     <div class="row m-3 justify-content-end">
         <div class="col align-self-center">
-            <h6 class="fw-lighter">To de-activate the course, click on <b>'Edit Course'</b>, then <b>'De-Activate Course'</b>. Once a course is de-activated, it can still be re-activated.</h6>
+            <h6 class="fw-lighter">To de-activate the course, click on <b>'Edit Course'</b>, then <b>'De-Activate Course'</b>. <b style="color: red;"><i>Be careful! This action cannot be undone.</i></b></h6>
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn gold-btn btn-lg">Edit Course</button>
+            <a href="{% url 'edit_course' course.name course.pk %}" class="btn btn-lg gold-btn">Edit Course</a>
         </div> 
     </div>
     {% endif %}
