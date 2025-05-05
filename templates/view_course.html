@@ -184,10 +184,10 @@
     {% if course.created_by == request.user and user.role|lower == "professor" %}
     <div class="row m-3 justify-content-end">
         <div class="col align-self-center">
-            <h6 class="fw-lighter">To de-activate the course, click on <b>'Edit Course'</b>, then <b>'De-Activate Course'</b>. Once a course is de-activated, it can still be re-activated.</h6>
+            <h6 class="fw-lighter">To de-activate the course, click on <b>'Edit Course'</b>, then <b>'De-Activate Course'</b>. <b style="color: red;"><i>Be careful! This action cannot be undone.</i></b></h6>
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn gold-btn btn-lg">Edit Course</button>
+            <a href="{% url 'edit_course' course.name course.pk %}" class="btn btn-lg gold-btn">Edit Course</a>
         </div> 
     </div>
     {% endif %}

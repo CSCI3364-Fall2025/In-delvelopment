@@ -75,10 +75,11 @@
             {% endif %}
         </div>
     </div>
-    <div class="row m-2 p-2 justify-content-between">
-        <div class="col-auto">
+    <div class="row m-2 p-2 justify-content-end">
+        <!-- Can implement later if we really want to - not necessary right now -->
+        <!-- <div class="col-auto">
             <a href="#" style="color: var(--bc-gold);">View Past Courses</a>
-        </div>
+        </div> -->
         <div class="col-auto">
             {% if user.role == "professor" or user.role == "Professor" %}
                 <a href="{% url 'create_course' %}" class="btn btn-lg maroon-btn">Create New Course</a>

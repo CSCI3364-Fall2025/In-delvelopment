@@ -1763,3 +1763,33 @@ def team_dashboard(request):
         "user": user_data, "teams": request.user.teams.filter(is_active=True)
     })
 
+@login_required
+def edit_course(request, course_name, course_id):
+
+    course = Course.objects.get(pk=course_id)
+
+    if request.method == "POST":
+        course.name=request.POST['courseName']
+        course.course_code=request.POST['courseCode']
+        course.year=request.POST['year']
+        course.semester=request.POST['semester']
+        course.description=request.POST['description']
+
+        course.save()
+
+        messages.success(request, f"Course successfully updated!")
+        return redirect('view_course', course_name=course.name)
+
+    return render(request, 'edit_course.html', {
+        "course": course, "students": course.students.all()
+    })
+
+@login_required
+def delete_course(request, course_pk):
+
+    course = Course.objects.get(pk=course_pk)
+    name = course.name
+    course.delete()
+
+    messages.success(request, f"Successfully deleted course {name}.")
+    return redirect('course_dashboard')
