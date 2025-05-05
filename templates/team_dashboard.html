@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}My Teams{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row pt-3 justify-content-between">
+        <div class="col-auto">
+            <h2>My Teams: {{ user.real_name }} - {{ user.role }}</h2>
+        </div>  
+        <div class="col-auto">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary rounded-pill">Return to Dashboard</a>
+        </div>
+    </div>
+    <hr>
+    <div class="row m-2 p-2">
+        <div class="col">
+            {% if not teams %}
+            <h6>You currently do not have any active teams.</h6>
+            {% else %}
+            {% for team in teams %}
+                <div class="row border shadow p-2 m-3 rounded" id="teamBox">
+                    <div class="col">
+                        <div class="row">
+                            <div class="col">
+                                <h4>
+                                   {% if team.name == "" %}
+                                        <i>(Unnamed Team)</i>
+                                    {% else %}
+                                        {{ team.name }}
+                                    {% endif %} 
+                                </h4>
+                                
+                            </div>
+                        </div>
+                        <div class="row pt-2 align-items-center">
+                            <div class="col-auto">
+                                <h6 class="fw-lighter">
+                                    <b>Members:</b>
+                                    {% if not team.members.all %}
+                                        <i>There are currently no members on this team.</i>
+                                    {% else %}
+                                        {% for member in team.members.all %}
+                                        {{ member.get_full_name }} (<a href="">{{ member.email }}</a>);
+                                        {% endfor %}
+                                    {% endif %}
+                                </h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

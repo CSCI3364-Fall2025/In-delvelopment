@@ -1746,3 +1746,20 @@ def view_course_invitations(request, course_id):
 
 def about(request):
     return render(request, 'about.html')
+
+@login_required
+def team_dashboard(request):
+
+    current_user = UserProfile.objects.get(user=request.user)
+    
+    user_data = {
+        'preferred_name': current_user.preferred_name if current_user.preferred_name != None  else (request.user.get_full_name() or request.user.username or request.user.email.split('@')[0]),
+        'real_name': request.user.get_full_name() or request.user.username or request.user.email.split('@')[0], 
+        'email': request.user.email,
+        'role': current_user.role,
+    }
+
+    return render(request, 'team_dashboard.html', {
+        "user": user_data, "teams": request.user.teams.filter(is_active=True)
+    })
+
