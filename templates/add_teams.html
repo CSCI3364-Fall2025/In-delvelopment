@@ -67,7 +67,7 @@
                 <h6 class="fw-lighter" style="font-style: italic;">Please select the number of teams you wish to create.</h6>
             </div>
         </div>
-        <form action="{% url 'view_course' course.name %}" method="post">
+        <form action="{% url 'view_course' course.name course.pk %}" method="post">
             {% csrf_token %}
             <div class="row m-2">
                 <div class="col-auto align-self-end">
@@ -82,7 +82,7 @@
                     <h6 class="fw-lighter">Click <b>'Add Teams'</b> To create new teams within the course. You can edit these teams on the course homepage by clicking on the <b>'Edit Team'</b> button.</h6>
                 </div>
                 <div class="col-auto align-self-center">
-                    <a href="{% url 'view_course' course.name %}" class="btn btn-secondary rounded-pill">Cancel</a>
+                    <a href="{% url 'view_course' course.name course.pk %}" class="btn btn-secondary rounded-pill">Cancel</a>
                 </div>
                 <div class="col-auto">
                     <button class="btn btn-lg gold-btn" type="submit">Add Teams</button>

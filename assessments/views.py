@@ -682,10 +682,10 @@ def create_course(request):
     return render(request, 'create_course.html')
 
 @login_required
-def view_course(request, course_name):
+def view_course(request, course_name, course_id):
 
     current_user = UserProfile.objects.get(user=request.user)
-    course = Course.objects.get(name=course_name)
+    course = Course.objects.get(pk=course_id)
 
     #Check if teams have been created / updated
     if request.method == "POST":
@@ -728,16 +728,25 @@ def view_course(request, course_name):
         'role': current_user.role,
     }
 
+    today = timezone.now()
+
+    active_assessments = Assessment.objects.filter(
+            open_date__lte = today,
+            due_date__gte = today,
+            is_closed = False,
+            course = course
+    ).order_by('due_date') 
+
     return render(request, 'view_course.html', {
         "course": course, "teams": course.teams.all(),
-        "assessments": Assessment.objects.filter(course=course),
+        "assessments": active_assessments,
         "user": user_data, "students": course.students.all()
     })
 
 @login_required
-def add_teams(request, course_name):
+def add_teams(request, course_name, course_id):
     
-    course = Course.objects.get(name=course_name)
+    course = Course.objects.get(pk=course_id)
 
     return render(request, 'add_teams.html', {
         "course": course, "teams": course.teams.all()
@@ -747,7 +756,7 @@ def add_teams(request, course_name):
 def edit_team(request, course_name, team_pk):
     
     team = Team.objects.get(pk=team_pk)
-    course = Course.objects.get(name=course_name)
+    course = team.course
 
     course_students = course.students.all()
     students_on_teams = User.objects.filter(teams__course=course).distinct()
@@ -763,10 +772,11 @@ def edit_team(request, course_name, team_pk):
 def delete_team(request, course_name, team_pk):
 
     team = Team.objects.get(pk=team_pk)
+    course = team.course
     team.delete()
 
     messages.success(request, f"Team deleted successfully.")
-    return redirect('view_course', course_name=course_name)
+    return redirect('view_course', course_name=course_name, course_id=course.pk)
 
 @login_required
 def invite_students(request):
@@ -784,17 +794,17 @@ def invite_students(request):
         # Get email addresses from the form
         email_list = request.POST.get('student_emails', '').strip().split('\n')
         email_list = [email.strip() for email in email_list if email.strip()]
-        course_name = request.POST.get('course_name', '').strip()
+        course_id = request.POST.get('course')
         
         # Validate course
         try:
-            course = Course.objects.get(name=course_name)
+            course = Course.objects.get(pk=course_id)
             # Check if the user is the course creator
             if course.created_by != request.user:
                 messages.error(request, "You can only invite students to courses you created.")
                 return redirect('invite_students')
         except Course.DoesNotExist:
-            messages.error(request, f"Course '{course_name}' not found.")
+            messages.error(request, f"Course '{course.name}' not found.")
             return redirect('invite_students')
         
         # Validate emails
@@ -818,7 +828,7 @@ def invite_students(request):
             
             for email in valid_emails:
                 # Get unique enrollment code
-                course = Course.objects.get(name=course_name)
+                course = Course.objects.get(pk=course_id)
                 enrollment_code = course.enrollment_code
 
                 # Create or update invitation record
@@ -1161,7 +1171,7 @@ def enroll_in_course(request):
                 course = Course.objects.get(enrollment_code=enrollment_code)
                 course.students.add(request.user)  # Enroll the student
                 messages.success(request, f"Successfully enrolled in {course.name}!")
-                return redirect('view_course', course_name=course.name)
+                return redirect('view_course', course_name=course.name, course_id=course.pk)
             except Course.DoesNotExist:
                 return render(request, "enroll.html", {"error": "Course not found!"})
         else:
@@ -1623,7 +1633,7 @@ def delete_assessment(request, assessment_id):
         )
         
         # Redirect to the course page
-        return redirect('view_course', course_name=course.name)
+        return redirect('view_course', course_name=course.name, course_id=course.pk)
         
     except Exception as e:
         logger.error(f"Error deleting assessment {assessment_id}: {str(e)}")
@@ -1683,7 +1693,7 @@ def edit_course(request, course_name, course_id):
         course.save()
 
         messages.success(request, f"Course successfully updated!")
-        return redirect('view_course', course_name=course.name)
+        return redirect('view_course', course_name=course.name, course_id=course.pk)
 
     return render(request, 'edit_course.html', {
         "course": course, "students": course.students.all()

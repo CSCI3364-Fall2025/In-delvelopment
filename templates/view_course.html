@@ -92,7 +92,7 @@
                 <h6 class="fw-lighter">To delete a team, click on <b>'Edit Team'</b> then <b>'Delete Team'</b> to remove the desired team. To add more teams, click on the <b>'Add Teams'</b> button.</h6>
             </div>
             <div class="col-auto">
-                <a href="{% url 'add_teams' course.name %}" class="btn maroon-btn btn-lg">Add Teams</a>
+                <a href="{% url 'add_teams' course.name course.pk %}" class="btn maroon-btn btn-lg">Add Teams</a>
             </div>
         </div>
         {% endif %}
