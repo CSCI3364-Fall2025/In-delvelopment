@@ -1,6 +1,6 @@
 from django.urls import path
 from assessments.views import send_deadline_notifications_view
-from .views import student_average_score, professor_average_scores, save_progress, load_progress, view_course_invitations
+from .views import student_average_score, professor_average_scores, save_progress, load_progress
 from . import views
 
 urlpatterns = [
@@ -35,13 +35,14 @@ urlpatterns = [
     path('accept-invitation/', views.accept_invitation, name='accept_invitation'),
     path('assessment/<int:assessment_id>/edit-questions/', views.edit_assessment_questions, name='edit_assessment_questions'),
     path('assessment/submit_student_score/', views.submit_student_score, name='submit_student_score'),
-    path('assessment/<int:assessment_id>/publish-now/', views.publish_assessment_now, name='publish_assessment_now'),
+    path('assessment/<int:assessment_id>/publish-now/', views.publish_assessment_results, name='publish_assessment_now'),
     path('assessment/<int:assessment_id>/delete/', views.delete_assessment, name='delete_assessment'),
-    path('courses/<int:course_id>/invitations/', view_course_invitations, name='view_course_invitations'),
+    path('courses/<int:course_id>/invitations/', views.view_course_invitations, name='view_course_invitations'),
     path('teams', views.team_dashboard, name='team_dashboard'),
     path('courses/edit/<str:course_name>/<int:course_id>', views.edit_course, name='edit_course'),
     path('courses/delete/<int:course_pk>', views.delete_course, name='delete_course'),
     path('assessment/<int:assessment_id>/student-submissions/', views.view_student_submissions, name='view_student_submissions'),
     path('assessment/<int:assessment_id>/close/', views.close_assessment, name='close_assessment'),
     path('assessment/<int:assessment_id>/team-submissions/', views.view_team_submissions, name='view_team_submissions'),
+    path('api/team-submissions/<int:team_id>/<int:assessment_id>/', views.api_team_submissions, name='api_team_submissions'),
 ]

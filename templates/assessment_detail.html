@@ -8,6 +8,34 @@
 
 {% block content %}
 <div class="container mt-5">
+    <!-- Add this message display section -->
+    {% if messages %}
+    <div class="messages-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 80%; max-width: 800px;">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show" 
+             style="border: 2px solid {% if message.tags == 'error' %}#721c24{% elif message.tags == 'success' %}#155724{% else %}#0c5460{% endif %}; 
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+                    font-weight: bold;
+                    {% if message.tags == 'error' %}
+                    background-color: #f8d7da; 
+                    color: #721c24;
+                    {% elif message.tags == 'success' %}
+                    background-color: #d4edda; 
+                    color: #155724;
+                    {% else %}
+                    background-color: #d1ecf1; 
+                    color: #0c5460;
+                    {% endif %}"
+             role="alert">
+            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <!-- End of message display section -->
+    
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow">
@@ -23,6 +51,31 @@
                     {% if user.profile.role == 'professor' or user.profile.role == 'Professor' %}
                     <div class="mb-4">
                         <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">Team and Class Averages</h4>
+                        
+                        <!-- Team selection dropdown -->
+                        <div class="mb-3">
+                            <form method="get" action="{% url 'view_assessment' assessment.id %}">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="team_select" class="form-label">Select Team for Averages:</label>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select name="team_id" id="team_select" class="form-select">
+                                            <option value="">All Teams (Class Average)</option>
+                                            {% for team_item in teams %}
+                                                <option value="{{ team_item.id }}" {% if selected_team and selected_team.id == team_item.id %}selected{% endif %}>
+                                                    {{ team_item.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn gold-btn">Apply</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
                         <div class="table-responsive mt-3">
                             <table class="table table-bordered">
                                 <thead class="table-light">
@@ -35,79 +88,47 @@
                                 <tbody>
                                     <tr>
                                         <td>Contribution</td>
-                                        <td>{{ team_avg_contribution|default:"0" }}</td>
-                                        <td>{{ class_avg_contribution|default:"0" }}</td>
+                                        <td>{{ team_avg.contribution|floatformat:1 }}</td>
+                                        <td>{{ class_avg.contribution|floatformat:1 }}</td>
                                     </tr>
                                     <tr>
                                         <td>Teamwork</td>
-                                        <td>{{ team_avg_teamwork|default:"0" }}</td>
-                                        <td>{{ class_avg_teamwork|default:"0" }}</td>
+                                        <td>{{ team_avg.teamwork|floatformat:1 }}</td>
+                                        <td>{{ class_avg.teamwork|floatformat:1 }}</td>
                                     </tr>
                                     <tr>
                                         <td>Communication</td>
-                                        <td>{{ team_avg_communication|default:"0" }}</td>
-                                        <td>{{ class_avg_communication|default:"0" }}</td>
+                                        <td>{{ team_avg.communication|floatformat:1 }}</td>
+                                        <td>{{ class_avg.communication|floatformat:1 }}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Quick Evaluation</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex gap-3 flex-wrap align-items-end">
-                                <div class="flex-grow-1">
-                                    <label class="form-label">Select Team</label>
-                                    <select class="form-select" id="teamSelect">
-                                        <option value="">Choose team...</option>
-                                        {% for team in teams %}
-                                        <option value="{{ team.id }}">{{ team.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <label class="form-label">Team Member</label>
-                                    <select class="form-select" id="memberSelect">
-                                        <option value="">Select team first...</option>
-                                    </select>
-                                </div>
-                                <div style="width: 120px;">
-                                    <label class="form-label">Score</label>
-                                    <input type="number" class="form-control" id="scoreInput" min="0" max="10"
-                                        step="0.1" placeholder="0.0">
-                                </div>
-                                <div>
-                                    <button class="btn gold-btn" onclick="submitEvaluation()">
-                                        Submit
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Student Submissions for this Assessment</h5>
-                        </div>
-                        <div class="card-body">
-                            {% if teams %}
-                                <div class="accordion" id="submissionsAccordion">
-                                    {% for team in teams %}
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header" id="heading{{ team.id }}">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                                                        data-bs-target="#collapse{{ team.id }}" aria-expanded="false" 
-                                                        aria-controls="collapse{{ team.id }}">
-                                                    {{ team.name }} ({{ all_submissions|get_item:team.id|length|default:"0" }} submissions)
-                                                </button>
-                                            </h2>
-                                            <div id="collapse{{ team.id }}" class="accordion-collapse collapse" 
-                                                 aria-labelledby="heading{{ team.id }}" data-bs-parent="#submissionsAccordion">
-                                                <div class="accordion-body">
-                                                    {% if all_submissions|get_item:team.id %}
+                    
+                    <!-- Professor view of all submissions -->
+                    <div class="mb-4">
+                        <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">All Submissions</h4>
+                        
+                        {% if teams %}
+                            <div class="accordion" id="teamsAccordion">
+                                {% for team in teams %}
+                                    <div class="accordion-item mb-3 border">
+                                        <h2 class="accordion-header" id="heading{{ team.id }}">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                    data-bs-target="#collapse{{ team.id }}" aria-expanded="false" 
+                                                    aria-controls="collapse{{ team.id }}">
+                                                {{ team.name|default:"Team "|add:team.id|stringformat:"s" }}
+                                                {% with team_submissions=all_submissions|get_item:team.id %}
+                                                    ({{ team_submissions|length }} submissions)
+                                                {% endwith %}
+                                            </button>
+                                        </h2>
+                                        <div id="collapse{{ team.id }}" class="accordion-collapse collapse" 
+                                             aria-labelledby="heading{{ team.id }}" data-bs-parent="#teamsAccordion">
+                                            <div class="accordion-body">
+                                                {% with team_submissions=all_submissions|get_item:team.id %}
+                                                    {% if team_submissions %}
                                                         <div class="table-responsive">
                                                             <table class="table table-striped">
                                                                 <thead>
@@ -121,7 +142,7 @@
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    {% for item in all_submissions|get_item:team.id %}
+                                                                    {% for item in team_submissions %}
                                                                         <tr>
                                                                             <td>{{ item.student.get_full_name|default:item.student.username }}</td>
                                                                             <td>{% if item.submission.submitted_at %}{{ item.submission.submitted_at|date:"M d, Y" }}{% else %}No date{% endif %}</td>
@@ -142,12 +163,14 @@
                                                             No submissions from this team yet.
                                                         </div>
                                                     {% endif %}
-                                                </div>
+                                                {% endwith %}
                                             </div>
                                         </div>
-                                    {% endfor %}
-                                    {% if all_submissions.no_team %}
-                                    <div class="accordion-item">
+                                    </div>
+                                {% endfor %}
+                                
+                                {% if all_submissions.no_team %}
+                                    <div class="accordion-item mb-3 border">
                                         <h2 class="accordion-header" id="headingNoTeam">
                                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
                                                     data-bs-target="#collapseNoTeam" aria-expanded="false" 
@@ -156,7 +179,7 @@
                                             </button>
                                         </h2>
                                         <div id="collapseNoTeam" class="accordion-collapse collapse" 
-                                             aria-labelledby="headingNoTeam" data-bs-parent="#submissionsAccordion">
+                                             aria-labelledby="headingNoTeam" data-bs-parent="#teamsAccordion">
                                             <div class="accordion-body">
                                                 <div class="table-responsive">
                                                     <table class="table table-striped">
@@ -190,75 +213,14 @@
                                             </div>
                                         </div>
                                     </div>
-                                    {% endif %}
-                                </div>
-                            {% else %}
-                                <div class="alert alert-info">
-                                    No teams found for this course.
-                                </div>
-                            {% endif %}
-                        </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                No teams found for this course.
+                            </div>
+                        {% endif %}
                     </div>
-
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            // Get teams data from the backend
-                            const teams = JSON.parse('{{ teams_json|escapejs }}');
-                            
-                            document.getElementById('teamSelect').addEventListener('change', function () {
-                                const memberSelect = document.getElementById('memberSelect');
-                                memberSelect.innerHTML = '<option value="">Select member...</option>';
-                                
-                                const teamId = this.value;
-                                if (!teamId) return;
-                                
-                                // Find the selected team and its members
-                                const selectedTeam = teams.find(team => team.id.toString() === teamId);
-                                if (selectedTeam && selectedTeam.members) {
-                                    selectedTeam.members.forEach(member => {
-                                        memberSelect.add(new Option(member.name, member.id));
-                                    });
-                                }
-                            });
-                        });
-                        
-                        function submitEvaluation() {
-                            const team = document.getElementById('teamSelect').value;
-                            const member = document.getElementById('memberSelect').value;
-                            const score = document.getElementById('scoreInput').value;
-                            
-                            if (!team || !member || !score) {
-                                alert('Please fill in all fields');
-                                return;
-                            }
-                            
-                            // Send data to the backend using fetch API
-                            fetch('{% url "submit_student_score" %}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                    'X-CSRFToken': '{{ csrf_token }}'
-                                },
-                                body: new URLSearchParams({
-                                    'assessment_id': '{{ assessment.id }}',
-                                    'student_id': member,
-                                    'score': score
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    alert(data.message);
-                                    // Optionally refresh the page or update UI
-                                } else {
-                                    throw new Error(data.error || 'Failed to submit score');
-                                }
-                            })
-                            .catch(error => {
-                                alert('Error: ' + error.message);
-                            });
-                        }
-                    </script>
                     {% endif %}
 
                     {% if user.profile.role == 'student' or user.profile.role == 'Student' %}
@@ -276,32 +238,65 @@
                                 <div class="row">
                                     {% for member in team_members %}
                                     <div class="col-md-6 mb-3">
-                                        <div class="card h-100 {% if member == request.user %}border-primary{% endif %}">
-                                            <div class="card-header d-flex justify-content-between align-items-center">
-                                                <h5 class="mb-0">{{ member.get_full_name|default:member.username }}</h5>
-                                                {% if member == request.user %}
-                                                <span class="badge bg-primary">Self</span>
-                                                {% endif %}
-                                            </div>
-                                            <div class="card-body">
-                                                {% with member_submission=member|get_submission:assessment %}
-                                                {% if member_submission %}
-                                                <div class="text-success">
-                                                    <i class="fas fa-check-circle me-2"></i>Completed
-                                                    <small class="text-muted d-block mt-1">Submitted on {{ member_submission.submitted_at|date:"M d, Y" }}</small>
+                                        <div class="team-member-card mb-3">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">
+                                                        {{ member.get_full_name|default:member.username }}
+                                                        {% if member == request.user %}
+                                                        <span class="badge bg-secondary">Self</span>
+                                                        {% endif %}
+                                                    </h5>
+                                                    
+                                                    {% with member_username=member.username %}
+                                                    {% if member_username in user_submissions %}
+                                                        <!-- Show submitted assessment details -->
+                                                        <div class="submitted-assessment">
+                                                            <span class="badge bg-success mb-2">Completed</span>
+                                                            
+                                                            <div class="assessment-details mt-2">
+                                                                <div class="row">
+                                                                    <div class="col-md-4">
+                                                                        <p><strong>Contribution:</strong> {{ user_submissions|get_item:member_username|get_attr:"contribution" }}/5</p>
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <p><strong>Teamwork:</strong> {{ user_submissions|get_item:member_username|get_attr:"teamwork" }}/5</p>
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <p><strong>Communication:</strong> {{ user_submissions|get_item:member_username|get_attr:"communication" }}/5</p>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {% if user_submissions|get_item:member_username|get_attr:"feedback" %}
+                                                                <div class="mt-2">
+                                                                    <p><strong>Feedback:</strong> {{ user_submissions|get_item:member_username|get_attr:"feedback" }}</p>
+                                                                </div>
+                                                                {% endif %}
+                                                                
+                                                                <button class="btn btn-sm btn-outline-primary mt-2 edit-assessment-btn" 
+                                                                        data-peer-id="{{ member.id }}" 
+                                                                        data-peer-name="{{ member.get_full_name|default:member.username }}">
+                                                                    Edit Assessment
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    {% else %}
+                                                        <!-- Show not completed and assess button -->
+                                                        <span class="badge bg-warning mb-2">Not Completed</span>
+                                                        <div class="mt-2">
+                                                            <a href="#" class="btn gold-btn assess-button" 
+                                                               data-peer-id="{{ member.id }}" 
+                                                               data-peer-name="{{ member.get_full_name|default:member.username }}">
+                                                                {% if member == request.user %}
+                                                                    Self Assessment
+                                                                {% else %}
+                                                                    Assess {{ member.get_full_name|default:member.username }}
+                                                                {% endif %}
+                                                            </a>
+                                                        </div>
+                                                    {% endif %}
+                                                    {% endwith %}
                                                 </div>
-                                                {% else %}
-                                                <div class="text-danger">
-                                                    <i class="fas fa-times-circle me-2"></i>Not Completed
-                                                </div>
-                                                <button type="button" 
-                                                    class="btn mt-2" 
-                                                    style="background-color: var(--bc-gold); color: var(--bc-maroon);"
-                                                    onclick="showAssessmentForm('{{ member.username }}')">
-                                                    Assess {{ member.get_full_name|default:member.username }}
-                                                </button>
-                                                {% endif %}
-                                                {% endwith %}
                                             </div>
                                         </div>
                                     </div>
@@ -310,562 +305,614 @@
                             </div>
                         </div>
 
-                        <!-- Assessment Form (initially hidden) -->
-                        <div id="assessmentFormContainer" class="card shadow mb-4" style="display: none;">
+                        <!-- Assessment form structure -->
+                        <form id="assessment-form" method="post" action="{% url 'submit_assessment' assessment.id %}" style="display: none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="peer_id" value="">
+                            
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Assessing: <span id="assessed-peer-name"></span></h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Contribution Rating -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Contribution (1-5):</label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="range" class="form-range me-3" name="contribution" min="1" max="5" step="1" value="3" id="contributionRange">
+                                            <span class="badge bg-primary" id="contributionValue">3</span>
+                                        </div>
+                                        <small class="text-muted">Rate how much this person contributed to the team's work</small>
+                                    </div>
+                                    
+                                    <!-- Teamwork Rating -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Teamwork (1-5):</label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="range" class="form-range me-3" name="teamwork" min="1" max="5" step="1" value="3" id="teamworkRange">
+                                            <span class="badge bg-primary" id="teamworkValue">3</span>
+                                        </div>
+                                        <small class="text-muted">Rate how well this person worked with the team</small>
+                                    </div>
+                                    
+                                    <!-- Communication Rating -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Communication (1-5):</label>
+                                        <div class="d-flex align-items-center">
+                                            <input type="range" class="form-range me-3" name="communication" min="1" max="5" step="1" value="3" id="communicationRange">
+                                            <span class="badge bg-primary" id="communicationValue">3</span>
+                                        </div>
+                                        <small class="text-muted">Rate how effectively this person communicated with the team</small>
+                                    </div>
+                                    
+                                    <!-- Likert Questions -->
+                                    {% if likert_questions %}
+                                    <div class="mb-4">
+                                        <h5 class="border-bottom pb-2">Additional Rating Questions</h5>
+                                        {% for question in likert_questions %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ question.question_text }}</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="range" class="form-range me-3" name="likert_{{ question.id }}" min="1" max="5" step="1" value="3" id="likert_{{ question.id }}_range">
+                                                <span class="badge bg-primary" id="likert_{{ question.id }}_value">3</span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Open-Ended Questions -->
+                                    {% if open_ended_questions %}
+                                    <div class="mb-4">
+                                        <h5 class="border-bottom pb-2">Open-Ended Questions</h5>
+                                        {% for question in open_ended_questions %}
+                                        <div class="mb-3">
+                                            <label for="openended_{{ question.id }}" class="form-label">{{ question.question_text }}</label>
+                                            <textarea class="form-control" name="openended_{{ question.id }}" id="openended_{{ question.id }}" rows="3"></textarea>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Feedback -->
+                                    <div class="mb-4">
+                                        <label for="feedback" class="form-label fw-bold">Additional Feedback (Optional):</label>
+                                        <textarea class="form-control" name="feedback" id="feedback" rows="3" placeholder="Provide constructive feedback for your teammate..."></textarea>
+                                    </div>
+                                    
+                                    <!-- Submit Button -->
+                                    <div class="text-end">
+                                        <button type="submit" class="btn gold-btn">Submit Assessment</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <script>
+                            // Update range value displays
+                            document.addEventListener('DOMContentLoaded', function() {
+                                // For standard ratings
+                                document.getElementById('contributionRange').addEventListener('input', function() {
+                                    document.getElementById('contributionValue').textContent = this.value;
+                                });
+                                
+                                document.getElementById('teamworkRange').addEventListener('input', function() {
+                                    document.getElementById('teamworkValue').textContent = this.value;
+                                });
+                                
+                                document.getElementById('communicationRange').addEventListener('input', function() {
+                                    document.getElementById('communicationValue').textContent = this.value;
+                                });
+                                
+                                // For Likert questions
+                                const likertRanges = document.querySelectorAll('input[id$="_range"]');
+                                likertRanges.forEach(range => {
+                                    range.addEventListener('input', function() {
+                                        const valueId = this.id.replace('_range', '_value');
+                                        document.getElementById(valueId).textContent = this.value;
+                                    });
+                                });
+                                
+                                // Add click handlers for all assess buttons
+                                const assessButtons = document.querySelectorAll('.assess-button, .edit-assessment-btn');
+                                assessButtons.forEach(button => {
+                                    button.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        
+                                        // Get the peer ID and name from data attributes
+                                        const peerId = this.getAttribute('data-peer-id');
+                                        const peerName = this.getAttribute('data-peer-name');
+                                        
+                                        // Set the peer ID in the hidden input field
+                                        const peerIdInput = document.querySelector('input[name="peer_id"]');
+                                        if (peerIdInput) {
+                                            peerIdInput.value = peerId;
+                                        }
+                                        
+                                        // Update any UI elements to show which peer is being assessed
+                                        const peerNameElement = document.getElementById('assessed-peer-name');
+                                        if (peerNameElement) {
+                                            peerNameElement.textContent = peerName;
+                                        }
+                                        
+                                        // If this is an edit button, pre-fill the form with existing data
+                                        if (this.classList.contains('edit-assessment-btn')) {
+                                            // Get the existing data from the DOM
+                                            const contributionText = this.closest('.assessment-details').querySelector('p:contains("Contribution")').textContent;
+                                            const teamworkText = this.closest('.assessment-details').querySelector('p:contains("Teamwork")').textContent;
+                                            const communicationText = this.closest('.assessment-details').querySelector('p:contains("Communication")').textContent;
+                                            const feedbackElement = this.closest('.assessment-details').querySelector('p:contains("Feedback")');
+                                            
+                                            // Extract the values
+                                            const contributionValue = contributionText.match(/(\d+)\/5/)[1];
+                                            const teamworkValue = teamworkText.match(/(\d+)\/5/)[1];
+                                            const communicationValue = communicationText.match(/(\d+)\/5/)[1];
+                                            const feedbackValue = feedbackElement ? feedbackElement.textContent.replace('Feedback:', '').trim() : '';
+                                            
+                                            // Set the form values
+                                            document.getElementById('contributionRange').value = contributionValue;
+                                            document.getElementById('contributionValue').textContent = contributionValue;
+                                            
+                                            document.getElementById('teamworkRange').value = teamworkValue;
+                                            document.getElementById('teamworkValue').textContent = teamworkValue;
+                                            
+                                            document.getElementById('communicationRange').value = communicationValue;
+                                            document.getElementById('communicationValue').textContent = communicationValue;
+                                            
+                                            if (document.getElementById('feedback')) {
+                                                document.getElementById('feedback').value = feedbackValue;
+                                            }
+                                        }
+                                        
+                                        // Show the assessment form
+                                        const assessmentForm = document.getElementById('assessment-form');
+                                        if (assessmentForm) {
+                                            assessmentForm.style.display = 'block';
+                                            assessmentForm.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
+                    </div>
+                    {% endif %}
+
+                    {% if user.profile.role == 'professor' or user.profile.role == 'Professor' %}
+                    <div id="professorView" class="container">
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">Team and Class Averages</h4>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th>Team Average</th>
+                                            <th>Class Average</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Contribution</td>
+                                            <td>{{ team_avg.contribution|floatformat:1 }}</td>
+                                            <td>{{ class_avg.contribution|floatformat:1 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Teamwork</td>
+                                            <td>{{ team_avg.teamwork|floatformat:1 }}</td>
+                                            <td>{{ class_avg.teamwork|floatformat:1 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Communication</td>
+                                            <td>{{ team_avg.communication|floatformat:1 }}</td>
+                                            <td>{{ class_avg.communication|floatformat:1 }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Team Selection -->
+                        <div class="card mb-4 shadow">
                             <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                                <h4 id="assessmentFormTitle">Assess Team Member</h4>
+                                <h4 class="mb-0">Team Submissions</h4>
                             </div>
                             <div class="card-body">
-                                <form method="post" action="{% url 'submit_assessment' assessment.id %}" id="assessmentForm">
-                                    {% csrf_token %}
-                                    <input type="hidden" id="student" name="student" value="">
+                                <div class="mb-3">
+                                    <label for="teamSelector" class="form-label">Select Team:</label>
+                                    <select id="teamSelector" class="form-select" onchange="loadTeamData(this.value)">
+                                        <option value="">Select a team...</option>
+                                        {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div id="teamDataContainer" style="display: none;">
+                                    <!-- Team Overview Card -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Team Overview</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6>Team Members:</h6>
+                                                    <ul id="teamMembersList" class="list-group">
+                                                        <!-- Team members will be populated here -->
+                                                    </ul>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>Submission Status:</h6>
+                                                    <div class="progress mb-2">
+                                                        <div id="submissionProgress" class="progress-bar" role="progressbar" style="width: 0%; background-color: var(--bc-maroon);" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                                    </div>
+                                                    <small id="submissionStatus">0 of 0 members have completed all assessments</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     
-                                    <div class="mb-4">
-                                        <label class="form-label">Rate Contribution:</label>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Poor</span>
-                                            <div class="btn-group" role="group" aria-label="Contribution Rating">
-                                                {% for i in "12345"|make_list %}
-                                                <input type="radio" class="btn-check" name="contribution" id="contribution{{ i }}" value="{{ i }}" required>
-                                                <label class="btn btn-outline-primary" for="contribution{{ i }}">{{ i }}</label>
-                                                {% endfor %}
+                                    <!-- Submission Matrix -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Peer Assessment Matrix</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Evaluator ↓ / Evaluated →</th>
+                                                            <th id="matrixHeaderRow">
+                                                                <!-- Team member headers will be populated here -->
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="assessmentMatrix">
+                                                        <!-- Matrix will be populated here -->
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                            <span>Excellent</span>
                                         </div>
                                     </div>
-
-                                    <div class="mb-4">
-                                        <label class="form-label">Rate Teamwork:</label>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Poor</span>
-                                            <div class="btn-group" role="group" aria-label="Teamwork Rating">
-                                                {% for i in "12345"|make_list %}
-                                                <input type="radio" class="btn-check" name="teamwork" id="teamwork{{ i }}" value="{{ i }}" required>
-                                                <label class="btn btn-outline-primary" for="teamwork{{ i }}">{{ i }}</label>
-                                                {% endfor %}
+                                    
+                                    <!-- Student Selection -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">View Individual Submissions</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="evaluatorSelector" class="form-label">Select Evaluator:</label>
+                                                    <select id="evaluatorSelector" class="form-select" onchange="updateEvaluatedDropdown()">
+                                                        <option value="">Select student...</option>
+                                                        <!-- Options will be populated here -->
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="evaluatedSelector" class="form-label">Select Student Being Evaluated:</label>
+                                                    <select id="evaluatedSelector" class="form-select" disabled>
+                                                        <option value="">Select evaluator first...</option>
+                                                        <!-- Options will be populated here -->
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <span>Excellent</span>
+                                            <div class="d-grid">
+                                                <button id="viewSubmissionBtn" class="btn" style="background-color: var(--bc-gold); color: var(--bc-maroon);" disabled onclick="viewSubmission()">
+                                                    View Submission
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div class="mb-4">
-                                        <label class="form-label">Rate Communication:</label>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Poor</span>
-                                            <div class="btn-group" role="group" aria-label="Communication Rating">
-                                                {% for i in "12345"|make_list %}
-                                                <input type="radio" class="btn-check" name="communication" id="communication{{ i }}" value="{{ i }}" required>
-                                                <label class="btn btn-outline-primary" for="communication{{ i }}">{{ i }}</label>
-                                                {% endfor %}
+                                    
+                                    <!-- Submission Details (initially hidden) -->
+                                    <div id="submissionDetails" class="card mb-4" style="display: none;">
+                                        <div class="card-header bg-light">
+                                            <h5 id="submissionTitle" class="mb-0">Submission Details</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="submissionContent">
+                                                <!-- Submission details will be populated here -->
                                             </div>
-                                            <span>Excellent</span>
                                         </div>
                                     </div>
-
-                                    <!-- Likert Questions -->
-                                    {% for question in likert_questions %}
-                                    <div class="mb-4">
-                                        <label class="form-label">{{ question.question_text }}</label>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>Poor</span>
-                                            <div class="btn-group" role="group" aria-label="{{ question.question_text }}">
-                                                {% for i in "12345"|make_list %}
-                                                <input type="radio" class="btn-check" name="likert_{{ question.id }}" id="likert_{{ question.id }}_{{ i }}" value="{{ i }}" required>
-                                                <label class="btn btn-outline-primary" for="likert_{{ question.id }}_{{ i }}">{{ i }}</label>
-                                                {% endfor %}
-                                            </div>
-                                            <span>Excellent</span>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-
-                                    <!-- Open-ended Questions -->
-                                    {% for question in open_ended_questions %}
-                                    <div class="mb-4">
-                                        <label for="open_ended_{{ question.id }}" class="form-label">{{ question.question_text }}</label>
-                                        <textarea class="form-control" id="open_ended_{{ question.id }}" name="open_ended_{{ question.id }}" rows="3" required></textarea>
-                                    </div>
-                                    {% endfor %}
-
-                                    <div class="mb-4">
-                                        <label for="feedback" class="form-label">Additional Feedback (Optional):</label>
-                                        <textarea class="form-control" id="feedback" name="feedback" rows="4"></textarea>
-                                    </div>
-
-                                    <div class="d-flex justify-content-between">
-                                        <button type="button" class="btn btn-secondary" onclick="hideAssessmentForm()">Cancel</button>
-                                        <button type="submit" class="btn" style="background-color: var(--bc-gold); color: var(--bc-maroon);">Submit Assessment</button>
-                                    </div>
-                                </form>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <script>
-                        function showAssessmentForm(username) {
-                            // Get the member's name
-                            let memberName = '';
-                            const memberElements = document.querySelectorAll('.card-header h5');
-                            memberElements.forEach(el => {
-                                if (el.closest('.card').querySelector('button') && 
-                                    el.closest('.card').querySelector('button').getAttribute('onclick').includes(username)) {
-                                    memberName = el.textContent.trim();
+                        // Store team data globally
+                        let teamsData = {{ teams_data|safe }};
+                        let submissionsData = {};
+                        
+                        // Function to load team data when a team is selected
+                        function loadTeamData(teamId) {
+                            if (!teamId) {
+                                document.getElementById('teamDataContainer').style.display = 'none';
+                                return;
+                            }
+                            
+                            document.getElementById('teamDataContainer').style.display = 'block';
+                            
+                            // Find the selected team
+                            const selectedTeam = teamsData.find(team => team.id == teamId);
+                            if (!selectedTeam) return;
+                            
+                            // Populate team members list
+                            const teamMembersList = document.getElementById('teamMembersList');
+                            teamMembersList.innerHTML = '';
+                            
+                            selectedTeam.members.forEach(member => {
+                                const li = document.createElement('li');
+                                li.className = 'list-group-item';
+                                li.textContent = member.name;
+                                teamMembersList.appendChild(li);
+                            });
+                            
+                            // Populate evaluator dropdown
+                            const evaluatorSelector = document.getElementById('evaluatorSelector');
+                            evaluatorSelector.innerHTML = '<option value="">Select student...</option>';
+                            
+                            selectedTeam.members.forEach(member => {
+                                const option = document.createElement('option');
+                                option.value = member.id;
+                                option.textContent = member.name;
+                                evaluatorSelector.appendChild(option);
+                            });
+                            
+                            // Reset other dropdowns and details
+                            document.getElementById('evaluatedSelector').innerHTML = '<option value="">Select evaluator first...</option>';
+                            document.getElementById('evaluatedSelector').disabled = true;
+                            document.getElementById('viewSubmissionBtn').disabled = true;
+                            document.getElementById('submissionDetails').style.display = 'none';
+                            
+                            // Fetch submission data for this team
+                            fetchTeamSubmissions(teamId);
+                        }
+                        
+                        // Function to fetch team submissions via AJAX
+                        function fetchTeamSubmissions(teamId) {
+                            fetch(`/api/team-submissions/${teamId}/{{ assessment.id }}/`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    submissionsData = data;
+                                    updateSubmissionStatus(data);
+                                    buildAssessmentMatrix(data);
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching team submissions:', error);
+                                });
+                        }
+                        
+                        // Update submission status and progress bar
+                        function updateSubmissionStatus(data) {
+                            const totalMembers = data.team_members.length;
+                            const completedMembers = data.completed_members.length;
+                            const percentage = totalMembers > 0 ? Math.round((completedMembers / totalMembers) * 100) : 0;
+                            
+                            document.getElementById('submissionProgress').style.width = `${percentage}%`;
+                            document.getElementById('submissionProgress').setAttribute('aria-valuenow', percentage);
+                            document.getElementById('submissionProgress').textContent = `${percentage}%`;
+                            document.getElementById('submissionStatus').textContent = 
+                                `${completedMembers} of ${totalMembers} members have completed all assessments`;
+                        }
+                        
+                        // Build the assessment matrix
+                        function buildAssessmentMatrix(data) {
+                            const matrixHeaderRow = document.getElementById('matrixHeaderRow');
+                            const assessmentMatrix = document.getElementById('assessmentMatrix');
+                            
+                            // Clear existing content
+                            matrixHeaderRow.innerHTML = '';
+                            assessmentMatrix.innerHTML = '';
+                            
+                            // Add headers for each team member
+                            data.team_members.forEach(member => {
+                                const th = document.createElement('th');
+                                th.textContent = member.name;
+                                matrixHeaderRow.appendChild(th);
+                            });
+                            
+                            // Create a row for each evaluator
+                            data.team_members.forEach(evaluator => {
+                                const tr = document.createElement('tr');
+                                
+                                // Add evaluator name as first cell
+                                const tdName = document.createElement('td');
+                                tdName.textContent = evaluator.name;
+                                tdName.className = 'fw-bold';
+                                tr.appendChild(tdName);
+                                
+                                // Add cells for each evaluated member
+                                data.team_members.forEach(evaluated => {
+                                    const td = document.createElement('td');
+                                    
+                                    // Find submission if it exists
+                                    const submission = data.submissions.find(s => 
+                                        s.evaluator_id == evaluator.id && s.evaluated_id == evaluated.id);
+                                    
+                                    if (submission) {
+                                        // Create a button to view the submission
+                                        const btn = document.createElement('button');
+                                        btn.className = 'btn btn-sm';
+                                        btn.style.backgroundColor = 'var(--bc-gold)';
+                                        btn.style.color = 'var(--bc-maroon)';
+                                        btn.textContent = 'View';
+                                        btn.onclick = function() {
+                                            viewSpecificSubmission(evaluator.id, evaluated.id);
+                                        };
+                                        td.appendChild(btn);
+                                    } else if (evaluator.id === evaluated.id) {
+                                        // Self-assessment cell
+                                        td.innerHTML = '<span class="text-muted">Self</span>';
+                                    } else {
+                                        // No submission
+                                        td.innerHTML = '<span class="text-danger">Missing</span>';
+                                    }
+                                    
+                                    tr.appendChild(td);
+                                });
+                                
+                                assessmentMatrix.appendChild(tr);
+                            });
+                        }
+                        
+                        // Update the evaluated dropdown when an evaluator is selected
+                        function updateEvaluatedDropdown() {
+                            const evaluatorId = document.getElementById('evaluatorSelector').value;
+                            const evaluatedSelector = document.getElementById('evaluatedSelector');
+                            
+                            if (!evaluatorId) {
+                                evaluatedSelector.innerHTML = '<option value="">Select evaluator first...</option>';
+                                evaluatedSelector.disabled = true;
+                                document.getElementById('viewSubmissionBtn').disabled = true;
+                                return;
+                            }
+                            
+                            // Enable the dropdown
+                            evaluatedSelector.disabled = false;
+                            evaluatedSelector.innerHTML = '<option value="">Select student...</option>';
+                            
+                            // Get the selected team
+                            const teamId = document.getElementById('teamSelector').value;
+                            const selectedTeam = teamsData.find(team => team.id == teamId);
+                            
+                            // Add options for each team member except the evaluator
+                            selectedTeam.members.forEach(member => {
+                                if (member.id != evaluatorId) {  // Don't include self in the dropdown
+                                    const option = document.createElement('option');
+                                    option.value = member.id;
+                                    option.textContent = member.name;
+                                    evaluatedSelector.appendChild(option);
                                 }
                             });
                             
-                            // Set the form title
-                            document.getElementById('assessmentFormTitle').textContent = 'Assess ' + memberName;
-                            
-                            // Set the hidden input value
-                            document.getElementById('student').value = username;
-                            
-                            // Show the form
-                            document.getElementById('assessmentFormContainer').style.display = 'block';
-                            
-                            // Scroll to the form
-                            document.getElementById('assessmentFormContainer').scrollIntoView({ behavior: 'smooth' });
-                            
-                            // Reset the form
-                            document.getElementById('assessmentForm').reset();
+                            // Disable the view button until an evaluated student is selected
+                            document.getElementById('viewSubmissionBtn').disabled = true;
                         }
                         
-                        function hideAssessmentForm() {
-                            document.getElementById('assessmentFormContainer').style.display = 'none';
+                        // Enable the view button when both dropdowns have selections
+                        document.getElementById('evaluatedSelector').addEventListener('change', function() {
+                            document.getElementById('viewSubmissionBtn').disabled = !this.value;
+                        });
+                        
+                        // View a specific submission
+                        function viewSpecificSubmission(evaluatorId, evaluatedId) {
+                            // Set the dropdown values
+                            document.getElementById('evaluatorSelector').value = evaluatorId;
+                            updateEvaluatedDropdown();
+                            document.getElementById('evaluatedSelector').value = evaluatedId;
+                            document.getElementById('viewSubmissionBtn').disabled = false;
+                            
+                            // View the submission
+                            viewSubmission();
+                        }
+                        
+                        // View the selected submission
+                        function viewSubmission() {
+                            const evaluatorId = document.getElementById('evaluatorSelector').value;
+                            const evaluatedId = document.getElementById('evaluatedSelector').value;
+                            
+                            if (!evaluatorId || !evaluatedId) return;
+                            
+                            // Find the submission in the data
+                            const submission = submissionsData.submissions.find(s => 
+                                s.evaluator_id == evaluatorId && s.evaluated_id == evaluatedId);
+                            
+                            if (!submission) {
+                                alert('No submission found for this combination.');
+                                return;
+                            }
+                            
+                            // Find the names
+                            const evaluator = submissionsData.team_members.find(m => m.id == evaluatorId);
+                            const evaluated = submissionsData.team_members.find(m => m.id == evaluatedId);
+                            
+                            // Update the submission title
+                            document.getElementById('submissionTitle').textContent = 
+                                `${evaluator.name}'s Assessment of ${evaluated.name}`;
+                            
+                            // Build the submission content
+                            const content = document.getElementById('submissionContent');
+                            content.innerHTML = `
+                                <div class="row mb-4">
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header bg-light">Contribution</div>
+                                            <div class="card-body text-center">
+                                                <h3>${submission.contribution}/5</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header bg-light">Teamwork</div>
+                                            <div class="card-body text-center">
+                                                <h3>${submission.teamwork}/5</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header bg-light">Communication</div>
+                                            <div class="card-body text-center">
+                                                <h3>${submission.communication}/5</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">Feedback</div>
+                                    <div class="card-body">
+                                        <p>${submission.feedback || 'No feedback provided.'}</p>
+                                    </div>
+                                </div>
+                                
+                                ${submission.likert_responses.length > 0 ? `
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">Likert Responses</div>
+                                        <div class="card-body">
+                                            <ul class="list-group">
+                                                ${submission.likert_responses.map(response => `
+                                                    <li class="list-group-item">
+                                                        <div class="fw-bold">${response.question_text}</div>
+                                                        <div class="mt-2">Rating: ${response.rating}/5</div>
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                
+                                ${submission.open_ended_responses.length > 0 ? `
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">Open-Ended Responses</div>
+                                        <div class="card-body">
+                                            <ul class="list-group">
+                                                ${submission.open_ended_responses.map(response => `
+                                                    <li class="list-group-item">
+                                                        <div class="fw-bold">${response.question_text}</div>
+                                                        <div class="mt-2">${response.response_text}</div>
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="text-muted">
+                                    Submitted on ${new Date(submission.submitted_at).toLocaleString()}
+                                </div>
+                            `;
+                            
+                            // Show the submission details
+                            document.getElementById('submissionDetails').style.display = 'block';
+                            document.getElementById('submissionDetails').scrollIntoView({ behavior: 'smooth' });
                         }
                     </script>
-                    {% endif %}
-
-                    {% if user.profile.role == 'professor' or user.profile.role == 'Professor' %}
-                    <div class="mb-4">
-                        <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">Professor Controls</h4>
-                        <div class="row mt-3">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h5>Assessment Management</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <p><strong>Current Status:</strong> 
-                                            {% if assessment.closed_date %}
-                                                <span class="badge bg-danger">Closed</span>
-                                            {% elif is_active %}
-                                                <span class="badge bg-success">Active</span>
-                                            {% else %}
-                                                <span class="badge bg-warning">Not Yet Open</span>
-                                            {% endif %}
-                                        </p>
-                                        
-                                        {% if not assessment.closed_date %}
-                                        <form method="post" action="{% url 'close_assessment' assessment.id %}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn maroon-btn" onclick="return confirm('Are you sure you want to close this assessment? This will end all submissions.')">
-                                                Close Assessment
-                                            </button>
-                                        </form>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h5>View Submissions</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <a href="{% url 'view_team_submissions' assessment.id %}" class="btn gold-btn mb-2">View by Team</a>
-                                        <a href="{% url 'view_student_submissions' assessment.id %}" class="btn gold-btn">View by Student</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="professorView" class="container mt-4">
-                        <div class="card shadow">
-                            <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                                <h4>Assessment Management</h4>
-                                {% if not assessment.is_published and not is_active %}
-                                <span class="badge bg-success">Draft - Questions Can Be Edited</span>
-                                {% elif assessment.is_published %}
-                                <span class="badge bg-danger">Published - Questions Cannot Be Modified</span>
-                                {% elif is_active %}
-                                <span class="badge bg-warning">Active - Questions Cannot Be Modified</span>
-                                {% endif %}
-                            </div>
-                            <div class="card-body">
-                                <!-- For published assessments scheduled for future release -->
-                                {% if assessment.is_scheduled %}
-                                <div class="alert alert-info mb-4">
-                                    <h5>Assessment Status: Scheduled for Release</h5>
-                                    <p>This assessment is published but not yet visible to students. It will be released
-                                        on {{ assessment.release_date|date:"F d, Y" }} at {{
-                                        assessment.release_date|time:"H:i" }}.</p>
-                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}"
-                                        class="mt-2">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-success"
-                                            onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
-                                            <i class="fas fa-rocket me-2"></i>Publish Now
-                                        </button>
-                                    </form>
-                                </div>
-                                {% endif %}
-
-                                <!-- For draft assessments with future release date -->
-                                {% if not assessment.is_published and assessment.release_date and assessment.release_date > now %}
-                                <div class="alert alert-info mb-4">
-                                    <h5>Assessment Status: Draft with Future Release Date</h5>
-                                    <p>This assessment will be released to students on {{
-                                        assessment.release_date|date:"F d, Y" }} at {{
-                                        assessment.release_date|time:"H:i" }} if published.</p>
-                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}"
-                                        class="mt-2">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-success"
-                                            onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
-                                            <i class="fas fa-rocket me-2"></i>Publish Now
-                                        </button>
-                                    </form>
-                                </div>
-                                {% endif %}
-
-                                <!-- For draft assessments without a release date -->
-                                {% if not assessment.is_published and not assessment.release_date %}
-                                <div class="alert alert-info mb-4">
-                                    <h5>Assessment Status: Draft</h5>
-                                    <p>This assessment is in draft mode and has no scheduled release date. You can
-                                        publish it immediately to make it visible to students.</p>
-                                    <form method="post" action="{% url 'publish_assessment_now' assessment.id %}"
-                                        class="mt-2">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-success"
-                                            onclick="return confirm('Are you sure you want to publish this assessment now? This will make it immediately visible to students.')">
-                                            <i class="fas fa-rocket me-2"></i>Publish Now
-                                        </button>
-                                    </form>
-                                </div>
-                                {% endif %}
-
-                                {% if teams %}
-                                <div class="mb-4">
-                                    <h5>Student Responses by Team</h5>
-                                    {% for team in teams %}
-                                    <div class="card mb-3">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h6>{{ team.name|default:"Unnamed Team" }}</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            {% for member in team.members.all %}
-                                            <div class="student-response mb-3 p-3 border rounded">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6>{{ member.get_full_name|default:member.username }}</h6>
-                                                    <div class="score-input-group">
-                                                        <input type="number"
-                                                            class="form-control form-control-sm score-input me-2"
-                                                            style="width: 100px;" min="0" max="10" step="0.1"
-                                                            value="{{ member.student_score.score|default:'' }}"
-                                                            data-student-id="{{ member.id }}"
-                                                            data-team-id="{{ team.id }}"
-                                                            data-assessment-id="{{ assessment.id }}">
-                                                        <button class="btn btn-primary btn-sm submit-score">
-                                                            Submit Score
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                {% with received_submissions=member.assessed_submissions.all %}
-                                                {% if received_submissions %}
-                                                <div class="submissions-received mt-3">
-                                                    <h6>Feedback Received:</h6>
-                                                    {% for submission in received_submissions %}
-                                                    {% if submission.assessment == assessment %}
-                                                    <div class="submission-detail mt-2 p-2 border rounded">
-                                                        <p><strong>From:</strong>
-                                                            Anonymous Team Member</p>
-                                                        <ul class="list-unstyled">
-                                                            <li>Contribution:
-                                                                {{ submission.contribution }}/5
-                                                            </li>
-                                                            <li>Teamwork:
-                                                                {{ submission.teamwork }}/5
-                                                            </li>
-                                                            <li>Communication:
-                                                                {{ submission.communication }}/5
-                                                            </li>
-                                                        </ul>
-                                                        {% if submission.feedback %}
-                                                        <p><strong>Feedback:</strong>
-                                                            {{ submission.feedback }}</p>
-                                                        {% endif %}
-
-                                                        {% if submission.likert_responses.exists %}
-                                                        <div class="likert-responses">
-                                                            <p>
-                                                                <strong>Additional
-                                                                    Ratings:</strong>
-                                                            </p>
-                                                            {% for response in submission.likert_responses.all %}
-                                                            <p>{{ response.question.question_text }}:
-                                                                {{ response.rating }}/5
-                                                            </p>
-                                                            {% endfor %}
-                                                        </div>
-                                                        {% endif %}
-
-                                                        {% if submission.open_ended_responses.exists %}
-                                                        <div class="open-ended-responses">
-                                                            <p>
-                                                                <strong>Additional
-                                                                    Comments:</strong>
-                                                            </p>
-                                                            {% for response in submission.open_ended_responses.all %}
-                                                            <p>
-                                                                <em>{{ response.question.question_text }}</em><br>
-                                                                {{ response.response_text }}
-                                                            </p>
-                                                            {% endfor %}
-                                                        </div>
-                                                        {% endif %}
-                                                    </div>
-                                                    {% endif %}
-                                                    {% endfor %}
-                                                </div>
-                                                {% else %}
-                                                <p class="text-muted mt-2">No assessments
-                                                    received yet</p>
-                                                {% endif %}
-                                                {% endwith %}
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                <div class="alert alert-info">No teams found for this assessment</div>
-                                {% endif %}
-
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        const csrfToken = '{{ csrf_token }}';
-
-                                        document.querySelectorAll('.submit-score').forEach(button => {
-                                            button.addEventListener('click', function () {
-                                                const inputGroup = this.closest('.score-input-group');
-                                                const input = inputGroup.querySelector('.score-input');
-                                                const score = parseFloat(input.value);
-
-                                                if (isNaN(score) || score < 0 || score > 10) {
-                                                    alert('Please enter a valid score between 0 and 10');
-                                                    return;
-                                                }
-
-                                                submitScore({
-                                                    student_id: input.dataset.studentId,
-                                                    assessment_id: input.dataset.assessmentId,
-                                                    score: score
-                                                });
-                                            });
-                                        });
-
-                                        function submitScore(data) {
-                                            fetch('{% url "submit_student_score" %}', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                                    'X-CSRFToken': csrfToken
-                                                },
-                                                body: new URLSearchParams(data)
-                                            })
-                                                .then(response => response.json())
-                                                .then(data => {
-                                                    if (data.success) {
-                                                        alert(data.message);
-                                                    } else {
-                                                        throw new Error(data.error ||
-                                                            'Failed to submit score');
-                                                    }
-                                                })
-                                                .catch(error => {
-                                                    alert('Error: ' + error.message);
-                                                });
-                                        }
-                                    });
-                                </script>
-
-                                {% if not assessment.is_published and not is_active %}
-                                <form method="post" action="{% url 'edit_assessment_questions' assessment.id %}">
-                                    {% csrf_token %}
-
-                                    <h5 class="mb-3">Likert Scale Questions</h5>
-                                    <div id="likert-questions-container">
-                                        {% for question in likert_questions %}
-                                        <div class="mb-3 likert-question">
-                                            <div class="input-group">
-                                                <input type="hidden" name="likert_id_{{ forloop.counter }}"
-                                                    value="{{ question.id }}">
-                                                <input type="text" class="form-control"
-                                                    name="likert_text_{{ forloop.counter }}"
-                                                    value="{{ question.question_text }}" required>
-                                                <input type="number" class="form-control"
-                                                    name="likert_order_{{ forloop.counter }}"
-                                                    value="{{ question.order }}" min="1" style="max-width: 100px;"
-                                                    required>
-                                                <button type="button"
-                                                    class="btn btn-danger remove-question">Remove</button>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <button type="button" id="add-likert-question" class="btn mb-4"
-                                        style="background-color: var(--bc-maroon); color: white;">
-                                        <i class="fas fa-plus me-2"></i>Add Likert Question
-                                    </button>
-
-                                    <h5 class="mb-3">Open-Ended Questions</h5>
-                                    <div id="open-ended-questions-container">
-                                        {% for question in open_ended_questions %}
-                                        <div class="mb-3 open-ended-question">
-                                            <div class="input-group">
-                                                <input type="hidden" name="open_ended_id_{{ forloop.counter }}"
-                                                    value="{{ question.id }}">
-                                                <input type="text" class="form-control"
-                                                    name="open_ended_text_{{ forloop.counter }}"
-                                                    value="{{ question.question_text }}" required>
-                                                <input type="number" class="form-control"
-                                                    name="open_ended_order_{{ forloop.counter }}"
-                                                    value="{{ question.order }}" min="1" style="max-width: 100px;"
-                                                    required>
-                                                <button type="button"
-                                                    class="btn btn-danger remove-question">Remove</button>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <button type="button" id="add-open-ended-question" class="btn mb-4"
-                                        style="background-color: var(--bc-maroon); color: white;">
-                                        <i class="fas fa-plus me-2"></i>Add Open-Ended Question
-                                    </button>
-
-                                    <input type="hidden" id="likert-count" name="likert_count"
-                                        value="{{ likert_questions|length }}">
-                                    <input type="hidden" id="open-ended-count" name="open_ended_count"
-                                        value="{{ open_ended_questions|length }}">
-
-                                    <div class="d-flex justify-content-between mt-4">
-                                        <button type="submit" name="action" value="save" class="btn"
-                                            style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                                            Save Draft</button>
-                                        <button type="submit" name="action" value="publish" class="btn btn-success">Save
-                                            &
-                                            Publish</button>
-                                    </div>
-                                </form>
-
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        let likertCount = Number('{{ likert_questions|length }}');
-                                        let openEndedCount = Number('{{ open_ended_questions|length }}');
-
-
-                                        // Add Likert question
-                                        document.getElementById('add-likert-question').addEventListener('click',
-                                            function () {
-                                                likertCount++;
-                                                const container = document.getElementById(
-                                                    'likert-questions-container');
-                                                const div = document.createElement('div');
-                                                div.className = 'mb-3 likert-question';
-                                                div.innerHTML = `
-                                                    <div class="input-group">
-                                                        <input type="hidden" name="likert_id_${likertCount}" value="new">
-                                                        <input type="text" class="form-control" name="likert_text_${likertCount}" 
-                                                               placeholder="Enter question text" required>
-                                                        <input type="number" class="form-control" name="likert_order_${likertCount}" 
-                                                               value="${likertCount}" min="1" style="max-width: 100px;" required>
-                                                        <button type="button" class="btn btn-danger remove-question">Remove</button>
-                                                    </div>
-                                                `;
-                                                container.appendChild(div);
-                                                document.getElementById('likert-count').value = likertCount;
-                                            });
-
-                                        // Add Open-ended question
-                                        document.getElementById('add-open-ended-question').addEventListener(
-                                            'click',
-                                            function () {
-                                                openEndedCount++;
-                                                const container = document.getElementById(
-                                                    'open-ended-questions-container');
-                                                const div = document.createElement('div');
-                                                div.className = 'mb-3 open-ended-question';
-                                                div.innerHTML = `
-                                                    <div class="input-group">
-                                                        <input type="hidden" name="open_ended_id_${openEndedCount}" value="new">
-                                                        <input type="text" class="form-control" name="open_ended_text_${openEndedCount}" 
-                                                               placeholder="Enter question text" required>
-                                                        <input type="number" class="form-control" name="open_ended_order_${openEndedCount}" 
-                                                               value="${openEndedCount}" min="1" style="max-width: 100px;" required>
-                                                        <button type="button" class="btn btn-danger remove-question">Remove</button>
-                                                    </div>
-                                                `;
-                                                container.appendChild(div);
-                                                document.getElementById('open-ended-count').value =
-                                                    openEndedCount;
-                                            });
-
-                                        // Remove question (delegated event)
-                                        document.addEventListener('click', function (e) {
-                                            if (e.target && e.target.classList.contains('remove-question')) {
-                                                e.target.closest(
-                                                    '.likert-question, .open-ended-question').remove();
-
-                                                // Update counts
-                                                const likertQuestions = document.querySelectorAll(
-                                                    '.likert-question').length;
-                                                const openEndedQuestions = document.querySelectorAll(
-                                                    '.open-ended-question').length;
-                                                document.getElementById('likert-count').value =
-                                                    likertQuestions;
-                                                document.getElementById('open-ended-count').value =
-                                                    openEndedQuestions;
-                                            }
-                                        });
-                                    });
-                                </script>
-                                {% else %}
-                                <div class="alert alert-warning">
-                                    {% if assessment.is_published %}
-                                    This assessment has been published. Questions cannot be modified.
-                                    {% elif is_active %}
-                                    This assessment is currently active. Questions cannot be modified.
-                                    {% endif %}
-                                </div>
-                                <div class="mt-3">
-                                    <a href="{% url 'dashboard' %}" class="btn"
-                                        style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back
-                                        to
-                                        Dashboard</a>
-                                </div>
-                                {% endif %}
-
-                                <!-- Add Delete Assessment button -->
-                                <div class="mt-4 mb-4">
-                                    <h5>Danger Zone</h5>
-                                    <div class="card border-danger mb-3">
-                                        <div class="card-header bg-danger text-white">Danger Zone</div>
-                                        <div class="card-body">
-                                            <h5 class="card-title">Delete Assessment</h5>
-                                            <p class="card-text">This action cannot be undone. All data associated with this assessment will be permanently deleted.</p>
-                                            <form method="POST" action="{% url 'delete_assessment' assessment.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger">Delete Assessment</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -915,6 +962,93 @@
                 deleteModal.show();
             });
         }
+    });
+</script>
+
+<!-- Add this script at the end of your template, just before the closing </body> tag -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click handlers for all assess buttons
+        const assessButtons = document.querySelectorAll('.assess-button, .edit-assessment-btn');
+        assessButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Get the peer ID and name from data attributes
+                const peerId = this.getAttribute('data-peer-id');
+                const peerName = this.getAttribute('data-peer-name');
+                
+                // Set the peer ID in the hidden input field
+                const peerIdInput = document.querySelector('input[name="peer_id"]');
+                if (peerIdInput) {
+                    peerIdInput.value = peerId;
+                }
+                
+                // Update any UI elements to show which peer is being assessed
+                const peerNameElement = document.getElementById('assessed-peer-name');
+                if (peerNameElement) {
+                    peerNameElement.textContent = peerName;
+                }
+                
+                // If this is an edit button, pre-fill the form with existing data
+                if (this.classList.contains('edit-assessment-btn')) {
+                    // Get the existing data from the DOM
+                    const contributionText = this.closest('.assessment-details').querySelector('p:contains("Contribution")').textContent;
+                    const teamworkText = this.closest('.assessment-details').querySelector('p:contains("Teamwork")').textContent;
+                    const communicationText = this.closest('.assessment-details').querySelector('p:contains("Communication")').textContent;
+                    const feedbackElement = this.closest('.assessment-details').querySelector('p:contains("Feedback")');
+                    
+                    // Extract the values
+                    const contributionValue = contributionText.match(/(\d+)\/5/)[1];
+                    const teamworkValue = teamworkText.match(/(\d+)\/5/)[1];
+                    const communicationValue = communicationText.match(/(\d+)\/5/)[1];
+                    const feedbackValue = feedbackElement ? feedbackElement.textContent.replace('Feedback:', '').trim() : '';
+                    
+                    // Set the form values
+                    document.getElementById('contributionRange').value = contributionValue;
+                    document.getElementById('contributionValue').textContent = contributionValue;
+                    
+                    document.getElementById('teamworkRange').value = teamworkValue;
+                    document.getElementById('teamworkValue').textContent = teamworkValue;
+                    
+                    document.getElementById('communicationRange').value = communicationValue;
+                    document.getElementById('communicationValue').textContent = communicationValue;
+                    
+                    if (document.getElementById('feedback')) {
+                        document.getElementById('feedback').value = feedbackValue;
+                    }
+                }
+                
+                // Show the assessment form
+                const assessmentForm = document.getElementById('assessment-form');
+                if (assessmentForm) {
+                    assessmentForm.style.display = 'block';
+                    assessmentForm.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+        
+        // Update range value displays
+        document.getElementById('contributionRange').addEventListener('input', function() {
+            document.getElementById('contributionValue').textContent = this.value;
+        });
+        
+        document.getElementById('teamworkRange').addEventListener('input', function() {
+            document.getElementById('teamworkValue').textContent = this.value;
+        });
+        
+        document.getElementById('communicationRange').addEventListener('input', function() {
+            document.getElementById('communicationValue').textContent = this.value;
+        });
+        
+        // For Likert questions
+        const likertRanges = document.querySelectorAll('input[id$="_range"]');
+        likertRanges.forEach(range => {
+            range.addEventListener('input', function() {
+                const valueId = this.id.replace('_range', '_value');
+                document.getElementById(valueId).textContent = this.value;
+            });
+        });
     });
 </script>
 

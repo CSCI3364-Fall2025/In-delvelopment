@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Submission Details | AAA{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h3>{{ student.get_full_name|default:student.username }}'s Submissions</h3>
+                    <p class="mb-0">{{ assessment.title }}</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Assessment
+                        </a>
+                    </div>
+                    
+                    {% if submissions %}
+                        <div class="table-responsive mb-4">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Assessed Peer</th>
+                                        <th>Submission Date</th>
+                                        <th>Contribution</th>
+                                        <th>Teamwork</th>
+                                        <th>Communication</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for submission in submissions %}
+                                        <tr>
+                                            <td>
+                                                {% if submission.assessed_peer %}
+                                                    {{ submission.assessed_peer.get_full_name|default:submission.assessed_peer.username }}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ submission.submitted_at|date:"M d, Y" }}</td>
+                                            <td>{{ submission.contribution|floatformat:1 }}</td>
+                                            <td>{{ submission.teamwork|floatformat:1 }}</td>
+                                            <td>{{ submission.communication|floatformat:1 }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% for submission in submissions %}
+                            {% if submission.assessed_peer %}
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Assessment of {{ submission.assessed_peer.get_full_name|default:submission.assessed_peer.username }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-4">
+                                            <div class="col-md-4">
+                                                <div class="card">
+                                                    <div class="card-header bg-light">Contribution</div>
+                                                    <div class="card-body text-center">
+                                                        <h3>{{ submission.contribution|floatformat:1 }}/5</h3>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card">
+                                                    <div class="card-header bg-light">Teamwork</div>
+                                                    <div class="card-body text-center">
+                                                        <h3>{{ submission.teamwork|floatformat:1 }}/5</h3>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card">
+                                                    <div class="card-header bg-light">Communication</div>
+                                                    <div class="card-body text-center">
+                                                        <h3>{{ submission.communication|floatformat:1 }}/5</h3>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if submission.likert_responses.all %}
+                                            <div class="card mb-4">
+                                                <div class="card-header bg-light">Likert Responses</div>
+                                                <div class="card-body">
+                                                    <ul class="list-group">
+                                                        {% for response in submission.likert_responses.all %}
+                                                            <li class="list-group-item">
+                                                                <div class="fw-bold">{{ response.question.text }}</div>
+                                                                <div class="mt-2">Rating: {{ response.rating }}/5</div>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if submission.open_ended_responses.all %}
+                                            <div class="card mb-4">
+                                                <div class="card-header bg-light">Open-Ended Responses</div>
+                                                <div class="card-body">
+                                                    <ul class="list-group">
+                                                        {% for response in submission.open_ended_responses.all %}
+                                                            <li class="list-group-item">
+                                                                <div class="fw-bold">{{ response.question.text }}</div>
+                                                                <div class="mt-2">{{ response.response_text }}</div>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            No submissions found for this student.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -86,7 +86,7 @@ class AssessmentScore(models.Model):
 
 class AssessmentSubmission(models.Model):
     assessment = models.ForeignKey('Assessment', on_delete=models.CASCADE, related_name='submissions')
-    student = models.CharField(max_length=150)  # Username of the person submitting
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submissions')
     assessed_peer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='assessed_submissions')
     contribution = models.IntegerField()
     teamwork = models.IntegerField()
@@ -94,15 +94,14 @@ class AssessmentSubmission(models.Model):
     feedback = models.TextField(blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.student} → {self.assessed_peer.username} | {self.assessment.title}"
-
     class Meta:
-        unique_together = ['assessment', 'student']  # One submission per student per assessment
+        # Update unique constraint to include assessed_peer
+        unique_together = ['assessment', 'student', 'assessed_peer']  # One submission per student per peer per assessment
 
     def __str__(self):
-        return f"{self.assessment.title} - {self.student}"
-        
+        peer_username = self.assessed_peer.username if self.assessed_peer else "Unknown"
+        return f"{self.student.username} → {peer_username} | {self.assessment.title}"
+
 class PeerAssessment(models.Model):
     title = models.CharField(max_length=255)
     publication_date = models.DateTimeField()

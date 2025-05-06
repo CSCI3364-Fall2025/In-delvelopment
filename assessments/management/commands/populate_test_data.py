@@ -17,7 +17,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         self.stdout.write('Creating sample test data...')
+        
+        # Get the current username from command arguments
         current_username = kwargs.get('current_user')
+        
+        # Debug output
+        if current_username:
+            self.stdout.write(f'Looking for user with username: "{current_username}"')
+            # List all users for debugging
+            all_users = User.objects.all()
+            self.stdout.write('All users in database:')
+            for user in all_users:
+                self.stdout.write(f'  - ID: {user.id}, Username: "{user.username}", Email: {user.email}')
         
         # Create professor if not exists
         professor, created = User.objects.get_or_create(
@@ -103,12 +114,27 @@ class Command(BaseCommand):
         current_user = None
         if current_username:
             try:
+                # Try exact match first
                 current_user = User.objects.get(username=current_username)
-                sample_course.students.add(current_user)
-                team1.members.add(current_user)
-                self.stdout.write(self.style.SUCCESS(f'Added current user {current_username} to {team1.name}'))
+                self.stdout.write(self.style.SUCCESS(f'Found user with exact username match: {current_username}'))
             except User.DoesNotExist:
-                self.stdout.write(self.style.WARNING(f'Current user {current_username} not found'))
+                # Try case-insensitive match
+                try:
+                    current_user = User.objects.get(username__iexact=current_username)
+                    self.stdout.write(self.style.SUCCESS(f'Found user with case-insensitive match: {current_user.username}'))
+                except User.DoesNotExist:
+                    # Try partial match
+                    matching_users = User.objects.filter(username__contains=current_username)
+                    if matching_users.exists():
+                        current_user = matching_users.first()
+                        self.stdout.write(self.style.SUCCESS(f'Found user with partial match: {current_user.username}'))
+                    else:
+                        self.stdout.write(self.style.WARNING(f'Current user "{current_username}" not found'))
+        
+        if current_user:
+            sample_course.students.add(current_user)
+            team1.members.add(current_user)
+            self.stdout.write(self.style.SUCCESS(f'Added user {current_user.username} to {team1.name}'))
         
         # Create a sample assessment
         now = timezone.now()
@@ -171,13 +197,13 @@ class Command(BaseCommand):
             # Check if submission already exists
             existing_submission = AssessmentSubmission.objects.filter(
                 assessment=assessment,
-                student=john.username
+                student=john
             ).exists()
             
             if not existing_submission:
                 john_submission = AssessmentSubmission.objects.create(
                     assessment=assessment,
-                    student=john.username,
+                    student=john,
                     contribution=random.randint(3, 5),
                     teamwork=random.randint(3, 5),
                     communication=random.randint(3, 5),
@@ -194,13 +220,13 @@ class Command(BaseCommand):
             
             existing_submission = AssessmentSubmission.objects.filter(
                 assessment=assessment,
-                student=michael.username
+                student=michael
             ).exists()
             
             if not existing_submission:
                 michael_submission = AssessmentSubmission.objects.create(
                     assessment=assessment,
-                    student=michael.username,
+                    student=michael,
                     contribution=random.randint(2, 5),
                     teamwork=random.randint(2, 5),
                     communication=random.randint(2, 5),

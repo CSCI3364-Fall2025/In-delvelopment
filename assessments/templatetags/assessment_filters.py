@@ -53,16 +53,29 @@ def get_open_ended_response(submission, question):
 
 @register.filter
 def get_item(dictionary, key):
-    """Get an item from a dictionary by key"""
-    if dictionary and key in dictionary:
-        return dictionary[key]
+    """Get an item from a dictionary using a key"""
+    if dictionary is None:
+        return None
+    if isinstance(dictionary, dict):
+        return dictionary.get(key)
     return None
+
+@register.filter
+def get_attr(obj, attr):
+    return getattr(obj, attr)
 
 @register.filter
 def get_submission(member, assessment):
     """Check if a submission exists for this member and assessment"""
     from assessments.models import AssessmentSubmission
-    return AssessmentSubmission.objects.filter(
-        assessment=assessment,
-        student=member.username
-    ).first()
+    from django.contrib.auth.models import User
+    
+    # Get the current user from the context
+    request = getattr(member, '_request', None)
+    if request and request.user.is_authenticated:
+        return AssessmentSubmission.objects.filter(
+            assessment=assessment,
+            student=request.user,
+            assessed_peer=member
+        ).first()
+    return None
