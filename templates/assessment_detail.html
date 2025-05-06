@@ -264,186 +264,175 @@
                     {% if user.profile.role == 'student' or user.profile.role == 'Student' %}
                     <div id="studentView" class="container">
                         <h2>Peer Assessment</h2>
-                        <form method="post" action="{% url 'submit_assessment' assessment.id %}">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="student" class="form-label">Select Team Member:</label>
-                                <select id="student" name="student" class="form-select" required>
+                        
+                        <!-- Team Member Assessment Status -->
+                        <div class="card mb-4 shadow">
+                            <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                                <h4>Team Assessment Progress</h4>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-3">Please complete assessments for all team members, including yourself:</p>
+                                
+                                <div class="row">
                                     {% for member in team_members %}
-                                    <option value="{{ member.username }}">{{
-                                        member.get_full_name|default:member.username }}</option>
-                                    {% endfor %}
-                                    <option value="{{ request.user.username }}">Self</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label">Rate Contribution:</label>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span>Poor</span>
-                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
-                                        {% for i in 5|range_filter %}
-                                        <div class="form-check mx-auto" style="z-index: 1;">
-                                            {% if submission and submission.contribution == i %}
-                                            <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" checked required>
-                                            {% else %}
-                                            <input class="form-check-input" type="radio" name="contribution" value="{{ i }}" required>
-                                            {% endif %}
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <span>Excellent</span>
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label">Rate Teamwork:</label>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span>Poor</span>
-                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
-                                        {% for i in 5|range_filter %}
-                                        <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="teamwork" value="{{ i }}"
-                                                {% if submission and submission.teamwork == i %}checked{% endif %} required>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <span>Excellent</span>
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label">Rate Communication:</label>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span>Poor</span>
-                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute" style="top: 50%; z-index: 0; border: 1px solid #ccc;">
-                                        {% for i in 5|range_filter %}
-                                        <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="communication" value="{{ i }}"
-                                                {% if submission and submission.communication == i %}checked{% endif %} required>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <span>Excellent</span>
-                                </div>
-                            </div>
-
-                            <!-- For Likert Scale Questions -->
-                            {% for question in likert_questions %}
-                            <div class="mb-4">
-                                <label class="form-label">{{ question.question_text|safe }}</label>
-
-                                {% if question.question_type == 'team' %}
-                                <!-- Team question (overall) -->
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span>Poor</span>
-                                    <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                        <hr class="w-100 position-absolute"
-                                            style="top: 50%; z-index: 0; border: 1px solid #ccc;">
-                                        {% for i in 5|range_filter %}
-                                        <div class="form-check mx-auto" style="z-index: 1;">
-                                            <input class="form-check-input" type="radio" name="likert_{{ question.id }}"
-                                                value="{{ i }}" {% has_response_with_rating submission question i as
-                                                has_response %} {% if has_response %}checked{% endif %} required>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <span>Excellent</span>
-                                </div>
-                                {% else %}
-                                <!-- Individual question (per teammate) -->
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h6>Rate each team member individually:</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        {% for teammate in teammates %}
-                                        {% if teammate.username != request.user.username %}
-                                        <div class="mb-3">
-                                            <label class="form-label">{{
-                                                teammate.get_full_name|default:teammate.username }}</label>
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <span>Poor</span>
-                                                <div class="d-flex align-items-center position-relative w-100 mx-3">
-                                                    <hr class="w-100 position-absolute"
-                                                        style="top: 50%; z-index: 0; border: 1px solid #ccc;">
-                                                    {% for i in 5|range_filter %}
-                                                    <div class="form-check mx-auto" style="z-index: 1;">
-                                                        <input class="form-check-input" type="radio"
-                                                            name="likert_{{ question.id }}_{{ teammate.id }}"
-                                                            value="{{ i }}" 
-                                                            {% has_response_with_rating_for_teammate submission question teammate i as has_response %} 
-                                                            {% if has_response %}checked{% endif %} 
-                                                            required>
-                                                    </div>
-                                                    {% endfor %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 {% if member == request.user %}border-primary{% endif %}">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0">{{ member.get_full_name|default:member.username }}</h5>
+                                                {% if member == request.user %}
+                                                <span class="badge bg-primary">Self</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-body">
+                                                {% with member_submission=member|get_submission:assessment %}
+                                                {% if member_submission %}
+                                                <div class="text-success">
+                                                    <i class="fas fa-check-circle me-2"></i>Completed
+                                                    <small class="text-muted d-block mt-1">Submitted on {{ member_submission.submitted_at|date:"M d, Y" }}</small>
                                                 </div>
-                                                <span>Excellent</span>
+                                                {% else %}
+                                                <div class="text-danger">
+                                                    <i class="fas fa-times-circle me-2"></i>Not Completed
+                                                </div>
+                                                <button type="button" 
+                                                    class="btn mt-2" 
+                                                    style="background-color: var(--bc-gold); color: var(--bc-maroon);"
+                                                    onclick="showAssessmentForm('{{ member.username }}')">
+                                                    Assess {{ member.get_full_name|default:member.username }}
+                                                </button>
+                                                {% endif %}
+                                                {% endwith %}
                                             </div>
                                         </div>
-                                        {% endif %}
-                                        {% endfor %}
                                     </div>
+                                    {% endfor %}
                                 </div>
-                                {% endif %}
                             </div>
-                            {% endfor %}
+                        </div>
 
-                            <!-- For Open-Ended Questions -->
-                            {% for question in open_ended_questions %}
-                            <div class="mb-4">
-                                <label class="form-label">{{ question.question_text|safe }}</label>
-
-                                {% if question.question_type == 'team' %}
-                                <!-- Team question (overall) -->
-                                <textarea class="form-control" name="open_ended_{{ question.id }}" rows="4"
-                                    required>{% if submission %}{% get_open_ended_response submission question as response %}{{ response }}{% endif %}</textarea>
-                                {% else %}
-                                <!-- Individual question (per teammate) -->
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h6>Provide feedback for each team member individually:</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        {% for teammate in teammates %}
-                                        {% if teammate.username != request.user.username %}
-                                        <div class="mb-3">
-                                            <label class="form-label">{{
-                                                teammate.get_full_name|default:teammate.username }}</label>
-                                            <textarea class="form-control"
-                                                name="open_ended_{{ question.id }}_{{ teammate.id }}" rows="4"
-                                                required>{% if submission %}{% get_open_ended_response_for_teammate submission question teammate as response %}{{ response }}{% endif %}</textarea>
+                        <!-- Assessment Form (initially hidden) -->
+                        <div id="assessmentFormContainer" class="card shadow mb-4" style="display: none;">
+                            <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                                <h4 id="assessmentFormTitle">Assess Team Member</h4>
+                            </div>
+                            <div class="card-body">
+                                <form method="post" action="{% url 'submit_assessment' assessment.id %}" id="assessmentForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" id="student" name="student" value="">
+                                    
+                                    <div class="mb-4">
+                                        <label class="form-label">Rate Contribution:</label>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Poor</span>
+                                            <div class="btn-group" role="group" aria-label="Contribution Rating">
+                                                {% for i in "12345"|make_list %}
+                                                <input type="radio" class="btn-check" name="contribution" id="contribution{{ i }}" value="{{ i }}" required>
+                                                <label class="btn btn-outline-primary" for="contribution{{ i }}">{{ i }}</label>
+                                                {% endfor %}
+                                            </div>
+                                            <span>Excellent</span>
                                         </div>
-                                        {% endif %}
-                                        {% endfor %}
                                     </div>
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
 
-                            <div class="mb-3">
-                                <label for="feedback" class="form-label">Give an overview of this member's role in
-                                    the team:</label>
-                                <textarea id="feedback" name="feedback" class="form-control" rows="4"
-                                    placeholder="Provide additional feedback here...">{% if submission %}{{ submission.feedback }}{% endif %}</textarea>
-                            </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">Rate Teamwork:</label>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Poor</span>
+                                            <div class="btn-group" role="group" aria-label="Teamwork Rating">
+                                                {% for i in "12345"|make_list %}
+                                                <input type="radio" class="btn-check" name="teamwork" id="teamwork{{ i }}" value="{{ i }}" required>
+                                                <label class="btn btn-outline-primary" for="teamwork{{ i }}">{{ i }}</label>
+                                                {% endfor %}
+                                            </div>
+                                            <span>Excellent</span>
+                                        </div>
+                                    </div>
 
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-primary">Submit Assessment</button>
-                            </div>
-                        </form>
+                                    <div class="mb-4">
+                                        <label class="form-label">Rate Communication:</label>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Poor</span>
+                                            <div class="btn-group" role="group" aria-label="Communication Rating">
+                                                {% for i in "12345"|make_list %}
+                                                <input type="radio" class="btn-check" name="communication" id="communication{{ i }}" value="{{ i }}" required>
+                                                <label class="btn btn-outline-primary" for="communication{{ i }}">{{ i }}</label>
+                                                {% endfor %}
+                                            </div>
+                                            <span>Excellent</span>
+                                        </div>
+                                    </div>
 
-                        <div class="mt-4">
-                            <h3>Summary Report</h3>
-                            <p>Average Grade: <span id="averageGrade">N/A</span></p>
-                            <h4>Comments:</h4>
-                            <ul id="commentsList"></ul>
+                                    <!-- Likert Questions -->
+                                    {% for question in likert_questions %}
+                                    <div class="mb-4">
+                                        <label class="form-label">{{ question.question_text }}</label>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Poor</span>
+                                            <div class="btn-group" role="group" aria-label="{{ question.question_text }}">
+                                                {% for i in "12345"|make_list %}
+                                                <input type="radio" class="btn-check" name="likert_{{ question.id }}" id="likert_{{ question.id }}_{{ i }}" value="{{ i }}" required>
+                                                <label class="btn btn-outline-primary" for="likert_{{ question.id }}_{{ i }}">{{ i }}</label>
+                                                {% endfor %}
+                                            </div>
+                                            <span>Excellent</span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+
+                                    <!-- Open-ended Questions -->
+                                    {% for question in open_ended_questions %}
+                                    <div class="mb-4">
+                                        <label for="open_ended_{{ question.id }}" class="form-label">{{ question.question_text }}</label>
+                                        <textarea class="form-control" id="open_ended_{{ question.id }}" name="open_ended_{{ question.id }}" rows="3" required></textarea>
+                                    </div>
+                                    {% endfor %}
+
+                                    <div class="mb-4">
+                                        <label for="feedback" class="form-label">Additional Feedback (Optional):</label>
+                                        <textarea class="form-control" id="feedback" name="feedback" rows="4"></textarea>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-secondary" onclick="hideAssessmentForm()">Cancel</button>
+                                        <button type="submit" class="btn" style="background-color: var(--bc-gold); color: var(--bc-maroon);">Submit Assessment</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
+
+                    <script>
+                        function showAssessmentForm(username) {
+                            // Get the member's name
+                            let memberName = '';
+                            const memberElements = document.querySelectorAll('.card-header h5');
+                            memberElements.forEach(el => {
+                                if (el.closest('.card').querySelector('button') && 
+                                    el.closest('.card').querySelector('button').getAttribute('onclick').includes(username)) {
+                                    memberName = el.textContent.trim();
+                                }
+                            });
+                            
+                            // Set the form title
+                            document.getElementById('assessmentFormTitle').textContent = 'Assess ' + memberName;
+                            
+                            // Set the hidden input value
+                            document.getElementById('student').value = username;
+                            
+                            // Show the form
+                            document.getElementById('assessmentFormContainer').style.display = 'block';
+                            
+                            // Scroll to the form
+                            document.getElementById('assessmentFormContainer').scrollIntoView({ behavior: 'smooth' });
+                            
+                            // Reset the form
+                            document.getElementById('assessmentForm').reset();
+                        }
+                        
+                        function hideAssessmentForm() {
+                            document.getElementById('assessmentFormContainer').style.display = 'none';
+                        }
+                    </script>
                     {% endif %}
 
                     {% if user.profile.role == 'professor' or user.profile.role == 'Professor' %}
@@ -862,14 +851,15 @@
                                 <!-- Add Delete Assessment button -->
                                 <div class="mt-4 mb-4">
                                     <h5>Danger Zone</h5>
-                                    <div class="card border-danger">
+                                    <div class="card border-danger mb-3">
+                                        <div class="card-header bg-danger text-white">Danger Zone</div>
                                         <div class="card-body">
-                                            <h6 class="card-title text-danger">Delete Assessment</h6>
-                                            <p>This action cannot be undone. All data associated with this assessment
-                                                will be permanently deleted.</p>
-                                            <button type="button" class="btn btn-danger delete-assessment-btn">
-                                                <i class="fas fa-trash-alt me-2"></i>Delete Assessment
-                                            </button>
+                                            <h5 class="card-title">Delete Assessment</h5>
+                                            <p class="card-text">This action cannot be undone. All data associated with this assessment will be permanently deleted.</p>
+                                            <form method="POST" action="{% url 'delete_assessment' assessment.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">Delete Assessment</button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>

@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from assessments.models import Submission
 from .tasks import send_submission_verification_email
+from authentication.models import UserProfile
 
 @receiver(user_signed_up)
 def set_user_role(sender, request, user, **kwargs):
@@ -16,14 +17,13 @@ def set_user_role(sender, request, user, **kwargs):
     selected_role = request.session.get('user_role', 'student')
     
     # Update the user's profile with the selected role
-    if hasattr(user, 'profile'):
-        profile = user.profile
-        profile.role = selected_role
-        profile.save()
-        
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    profile.role = selected_role
+    profile.save()
+    
     # Clear the session variable
     if 'user_role' in request.session:
-        del request.session['user_role'] 
+        del request.session['user_role']
         
         
 @receiver(pre_save, sender=Assessment)

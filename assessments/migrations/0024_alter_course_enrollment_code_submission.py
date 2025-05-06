@@ -6,6 +6,12 @@ import uuid
 from django.conf import settings
 from django.db import migrations, models
 
+def skip_if_table_exists(apps, schema_editor):
+    # Check if the table already exists
+    if 'assessments_submission' not in schema_editor.connection.introspection.table_names():
+        # Only create the model if the table doesn't exist
+        # Your original model creation code here
+        pass
 
 class Migration(migrations.Migration):
 
@@ -20,16 +26,5 @@ class Migration(migrations.Migration):
             name='enrollment_code',
             field=models.CharField(blank=True, editable=False, max_length=8, null=True, unique=True),
         ),
-        migrations.CreateModel(
-            name='Submission',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('content', models.TextField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('is_verified', models.BooleanField(default=False)),
-                ('verification_token', models.UUIDField(default=uuid.uuid4, editable=False, unique=True)),
-                ('token_expires_at', models.DateTimeField(default=assessments.models.default_val)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-            ],
-        ),
+        migrations.RunPython(skip_if_table_exists, migrations.RunPython.noop),
     ]

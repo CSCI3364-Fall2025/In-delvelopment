@@ -57,3 +57,12 @@ def get_item(dictionary, key):
     if dictionary and key in dictionary:
         return dictionary[key]
     return None
+
+@register.filter
+def get_submission(member, assessment):
+    """Check if a submission exists for this member and assessment"""
+    from assessments.models import AssessmentSubmission
+    return AssessmentSubmission.objects.filter(
+        assessment=assessment,
+        student=member.username
+    ).first()

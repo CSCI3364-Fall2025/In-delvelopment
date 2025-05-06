@@ -3,9 +3,9 @@
 {% block title %}{{ course.course_code }}: {{ course.name }}{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container mt-4">
     {% if messages %}
-    <div class="row mt-3">
+    <div class="row">
         <div class="col">
             {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -17,178 +17,125 @@
     </div>
     {% endif %}
 
-    <div class="row pt-3 justify-content-between">
-        <div class="col-auto">
-            <h2>Course Details - {{ course.course_code }}: {{ course.name }}</h2>
-        </div>  
-        <div class="col-auto">
-            <a href="{% url 'course_dashboard' %}" class="btn btn-secondary rounded-pill">Return to Courses</a>
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h2 style="color: var(--bc-maroon);">{{ course.course_code }}: {{ course.name }}</h2>
+            <p class="text-muted">Professor: {{ course.created_by.get_full_name|default:course.created_by.email }}</p>
+            <p>{{ course.description }}</p>
+            {% if is_creator %}
+            <p><strong>Enrollment Code:</strong> {{ course.enrollment_code }}</p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'dashboard' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back to Dashboard</a>
+            {% if is_creator %}
+            <a href="{% url 'create_assessment' course.id %}" class="btn mt-2" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Create Assessment</a>
+            <a href="{% url 'edit_course' course.id %}" class="btn mt-2" style="background-color: var(--bc-gold); color: var(--bc-maroon);">Edit Course</a>
+            {% endif %}
         </div>
     </div>
-    <div class="row mx-4">
+
+    <!-- Active Assessments Section -->
+    <div class="row mt-4">
         <div class="col">
-            <h6 class="fw-lighter"><b>Professor: </b>{{ course.created_by.get_full_name }} (<a href="#">{{ course.created_by.email }}</a>)</h6>
-        </div>
-    </div>
-    <div class="row mx-4">
-        <div class="col">
-            <h6 class="fw-lighter"><b>Description: </b>{{ course.description }}</h6>
-        </div>
-    </div>
-    <div class="row mx-4">
-        <div class="col">
-            <h6 class="fw-lighter"><b>Join Code: </b>{{ course.enrollment_code }}</h6>
-        </div>
-    </div>
-    <div class="row m-4 p-3 border shadow rounded justify-content-center" id="classInfoBox">
-        <div class="row">
-            <div class="col">
-                <h4>Teams:</h4>
-            </div>
-        </div>
-        {% if not teams %}
-        <div class="row">
-               <i>There are currently no teams in this course.</i> 
-        </div>
-        {% else %}
-        {% for team in teams %}
-            <div class="row m-2 p-3 rounded" style="background-color: rgb(237, 237, 237);">
-                <div class="row">
-                    <h5>
-                        {% if team.name == "" %}
-                        <i>(Unnamed Team)</i>
-                        {% else %}
-                        {{ team.name }}:
-                        {% endif %}
-                        {% if team in request.user.teams.all %}
-                        <h6 style="color: var(--bc-gold);">You are on this team.</h6>
-                        {% endif %}
-                    </h5>
-                </div>
-                <div class="row mt-2">
-                    <h6 class="fw-lighter"><b>Members:</b>  
-                        {% if not team.members.all %}
-                        <i>There are currently no members on this team.</i>
-                        {% else %}
-                            {% for member in team.members.all %}
-                            {{ member.get_full_name }} (<a href="">{{ member.email }}</a>);
-                            {% endfor %}
-                        {% endif %}
-                    </h6>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-auto">
-                        {% if course.created_by == request.user and user.role|lower == "professor" %}
-                            <a href="{% url 'edit_team' course.name team.pk %}" class="btn maroon-btn">Edit Team</a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-        {% endif %}
-        {% if course.created_by == request.user and user.role|lower == "professor" %}
-        <div class="row m-3 justify-content-between">
-            <div class="col-auto align-self-center">
-                <h6 class="fw-lighter">To delete a team, click on <b>'Edit Team'</b> then <b>'Delete Team'</b> to remove the desired team. To add more teams, click on the <b>'Add Teams'</b> button.</h6>
-            </div>
-            <div class="col-auto">
-                <a href="{% url 'add_teams' course.name course.pk %}" class="btn maroon-btn btn-lg">Add Teams</a>
-            </div>
-        </div>
-        {% endif %}
-        <hr class="m-3">
-        <div class="row">
-            <div class="col-auto mt-2">
-                <h4>Active Assessments:</h4>
-            </div>
-        </div>
-        {% if not assessments %}
-        <div class="row">
-             <i>There are currently no active assessments in this course.</i>
-        </div>
-        {% else %}
+            <h4 style="color: var(--bc-maroon);">Active Assessments:</h4>
+            {% if active_assessments %}
             <table class="table table-striped table-bordered">
-                <thead class="table-dark">
+                <thead style="background-color: var(--bc-maroon); color: var(--bc-gold);">
                     <tr>
-                        <th>ID</th>
                         <th>Title</th>
-                        <th>Course</th>
+                        <th>Description</th>
                         <th>Due Date</th>
-                        <th>Due Time</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for assessment in assessments %}
+                    {% for assessment in active_assessments %}
                     <tr>
-                        <td>{{ assessment.id }}</td>
                         <td>{{ assessment.title }}</td>
-                        <td>{{ assessment.course }}</td>
-                        <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
-                        <td>{{ assessment.due_date|time:"H:i" }}</td>
+                        <td>{{ assessment.description|truncatechars:50 }}</td>
+                        <td>{% if assessment.due_date %}{{ assessment.due_date|date:"Y-m-d" }}{% else %}No due date{% endif %}</td>
                         <td>
-                            <a href="{% url 'view_assessment' assessment.id %}" class="view-btn">View Details</a>
-                            {% if user.role == "student" or user.role == "Student" %}
-                            <a href="{% url 'submit_assessment' assessment.id %}" class="btn btn-success">Submit
-                                Form</a>
+                            <a href="{% url 'view_assessment' assessment.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View Details</a>
+                            {% if not is_creator %}
+                            <a href="{% url 'submit_assessment' assessment.id %}" class="btn" style="background-color: var(--bc-gold); color: var(--bc-maroon);">Submit Assessment</a>
                             {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        {% endif %}
-        {% if course.created_by == request.user and user.role|lower == "professor" %}
-        <div class="row m-3 justify-content-between">
-            <div class="col-auto align-self-center">
-                <h6 class="fw-lighter">To create a new assessment, click on the <b>'Create Assessment'</b> button.</h6>
-            </div>
-            <div class="col-auto">
-                <a href="{% url 'create_peer_assessments' %}" class="btn maroon-btn btn-lg">Create Assessment</a>
-            </div>
+            {% else %}
+            <p>No active assessments available for this course.</p>
+            {% endif %}
         </div>
-        {% endif %}
-        <hr class="m-3">
-        <div class="row">
-            <div class="col-auto mt-2">
-                <h4>Students:</h4>
-            </div>
-        </div> 
-        {% if not students %}
-        <div class="row">
-             <i>There are currently no students enrolled in this course.</i>
-        </div>
-        {% else %}
-        <div class="row mt-1">
-            <h6 class="fw-lighter">
-                {% for student in students %}
-                {{ student.get_full_name }} (<a href="#">{{ student.email }}</a>);
-                {% endfor %}
-            </h6>
-        </div>
-        {% endif %}
-        {% if course.created_by == request.user and user.role|lower == "professor" %}
-        <div class="row m-3 pt-3 justify-content-between">
-            <div class="col align-self-center">
-                <h6 class="fw-lighter">To add students to a course, click on the <b>'Invite Students'</b> button. Alternatively, you can invite students directly to teams. </h6>
-            </div>
-            <div class="col-auto">
-                <a href="{% url 'invite_students' %}" class="btn maroon-btn btn-lg">Invite Students</a>
-            </div>
-            <div class="col-auto">
-                <a href="{% url 'view_course_invitations' course.id %}" class="btn maroon-btn btn-lg">View Invitations</a>
-            </div>
-        </div>
-        {% endif %}
     </div>
-    {% if course.created_by == request.user and user.role|lower == "professor" %}
-    <div class="row m-3 justify-content-end">
-        <div class="col align-self-center">
-            <h6 class="fw-lighter">To de-activate the course, click on <b>'Edit Course'</b>, then <b>'De-Activate Course'</b>. <b style="color: red;"><i>Be careful! This action cannot be undone.</i></b></h6>
+
+    <!-- Past Assessments Section -->
+    <div class="row mt-4">
+        <div class="col">
+            <h4 style="color: var(--bc-maroon);">Past Assessments:</h4>
+            {% if past_assessments %}
+            <table class="table table-striped table-bordered">
+                <thead style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Due Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assessment in past_assessments %}
+                    <tr>
+                        <td>{{ assessment.title }}</td>
+                        <td>{{ assessment.description|truncatechars:50 }}</td>
+                        <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
+                        <td>
+                            <a href="{% url 'view_assessment' assessment.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No past assessments available for this course.</p>
+            {% endif %}
         </div>
-        <div class="col-auto">
-            <a href="{% url 'edit_course' course.name course.pk %}" class="btn btn-lg gold-btn">Edit Course</a>
-        </div> 
+    </div>
+
+    {% if is_creator %}
+    <!-- Enrolled Students Section -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card shadow">
+                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                    <h4 class="mb-0">Enrolled Students</h4>
+                </div>
+                <div class="card-body">
+                    {% if students %}
+                        <table class="table table-striped table-bordered">
+                            <thead style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>{{ student.get_full_name|default:"No name provided" }}</td>
+                                    <td>{{ student.email }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No students enrolled yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
     {% endif %}
 </div>

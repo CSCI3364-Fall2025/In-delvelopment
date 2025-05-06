@@ -148,7 +148,7 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_UNIQUE_EMAIL = True  # Keep this setting
 
 # These settings should bypass the signup page
-SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_QUERY_EMAIL = True
@@ -157,7 +157,7 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'authentication.adapters.BCEmailAdapter'
 
 # Redirect URLs
-LOGIN_REDIRECT_URL = 'dashboard'  # Redirect directly to dashboard after login
+LOGIN_REDIRECT_URL = 'dashboard' 
 LOGOUT_REDIRECT_URL = 'home'
 
 # Custom adapter

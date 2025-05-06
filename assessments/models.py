@@ -24,14 +24,15 @@ class Course(models.Model):
 
 class Assessment(models.Model):
     title = models.CharField(max_length=200)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="assessments")
-    due_date = models.DateTimeField(null=True, blank=True)
-    closed_date = models.DateTimeField(null=True, blank=True)
-    is_closed = models.BooleanField(default=False)
-    open_date = models.DateTimeField(null=True, blank=True)
-    self_assessment_required = models.BooleanField(default=False)  # New field
+    description = models.TextField(blank=True, null=True)
+    due_date = models.DateTimeField(blank=True, null=True)
+    closed_date = models.DateTimeField(blank=True, null=True)
+    open_date = models.DateTimeField(blank=True, null=True)
+    self_assessment_required = models.BooleanField(default=False)
+    published_date = models.DateTimeField(blank=True, null=True)
     results_published = models.BooleanField(default=False)
-    published_date = models.DateTimeField(null=True, blank=True)
+    published = models.BooleanField(default=False)
+    course = models.ForeignKey('Course', on_delete=models.CASCADE)
     reminder_sent = models.BooleanField(default=False)
     release_date = models.DateTimeField(null=True, blank=True)
     is_published = models.BooleanField(default=False)
@@ -223,3 +224,15 @@ class Submission(models.Model):
         self.verification_token = None
         self.token_expires_at = None
         self.save()
+
+class Enrollment(models.Model):
+    """Model representing a student's enrollment in a course"""
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='enrollments')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    date_enrolled = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('student', 'course')
+        
+    def __str__(self):
+        return f"{self.student.email} enrolled in {self.course.name}"
