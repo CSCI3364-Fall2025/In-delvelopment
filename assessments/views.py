@@ -752,49 +752,56 @@ def create_course(request):
 
 @login_required
 def view_course(request, course_id, course_name=None):
-    """View a specific course and its assessments"""
+    """View a specific course."""
     try:
-        course = get_object_or_404(Course, id=course_id)
+        course = Course.objects.get(pk=course_id)
         
-        # Check if course_name was provided and doesn't match
+        # Check if the course name in the URL matches the actual course name
         if course_name and course_name != course.name:
-            messages.warning(request, f"Course name in URL doesn't match the actual course name. Redirecting to the correct page.")
-            return redirect('view_course', course_id=course_id)
+            # Redirect to the correct URL if the name doesn't match
+            return redirect('view_course', course_name=course.name, course_id=course_id)
         
-        # Check if user is enrolled in this course or is the creator
+        # Check if user is enrolled or is the creator
         is_enrolled = request.user in course.students.all()
-        is_creator = course.created_by == request.user
+        is_creator = request.user == course.created_by
         
         if not (is_enrolled or is_creator):
             messages.error(request, "You are not enrolled in this course.")
             return redirect('dashboard')
         
-        # Get assessments for this course
-        assessments = Assessment.objects.filter(course=course)
+        # Get assessments for this course - use the correct related name or query
+        # If there's a related name defined in your model, use that instead
+        try:
+            # Try to get assessments using the related name if it exists
+            assessments = course.assessments.all()
+        except AttributeError:
+            # If the related name doesn't exist, try to query directly
+            from assessments.models import Assessment  # Import the Assessment model
+            assessments = Assessment.objects.filter(course=course)
         
         # Get teams for this course
         teams = Team.objects.filter(course=course)
         
-        # Get the user's team for this course
+        # Check if the user is on a team
         user_team = None
-        if hasattr(request.user, 'teams'):
-            user_teams = request.user.teams.filter(course=course)
-            if user_teams.exists():
-                user_team = user_teams.first()
+        for team in teams:
+            if request.user in team.members.all():
+                user_team = team
+                break
         
         context = {
             'course': course,
             'assessments': assessments,
-            'teams': teams,
-            'user_team': user_team,
             'is_enrolled': is_enrolled,
             'is_creator': is_creator,
+            'teams': teams,
+            'user_team': user_team
         }
         
         return render(request, 'view_course.html', context)
-    
-    except Exception as e:
-        messages.error(request, f"An error occurred: {str(e)}")
+        
+    except Course.DoesNotExist:
+        messages.error(request, "Course not found.")
         return redirect('dashboard')
 
 @login_required
@@ -805,14 +812,21 @@ def add_teams(request, course_name, course_id):
     # Check if user is the course creator
     if course.created_by != request.user:
         messages.error(request, "You don't have permission to add teams to this course.")
-        return redirect('view_course', course_id=course_id)
+        return redirect('view_course', course_name=course.name, course_id=course_id)
     
     # Get existing teams for this course
     teams = Team.objects.filter(course=course)
     
+    # Get enrolled students who are not yet assigned to a team
+    enrolled_students = course.students.all()
+    students_on_teams = User.objects.filter(teams__course=course).distinct()
+    unassigned_students = enrolled_students.exclude(pk__in=students_on_teams.values_list('pk', flat=True))
+    
     context = {
         'course': course,
-        'teams': teams
+        'teams': teams,
+        'enrolled_students': enrolled_students,
+        'unassigned_students': unassigned_students
     }
     
     return render(request, 'add_teams.html', context)
@@ -1205,7 +1219,7 @@ def enroll_in_course(request):
                 course = Course.objects.get(enrollment_code=enrollment_code)
                 course.students.add(request.user)  # Enroll the student
                 messages.success(request, f"Successfully enrolled in {course.name}!")
-                return redirect('view_course', course_id=course.pk)
+                return redirect('view_course', course_name=course.name, course_id=course.pk)
             except Course.DoesNotExist:
                 return render(request, "enroll.html", {"error": "Course not found!"})
         else:
@@ -1679,7 +1693,7 @@ def edit_course(request, course_id):
     # Check if user is the course creator
     if course.created_by != request.user:
         messages.error(request, "You don't have permission to edit this course.")
-        return redirect('view_course', course_id=course_id)
+        return redirect('view_course', course_name=course.name, course_id=course_id)
     
     if request.method == 'POST':
         # Get form data
@@ -1697,7 +1711,7 @@ def edit_course(request, course_id):
         course.save()
         
         messages.success(request, f"Course '{name}' updated successfully.")
-        return redirect('view_course', course_id=course.id)
+        return redirect('view_course', course_name=course.name, course_id=course.id)
     
     # GET request - show edit form
     context = {

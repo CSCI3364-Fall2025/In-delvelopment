@@ -3,93 +3,106 @@
 {% block title %}Add Teams | {{ course.name }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row pt-3 justify-content-between">
-        <div class="col-auto">
-            <h2>Add Teams - {{ course.course_code }}: {{ course.name }}</h2>
-        </div>  
-    </div>
-    <div class="row mx-4">
-        <div class="col">
-            <h6 class="fw-lighter"><b>Professor: </b>{{ course.created_by.get_full_name }} (<a href="#">{{ course.created_by.email }}</a>)</h6>
+<div class="container mt-4">
+    <h2>Add Teams for {{ course.name }}</h2>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+            <h3>Enrolled Students</h3>
         </div>
-    </div>
-    <div class="row mx-4">
-        <div class="col">
-            <h6 class="fw-lighter"><b>Description: </b>{{ course.description }}</h6>
-        </div>
-    </div>
-    <div class="row m-4 p-3 border shadow rounded justify-content-center" id="classInfoBox">
-        <div class="row">
-            <div class="col">
-                <h4>Teams:</h4>
-            </div>
-        </div>
-        {% if not teams %}
-        <div class="row">
-            <i>There are currently no teams in this course.</i>
-        </div>
-        {% else %}
-        {% for team in teams %}
-            <div class="row m-2 p-3 rounded" style="background-color: rgb(237, 237, 237);">
-                <div class="row">
-                    <h5>
-                        {% if team.name == "" %}
-                        <i>(Unnamed Team)</i>:
-                        {% else %}
-                        {{ team.name }}
-                        {% endif %}
-                        {% if team in request.user.teams.all %}
-                        <h6 style="color: var(--bc-gold);">You are on this team.</h6>
-                        {% endif %}
-                    </h5>
-                </div>
-                <div class="row mt-2">
-                    <h6 class="fw-lighter"><b>Members:</b>  
-                        {% if not team.members.all %}
-                        <i>There are currently no members on this team.</i>
-                        {% else %}
-                            {% for member in team.members.all %}
-                            {{ member.get_full_name }} (<a href="">{{ member.email }}</a>);
+        <div class="card-body">
+            {% if enrolled_students %}
+                <h4>Students in this course:</h4>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Team Assignment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in enrolled_students %}
+                            <tr>
+                                <td>{{ student.get_full_name|default:student.username }}</td>
+                                <td>{{ student.email }}</td>
+                                <td>
+                                    {% for team in teams %}
+                                        {% if student in team.members.all %}
+                                            {{ team.name|default:"Unnamed Team" }} (Team {{ team.id }})
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if student in unassigned_students %}
+                                        <span class="badge bg-warning">Not assigned</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
                             {% endfor %}
-                        {% endif %}
-                    </h6>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-        {% endfor %}
-        {% endif %}
-        <hr class="m-3">
-        <div class="row">
-            <div class="col-auto">
-                <h5 class="fw-bold">Add Teams</h5>
-            </div>
-            <div class="col-auto align-self-center">
-                <h6 class="fw-lighter" style="font-style: italic;">Please select the number of teams you wish to create.</h6>
-            </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No students are enrolled in this course yet. 
+                    <a href="{% url 'invite_students' %}?course_id={{ course.id }}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Invite Students</a>
+                </div>
+            {% endif %}
         </div>
-        <form action="{% url 'view_course' course.name course.pk %}" method="post">
-            {% csrf_token %}
-            <div class="row m-2">
-                <div class="col-auto align-self-end">
-                    <label for="numTeams" class="form-label fw-bold">Number of Teams to Create:</label>
-                </div>
-                <div class="col">
-                    <input type="number" class="form-control" id="numTeams" name="numTeams" placeholder="e.g. 3" min="1" max="10" required>
-                </div>
-            </div>
-            <div class="row m-2 pt-3 justify-content-end">
-                <div class="col align-self-end">
-                    <h6 class="fw-lighter">Click <b>'Add Teams'</b> To create new teams within the course. You can edit these teams on the course homepage by clicking on the <b>'Edit Team'</b> button.</h6>
-                </div>
-                <div class="col-auto align-self-center">
-                    <a href="{% url 'view_course' course.name course.pk %}" class="btn btn-secondary rounded-pill">Cancel</a>
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-lg gold-btn" type="submit">Add Teams</button>
-                </div>
-            </div>
-        </form>
     </div>
-    <br>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+            <h3>Create Teams</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'add_teams' course.name course.id %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="numTeams" class="form-label">Number of Teams to Create:</label>
+                    <input type="number" class="form-control" id="numTeams" name="numTeams" min="1" max="10" required>
+                </div>
+                <button type="submit" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Create Teams</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+            <h3>Existing Teams</h3>
+        </div>
+        <div class="card-body">
+            {% if teams %}
+                <div class="row">
+                    {% for team in teams %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>{{ team.name|default:"Team "|add:team.id|stringformat:"s" }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>Members:</h6>
+                                <ul>
+                                    {% for member in team.members.all %}
+                                    <li>{{ member.get_full_name|default:member.username }}</li>
+                                    {% empty %}
+                                    <li>No members yet</li>
+                                    {% endfor %}
+                                </ul>
+                                <a href="{% url 'edit_team' course.name team.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Edit Team</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No teams have been created yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <a href="{% url 'view_course' course.name course.id %}" class="btn btn-secondary">Back to Course</a>
+    </div>
 </div>
 {% endblock %}
