@@ -834,10 +834,28 @@ def add_teams(request, course_name, course_id):
                 except User.DoesNotExist:
                     continue
             
-            messages.success(request, f"Team '{team_name or f'Team {team.id}'}' created successfully with {len(selected_students)} members.")
-            return redirect('add_teams', course_name=course_name, course_id=course_id)
+            # Check if it's an AJAX request
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                # Return JSON response for AJAX
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f"Team '{team_name or f'Team {team.id}'}' created successfully with {len(selected_students)} members.",
+                    'team_id': team.id,
+                    'team_name': team_name or f'Team {team.id}',
+                    'member_count': len(selected_students)
+                })
+            else:
+                # Regular form submission
+                messages.success(request, f"Team '{team_name or f'Team {team.id}'}' created successfully with {len(selected_students)} members.")
+                return redirect('add_teams', course_name=course_name, course_id=course_id)
         else:
-            messages.error(request, "Please select at least one student for the team.")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': "Please select at least one student for the team."
+                })
+            else:
+                messages.error(request, "Please select at least one student for the team.")
     
     # Get existing teams for this course
     teams = Team.objects.filter(course=course)
