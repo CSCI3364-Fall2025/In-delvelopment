@@ -4,66 +4,57 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Add Teams for {{ course.name }}</h2>
+    <h2>Manage Teams for {{ course.name }}</h2>
     
     <div class="card shadow mb-4">
         <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-            <h3>Enrolled Students</h3>
+            <h3>Create New Team</h3>
         </div>
         <div class="card-body">
-            {% if enrolled_students %}
-                <h4>Students in this course:</h4>
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Team Assignment</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for student in enrolled_students %}
-                            <tr>
-                                <td>{{ student.get_full_name|default:student.username }}</td>
-                                <td>{{ student.email }}</td>
-                                <td>
-                                    {% for team in teams %}
-                                        {% if student in team.members.all %}
-                                            {{ team.name|default:"Unnamed Team" }} (Team {{ team.id }})
-                                        {% endif %}
+            {% if unassigned_students %}
+                <form method="POST" action="{% url 'add_teams' course.name course.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="team_name" class="form-label">Team Name</label>
+                        <input type="text" class="form-control" id="team_name" name="team_name" placeholder="Enter team name">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Students</label>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Select</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in unassigned_students %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="selected_students" value="{{ student.id }}" class="form-check-input">
+                                        </td>
+                                        <td>{{ student.get_full_name|default:student.username }}</td>
+                                        <td>{{ student.email }}</td>
+                                    </tr>
                                     {% endfor %}
-                                    {% if student in unassigned_students %}
-                                        <span class="badge bg-warning">Not assigned</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                        Create Team
+                    </button>
+                </form>
             {% else %}
                 <div class="alert alert-info">
-                    No students are enrolled in this course yet. 
-                    <a href="{% url 'invite_students' %}?course_id={{ course.id }}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Invite Students</a>
+                    <p>All enrolled students are already assigned to teams.</p>
+                    <p>To add more students to the course, use the <a href="{% url 'invite_students' %}">Invite Students</a> feature.</p>
                 </div>
             {% endif %}
-        </div>
-    </div>
-    
-    <div class="card shadow mb-4">
-        <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-            <h3>Create Teams</h3>
-        </div>
-        <div class="card-body">
-            <form method="post" action="{% url 'add_teams' course.name course.id %}">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="numTeams" class="form-label">Number of Teams to Create:</label>
-                    <input type="number" class="form-control" id="numTeams" name="numTeams" min="1" max="10" required>
-                </div>
-                <button type="submit" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Create Teams</button>
-            </form>
         </div>
     </div>
     

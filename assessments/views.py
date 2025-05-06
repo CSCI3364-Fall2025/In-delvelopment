@@ -814,6 +814,31 @@ def add_teams(request, course_name, course_id):
         messages.error(request, "You don't have permission to add teams to this course.")
         return redirect('view_course', course_name=course.name, course_id=course_id)
     
+    # Handle form submission for creating a new team
+    if request.method == "POST":
+        team_name = request.POST.get('team_name', '').strip()
+        selected_students = request.POST.getlist('selected_students')
+        
+        if selected_students:
+            # Create a new team
+            team = Team.objects.create(
+                name=team_name,
+                course=course
+            )
+            
+            # Add selected students to the team
+            for student_id in selected_students:
+                try:
+                    student = User.objects.get(id=student_id)
+                    team.members.add(student)
+                except User.DoesNotExist:
+                    continue
+            
+            messages.success(request, f"Team '{team_name or f'Team {team.id}'}' created successfully with {len(selected_students)} members.")
+            return redirect('add_teams', course_name=course_name, course_id=course_id)
+        else:
+            messages.error(request, "Please select at least one student for the team.")
+    
     # Get existing teams for this course
     teams = Team.objects.filter(course=course)
     
@@ -969,7 +994,7 @@ def invite_students(request):
             messages.info(request, f"Already enrolled: {', '.join(already_enrolled)}")
         
         # Redirect to course view
-        return redirect('view_course', course_id=course.id)
+        return redirect('view_course', course_name=course.name, course_id=course.id)
     
     # For GET requests, render the form
     context = {

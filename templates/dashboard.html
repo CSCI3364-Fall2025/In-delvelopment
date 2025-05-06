@@ -106,7 +106,7 @@
                                 </div>
                                 <div class="row p-2 align-items-center">
                                     <div class="col-auto">
-                                        <a href="{% url 'view_course' course.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">{% if request.user == course.created_by and user_data.role == "professor" %}Manage{% else %}View{% endif %} Course</a>
+                                        <a href="{% url 'view_course' course.name course.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">{% if request.user == course.created_by and user_data.role == "professor" %}Manage{% else %}View{% endif %} Course</a>
                                     </div>
                                 </div>
                             </div>
