@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Submissions | Peer Assessment System{% endblock %}
+
+{% block content %}
+<div class="wide-form-container">
+    <div class="bc-card">
+        <div class="bc-card-header">
+            <h3>Team Submissions: {{ assessment.title }}</h3>
+        </div>
+        <div class="bc-card-body">
+            <div class="mb-4">
+                <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">Select Team</h4>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <form method="get" action="{% url 'view_team_submissions' assessment.id %}">
+                            <div class="mb-3">
+                                <label for="team_id" class="form-label">Choose a team:</label>
+                                <select name="team_id" id="team_id" class="form-select" onchange="this.form.submit()">
+                                    <option value="">-- Select Team --</option>
+                                    {% for team in teams %}
+                                    <option value="{{ team.id }}" {% if selected_team and selected_team.id == team.id %}selected{% endif %}>
+                                        {{ team.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            {% if selected_team %}
+            <div class="mb-4">
+                <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">Submissions for {{ selected_team.name }}</h4>
+                
+                {% if team_submissions %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Submission Date</th>
+                                <th>Contribution</th>
+                                <th>Teamwork</th>
+                                <th>Communication</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in team_submissions %}
+                            <tr>
+                                <td>{{ item.student.get_full_name|default:item.student.username }}</td>
+                                <td>{{ item.submission_date|date:"M d, Y" }}</td>
+                                <td>{{ item.submission.contribution|floatformat:1 }}</td>
+                                <td>{{ item.submission.teamwork|floatformat:1 }}</td>
+                                <td>{{ item.submission.communication|floatformat:1 }}</td>
+                                <td>
+                                    <a href="{% url 'view_student_submissions' assessment.id %}?student_id={{ item.student.id }}" class="btn btn-sm gold-btn">View Details</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-warning mt-3">
+                    <p>No team members have submitted the assessment yet.</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <a href="{% url 'view_assessment' assessment.id %}" class="btn maroon-btn">Back to Assessment</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

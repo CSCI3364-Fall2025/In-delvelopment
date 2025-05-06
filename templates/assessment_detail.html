@@ -53,30 +53,6 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">Quick Evaluation</h4>
-                        <div class="row mt-3">
-                            <div class="col-md-4">
-                                <label for="team-select" class="form-label">Select Team</label>
-                                <select id="team-select" class="form-select">
-                                    <option selected>Choose team...</option>
-                                    <!-- Team options would be populated here -->
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="member-select" class="form-label">Team Member</label>
-                                <select id="member-select" class="form-select" disabled>
-                                    <option selected>Select team first...</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="score-display" class="form-label">Score</label>
-                                <div id="score-display" class="form-control">0.0</div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
                     <div class="card mb-4">
                         <div class="card-header bg-light">
                             <h5 class="mb-0">Quick Evaluation</h5>
@@ -104,11 +80,123 @@
                                         step="0.1" placeholder="0.0">
                                 </div>
                                 <div>
-                                    <button class="btn btn-primary" onclick="submitEvaluation()">
+                                    <button class="btn gold-btn" onclick="submitEvaluation()">
                                         Submit
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Student Submissions for this Assessment</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if teams %}
+                                <div class="accordion" id="submissionsAccordion">
+                                    {% for team in teams %}
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="heading{{ team.id }}">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                        data-bs-target="#collapse{{ team.id }}" aria-expanded="false" 
+                                                        aria-controls="collapse{{ team.id }}">
+                                                    {{ team.name }} ({{ all_submissions|get_item:team.id|length|default:"0" }} submissions)
+                                                </button>
+                                            </h2>
+                                            <div id="collapse{{ team.id }}" class="accordion-collapse collapse" 
+                                                 aria-labelledby="heading{{ team.id }}" data-bs-parent="#submissionsAccordion">
+                                                <div class="accordion-body">
+                                                    {% if all_submissions|get_item:team.id %}
+                                                        <div class="table-responsive">
+                                                            <table class="table table-striped">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Student</th>
+                                                                        <th>Submission Date</th>
+                                                                        <th>Contribution</th>
+                                                                        <th>Teamwork</th>
+                                                                        <th>Communication</th>
+                                                                        <th>Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {% for item in all_submissions|get_item:team.id %}
+                                                                        <tr>
+                                                                            <td>{{ item.student.get_full_name|default:item.student.username }}</td>
+                                                                            <td>{% if item.submission.submitted_at %}{{ item.submission.submitted_at|date:"M d, Y" }}{% else %}No date{% endif %}</td>
+                                                                            <td>{{ item.submission.contribution|floatformat:1 }}</td>
+                                                                            <td>{{ item.submission.teamwork|floatformat:1 }}</td>
+                                                                            <td>{{ item.submission.communication|floatformat:1 }}</td>
+                                                                            <td>
+                                                                                <a href="{% url 'view_student_submissions' assessment.id %}?student_id={{ item.student.id }}" 
+                                                                                   class="btn btn-sm gold-btn">View Details</a>
+                                                                            </td>
+                                                                        </tr>
+                                                                    {% endfor %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="alert alert-warning">
+                                                            No submissions from this team yet.
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if all_submissions.no_team %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingNoTeam">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                    data-bs-target="#collapseNoTeam" aria-expanded="false" 
+                                                    aria-controls="collapseNoTeam">
+                                                Students Not in Teams ({{ all_submissions.no_team|length }} submissions)
+                                            </button>
+                                        </h2>
+                                        <div id="collapseNoTeam" class="accordion-collapse collapse" 
+                                             aria-labelledby="headingNoTeam" data-bs-parent="#submissionsAccordion">
+                                            <div class="accordion-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Student</th>
+                                                                <th>Submission Date</th>
+                                                                <th>Contribution</th>
+                                                                <th>Teamwork</th>
+                                                                <th>Communication</th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for item in all_submissions.no_team %}
+                                                                <tr>
+                                                                    <td>{{ item.student.get_full_name|default:item.student.username }}</td>
+                                                                    <td>{% if item.submission.submitted_at %}{{ item.submission.submitted_at|date:"M d, Y" }}{% else %}No date{% endif %}</td>
+                                                                    <td>{{ item.submission.contribution|floatformat:1 }}</td>
+                                                                    <td>{{ item.submission.teamwork|floatformat:1 }}</td>
+                                                                    <td>{{ item.submission.communication|floatformat:1 }}</td>
+                                                                    <td>
+                                                                        <a href="{% url 'view_student_submissions' assessment.id %}?student_id={{ item.student.id }}" 
+                                                                           class="btn btn-sm gold-btn">View Details</a>
+                                                                    </td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    No teams found for this course.
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -171,6 +259,7 @@
                             });
                         }
                     </script>
+                    {% endif %}
 
                     {% if user.profile.role == 'student' or user.profile.role == 'Student' %}
                     <div id="studentView" class="container">
@@ -358,6 +447,49 @@
                     {% endif %}
 
                     {% if user.profile.role == 'professor' or user.profile.role == 'Professor' %}
+                    <div class="mb-4">
+                        <h4 class="border-bottom pb-2" style="color: var(--bc-maroon);">Professor Controls</h4>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h5>Assessment Management</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Current Status:</strong> 
+                                            {% if assessment.closed_date %}
+                                                <span class="badge bg-danger">Closed</span>
+                                            {% elif is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Not Yet Open</span>
+                                            {% endif %}
+                                        </p>
+                                        
+                                        {% if not assessment.closed_date %}
+                                        <form method="post" action="{% url 'close_assessment' assessment.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn maroon-btn" onclick="return confirm('Are you sure you want to close this assessment? This will end all submissions.')">
+                                                Close Assessment
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h5>View Submissions</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <a href="{% url 'view_team_submissions' assessment.id %}" class="btn gold-btn mb-2">View by Team</a>
+                                        <a href="{% url 'view_student_submissions' assessment.id %}" class="btn gold-btn">View by Student</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="professorView" class="container mt-4">
                         <div class="card shadow">
                             <div class="card-header" style="background-color: var(--bc-maroon); color: var(--bc-gold);">

@@ -50,3 +50,10 @@ def get_open_ended_response(submission, question):
     
     response = submission.open_ended_responses.filter(question=question).first()
     return response.response_text if response else ''
+
+@register.filter
+def get_item(dictionary, key):
+    """Get an item from a dictionary by key"""
+    if dictionary and key in dictionary:
+        return dictionary[key]
+    return None

@@ -215,16 +215,15 @@ def view_assessment(request, assessment_id):
     }
     
     # Calculate team averages if team exists
-    if team:
-        team_submissions = AssessmentSubmission.objects.filter(
-            assessment=assessment,
-            student__in=[member.username for member in team_members]
-        )
+    team_submissions = AssessmentSubmission.objects.filter(
+        assessment=assessment,
+        student__in=[member.username for member in team_members]
+    )
         
-        if team_submissions.exists():
-            team_avg['contribution'] = team_submissions.aggregate(Avg('contribution'))['contribution__avg'] or 0
-            team_avg['teamwork'] = team_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or 0
-            team_avg['communication'] = team_submissions.aggregate(Avg('communication'))['communication__avg'] or 0
+    if team_submissions.exists():
+        team_avg['contribution'] = team_submissions.aggregate(Avg('contribution'))['contribution__avg'] or 0
+        team_avg['teamwork'] = team_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or 0
+        team_avg['communication'] = team_submissions.aggregate(Avg('communication'))['communication__avg'] or 0
     
     # Calculate class averages
     all_submissions = AssessmentSubmission.objects.filter(assessment=assessment)
@@ -254,6 +253,55 @@ def view_assessment(request, assessment_id):
         }
         teams_data.append(team_data)
     
+    # For professors, get all submissions for this assessment
+    all_submissions = {}
+    if hasattr(request.user, 'profile') and request.user.profile.role == 'professor':
+        for team in teams:
+            team_submissions = []
+            for member in team.members.all():
+                submission = AssessmentSubmission.objects.filter(
+                    assessment=assessment,
+                    student=member.username
+                ).first()
+                
+                if submission:
+                    team_submissions.append({
+                        'student': member,
+                        'submission': submission
+                    })
+            if team_submissions:
+                all_submissions[team.id] = team_submissions
+        
+        # Also include submissions from students not in any team
+        non_team_students = User.objects.filter(
+            courses=assessment.course
+        ).exclude(
+            teams__course=assessment.course
+        )
+
+        non_team_submissions = []
+        for student in non_team_students:
+            submission = AssessmentSubmission.objects.filter(
+                assessment=assessment,
+                student=student.username
+            ).first()
+            
+            if submission:
+                non_team_submissions.append({
+                    'student': student,
+                    'submission': submission
+                })
+
+        if non_team_submissions:
+            # Use a special key for students not in teams
+            all_submissions['no_team'] = non_team_submissions
+    
+    # After preparing all_submissions
+    print(f"Teams: {[team.id for team in teams]}")
+    print(f"All submissions keys: {all_submissions.keys()}")
+    for team_id, submissions in all_submissions.items():
+        print(f"Team {team_id} has {len(submissions)} submissions")
+    
     context = {
         'assessment': assessment,
         'team': team,
@@ -268,6 +316,7 @@ def view_assessment(request, assessment_id):
         'team_avg': team_avg,
         'class_avg': class_avg,
         'teams_json': json.dumps(teams_data, cls=DjangoJSONEncoder),
+        'all_submissions': all_submissions,
     }
     
     return render(request, 'assessment_detail.html', context)
@@ -1101,102 +1150,6 @@ def view_published_results(request, assessment_id):
     
     return render(request, 'view_published_results.html', context)
 
-@login_required
-def create_test_data(request):
-    """Create test data for assessment publishing functionality"""
-    if not request.user.is_superuser:
-        messages.error(request, "Only superusers can create test data.")
-        return redirect('dashboard')
-    
-    # Create a test assessment that's already closed
-    assessment = Assessment.objects.create(
-        title="Test Assessment",
-        course="Test Course",
-        due_date=timezone.now() - timedelta(days=1),  # Due date in the past
-        closed_date=timezone.now() - timedelta(hours=12),  # Already closed
-        results_published=False  # Not yet published
-    )
-    
-    # Create test students if needed
-    test_students = []
-    for i in range(3):
-        username = f"teststudent{i+1}"
-        email = f"{username}@bc.edu"
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={'email': email}
-        )
-        if created:
-            user.set_password("testpassword")
-            user.save()
-            # Only create profile if it doesn't exist
-            UserProfile.objects.get_or_create(user=user, defaults={'role': "student"})
-        test_students.append(user)
-    
-    # Create a test professor if needed
-    prof_username = "testprofessor"
-    prof_email = f"{prof_username}@bc.edu"
-    prof_user, prof_created = User.objects.get_or_create(
-        username=prof_username,
-        defaults={'email': prof_email}
-    )
-    if prof_created:
-        prof_user.set_password("testpassword")
-        prof_user.save()
-        UserProfile.objects.get_or_create(user=prof_user, defaults={'role': "professor"})
-    
-    # Create test submissions with varied feedback to test alphabetical sorting
-    feedback_comments = [
-        "Excellent presentation with clear explanations.",
-        "Appreciated the detailed examples provided.",
-        "Visuals were helpful but could be improved.",
-        "Collaboration was effective throughout the project.",
-        "Better communication would have improved outcomes.",
-        "Deadlines were consistently met by the team."
-    ]
-    
-    # Ensure we have enough feedback options
-    while len(feedback_comments) < len(test_students):
-        feedback_comments.append(f"Additional feedback item {len(feedback_comments) + 1}.")
-    
-    # Create submissions for each student
-    for i, student in enumerate(test_students):
-        # Check if a submission already exists
-        if not AssessmentSubmission.objects.filter(assessment=assessment, student=student.username).exists():
-            # Create submission with randomized scores and feedback
-            contribution = 3 + (i % 3)  # Scores between 3-5
-            teamwork = 2 + (i % 4)      # Scores between 2-5
-            communication = 3 + ((i+1) % 3)  # Scores between 3-5
-            
-            # Select two different feedback items for each student
-            primary_feedback_idx = i % len(feedback_comments)
-            secondary_feedback_idx = (i + 3) % len(feedback_comments)
-            
-            feedback = feedback_comments[primary_feedback_idx]
-            
-            # Create the submission
-            AssessmentSubmission.objects.create(
-                assessment=assessment,
-                student=student.username,
-                contribution=contribution,
-                teamwork=teamwork,
-                communication=communication,
-                feedback=feedback
-            )
-            
-            # Create a second submission with different feedback for variety
-            AssessmentSubmission.objects.create(
-                assessment=assessment,
-                student=f"peer{i+1}",  # Fictional peer
-                contribution=4,
-                teamwork=4,
-                communication=4,
-                feedback=feedback_comments[secondary_feedback_idx]
-            )
-    
-    messages.success(request, f"Test data created successfully. Assessment ID: {assessment.id}")
-    # Redirect to comments view instead of assessment view
-    return redirect('view_comments', assessment_id=assessment.id)
 
 @login_required
 def enroll_in_course(request):
@@ -1216,54 +1169,6 @@ def enroll_in_course(request):
     
     return render(request, "enroll.html")
 
-@login_required
-def debug_gmail_api(request):
-    """Debug view to check Gmail API configuration"""
-    from django.http import JsonResponse
-    from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
-    import json
-    
-    response_data = {
-        'user_email': request.user.email,
-        'is_authenticated': request.user.is_authenticated,
-    }
-    
-    # Check if we have a Google SocialApp configured
-    try:
-        social_app = SocialApp.objects.get(provider='google')
-        response_data['social_app'] = {
-            'name': social_app.name,
-            'client_id': social_app.client_id[:10] + '...',
-            'secret': social_app.secret[:5] + '...' if social_app.secret else None,
-        }
-    except SocialApp.DoesNotExist:
-        response_data['social_app'] = 'Not configured'
-    
-    # Check if user has a Google account
-    try:
-        social_account = SocialAccount.objects.get(user=request.user, provider='google')
-        response_data['social_account'] = {
-            'uid': social_account.uid,
-            'provider': social_account.provider,
-            'last_login': social_account.last_login.isoformat() if social_account.last_login else None,
-            'date_joined': social_account.date_joined.isoformat() if social_account.date_joined else None,
-        }
-    except SocialAccount.DoesNotExist:
-        response_data['social_account'] = 'Not found'
-    
-    # Check if user has a token
-    try:
-        if 'social_account' in response_data and response_data['social_account'] != 'Not found':
-            token = SocialToken.objects.get(account=social_account)
-            response_data['social_token'] = {
-                'token': token.token[:10] + '...' if token.token else None,
-                'token_secret': token.token_secret[:5] + '...' if token.token_secret else None,
-                'expires_at': token.expires_at.isoformat() if token.expires_at else None,
-            }
-    except SocialToken.DoesNotExist:
-        response_data['social_token'] = 'Not found'
-    
-    return JsonResponse(response_data)
 
 @login_required
 def pending_invitations(request):
@@ -1793,3 +1698,100 @@ def delete_course(request, course_pk):
 
     messages.success(request, f"Successfully deleted course {name}.")
     return redirect('course_dashboard')
+
+@login_required
+def view_student_submissions(request, assessment_id):
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if user is a professor
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
+        messages.error(request, "Only professors can view individual student submissions.")
+        return redirect('dashboard')
+    
+    # Get all students in the course, including those not in teams
+    course_students = User.objects.filter(
+        courses=assessment.course
+    ).distinct()
+    
+    # Get selected student if any
+    student_id = request.GET.get('student_id')
+    selected_student = None
+    submission = None
+    
+    if student_id:
+        selected_student = get_object_or_404(User, id=student_id)
+        submission = AssessmentSubmission.objects.filter(
+            assessment=assessment,
+            student=selected_student.username
+        ).first()
+    
+    context = {
+        'assessment': assessment,
+        'course_students': course_students,
+        'selected_student': selected_student,
+        'submission': submission,
+    }
+    
+    return render(request, 'student_submissions.html', context)
+
+@login_required
+def close_assessment(request, assessment_id):
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if user is a professor and created this assessment
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
+        messages.error(request, "Only professors can close assessments.")
+        return redirect('view_assessment', assessment_id=assessment_id)
+    
+    if request.method == 'POST':
+        # Set the closed date to now
+        assessment.closed_date = timezone.now()
+        assessment.save()
+        
+        messages.success(request, f"Assessment '{assessment.title}' has been closed successfully.")
+    
+    return redirect('view_assessment', assessment_id=assessment_id)
+
+@login_required
+def view_team_submissions(request, assessment_id):
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Check if user is a professor
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'professor':
+        messages.error(request, "Only professors can view team submissions.")
+        return redirect('dashboard')
+    
+    # Get all teams in the course
+    teams = Team.objects.filter(course=assessment.course)
+    
+    # Get selected team if any
+    team_id = request.GET.get('team_id')
+    selected_team = None
+    team_submissions = []
+    
+    if team_id:
+        selected_team = get_object_or_404(Team, id=team_id)
+        team_members = selected_team.members.all()
+        
+        # Get submissions for all team members
+        for member in team_members:
+            submission = AssessmentSubmission.objects.filter(
+                assessment=assessment,
+                student=member.username
+            ).first()
+            
+            if submission:
+                team_submissions.append({
+                    'student': member,
+                    'submission': submission,
+                    'submission_date': submission.submission_date
+                })
+    
+    context = {
+        'assessment': assessment,
+        'teams': teams,
+        'selected_team': selected_team,
+        'team_submissions': team_submissions,
+    }
+    
+    return render(request, 'team_submissions.html', context)
