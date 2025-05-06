@@ -25,11 +25,11 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label for="course_name" class="form-label">Select Course</label>
-                            <select class="form-select" id="course_name" name="course_name" required>
+                            <label for="course" class="form-label">Select Course</label>
+                            <select class="form-select" id="course" name="course" required>
                                 <option value="">-- Select a course --</option>
                                 {% for course in courses %}
-                                <option value="{{ course.name }}">{{ course.course_code }}: {{ course.name }}</option>
+                                <option value="{{ course.pk }}">{{ course.course_code }}: {{ course.name }}</option>
                                 {% endfor %}
                             </select>
                             <div class="form-text">Select the course for which you're inviting students.</div>

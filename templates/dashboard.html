@@ -106,7 +106,7 @@
                                         {% endfor %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'view_course' course_name=course.name %}" class="btn btn-sm gold-btn">View Course</a>
+                                        <a href="{% url 'view_course' course.name course.pk %}" class="btn btn-sm gold-btn">View Course</a>
                                     </td>
                                 </tr>
                                 {% endfor %}
