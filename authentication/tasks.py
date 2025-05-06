@@ -10,8 +10,8 @@ from assessments.models import Submission
 @shared_task
 def peer_assessment_due_date_reminder():
 
-    start_window = now() + timedelta(minutes=1) # set to 1 minutes and 5 minutes for testing purposes
-    end_window = now() + timedelta(minutes=5)
+    start_window = now() + timedelta(hours=23, minutes=55) 
+    end_window = now() + timedelta(hours=24, minutes=5)
 
     assessments = Assessment.objects.filter(
         due_date__gte = start_window,
@@ -54,12 +54,11 @@ def close_assessment():
 
     assessments = Assessment.objects.filter(
         due_date__lte = now(),
-        is_closed = False
+        closed_date__isnull = True
     )
 
     for assessment in assessments:
         assessment.closed_date = now()
-        assessment.is_closed = True
         assessment.save()
 
 @shared_task

@@ -15,6 +15,9 @@ class AuthenticationConfig(AppConfig):
         
         # Register a signal to fix invalid JSON data
         post_migrate.connect(self.fix_invalid_json, sender=self, dispatch_uid="fix_invalid_json_once")
+
+        # Set up the periodic tasks for checking due dates and sending reminder emails
+        post_migrate.connect(self.setup_periodic_tasks, sender=self, dispatch_uid="setup_periodic_tasks_once")
         
         # Move the admin customization here to avoid early imports
         self.customize_admin()
@@ -119,6 +122,46 @@ class AuthenticationConfig(AppConfig):
         except Exception as e:
             # This might happen if the database tables don't exist yet
             print(f"Could not set up OAuth configuration: {e}")
+        
+    def setup_periodic_tasks(self, **kwargs):
+        if kwargs.get('plan') is None:
+            return
+
+        try:
+            from django_celery_beat.models import CrontabSchedule, PeriodicTask
+            import json
+
+            schedule, _ = CrontabSchedule.objects.get_or_create(
+                minute='0',
+                hour='0',
+                day_of_week='*',
+                day_of_month='*',
+                month_of_year='*',
+                timezone='UTC',
+            )
+
+            PeriodicTask.objects.update_or_create(
+                name='Send peer assessment due date reminders',
+                defaults={
+                    'task': 'authentication.tasks.peer_assessment_due_date_reminder',
+                    'crontab': schedule,
+                    'args': json.dumps([]),
+                }
+            )
+
+            PeriodicTask.objects.update_or_create(
+                name='Close assessments at due date',
+                defaults={
+                    'task': 'authentication.tasks.close_assessment',
+                    'crontab': schedule,
+                    'args': json.dumps([]),
+                }
+            )
+
+            print("Successfully set up periodic Celery tasks")
+
+        except Exception as e:
+            print(f"Could not set up periodic tasks: {e}")
 
 
 class AuthenticationConfig(AppConfig):
