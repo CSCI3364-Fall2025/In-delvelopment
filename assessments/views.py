@@ -213,6 +213,71 @@ def view_assessment(request, assessment_id):
         class_avg['teamwork'] = all_submissions.aggregate(Avg('teamwork'))['teamwork__avg'] or 0
         class_avg['communication'] = all_submissions.aggregate(Avg('communication'))['communication__avg'] or 0
     
+    # Variables for team submissions section
+    team_submission_members = []
+    team_submission_data = []
+    submission_matrix = {}
+    completed_members = set()
+    completion_percentage = 0
+    
+    # Handle team submissions section (for professors)
+    if hasattr(request.user, 'profile') and request.user.profile.role == 'professor':
+        # Get selected team for submissions view
+        team_id = request.GET.get('team_id')  # Use the same parameter as the form
+        selected_team = None
+        
+        if team_id:
+            try:
+                selected_team = Team.objects.get(id=team_id, course=assessment.course)
+                
+                # Get team members
+                team_members = list(selected_team.members.all())
+                
+                # Initialize submission matrix
+                for evaluator in team_members:
+                    submission_matrix[evaluator.id] = {}
+                    for evaluated in team_members:
+                        submission_matrix[evaluator.id][evaluated.id] = None
+                
+                # Track which members have completed all their assessments
+                member_completion = {member.id: 0 for member in team_members}
+                required_submissions = len(team_members) - 1  # Excluding self-assessment
+                
+                # Get all submissions for this team and assessment
+                team_submissions_data = []
+                all_team_submissions = AssessmentSubmission.objects.filter(
+                    assessment=assessment,
+                    student__in=team_members
+                ).select_related('student', 'assessed_peer')
+                
+                # Process each submission
+                for submission in all_team_submissions:
+                    if submission.assessed_peer and submission.assessed_peer in team_members:
+                        # Add to the matrix
+                        submission_matrix[submission.student.id][submission.assessed_peer.id] = submission
+                        
+                        # Count this submission for completion tracking
+                        member_completion[submission.student.id] += 1
+                        
+                        # Add to the list for display
+                        team_submission_data.append({
+                            'student': submission.student,
+                            'submission': submission,
+                            'assessed_peer': submission.assessed_peer,
+                            'submission_date': submission.submitted_at
+                        })
+                
+                # Determine which members have completed all their assessments
+                for member_id, count in member_completion.items():
+                    if count >= required_submissions:
+                        completed_members.add(member_id)
+                
+                # Calculate completion percentage
+                completion_percentage = int(len(completed_members) / len(team_members) * 100) if team_members else 0
+                
+            except Team.DoesNotExist:
+                pass
+    
     # Initialize context dictionary
     context = {
         'assessment': assessment,
@@ -227,6 +292,13 @@ def view_assessment(request, assessment_id):
         'open_ended_questions': open_ended_questions,
         'team_avg': team_avg,
         'class_avg': class_avg,
+        # Team submissions section variables
+        'team_submission': selected_team if 'selected_team' in locals() else None,
+        'team_submission_members': team_submission_members,
+        'team_submission_data': team_submission_data,
+        'submission_matrix': submission_matrix,
+        'completed_members': completed_members,
+        'completion_percentage': completion_percentage
     }
     
     # For professors, collect all submissions by team
@@ -263,9 +335,15 @@ def view_assessment(request, assessment_id):
                     'student': submission.student,
                     'submission': submission
                 })
-        
-        # Add all_submissions to context
-        context['all_submissions'] = all_submissions
+    
+    context['all_submissions'] = all_submissions
+    
+    # Add a custom template filter for accessing dictionary items by key
+    from django.template.defaulttags import register
+    
+    @register.filter
+    def get_item(dictionary, key):
+        return dictionary.get(key)
     
     return render(request, 'assessment_detail.html', context)
 
