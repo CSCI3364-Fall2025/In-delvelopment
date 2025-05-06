@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container mt-4">
     {% if messages %}
-    <div class="row">
+    <div class="row mb-4">
         <div class="col">
             {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -17,126 +17,204 @@
     </div>
     {% endif %}
 
-    <div class="row mb-3">
-        <div class="col-md-8">
-            <h2 style="color: var(--bc-maroon);">{{ course.course_code }}: {{ course.name }}</h2>
-            <p class="text-muted">Professor: {{ course.created_by.get_full_name|default:course.created_by.email }}</p>
-            <p>{{ course.description }}</p>
-            {% if is_creator %}
-            <p><strong>Enrollment Code:</strong> {{ course.enrollment_code }}</p>
-            {% endif %}
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{% url 'dashboard' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Back to Dashboard</a>
-            {% if is_creator %}
-            <a href="{% url 'create_assessment' course.id %}" class="btn mt-2" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Create Assessment</a>
-            <a href="{% url 'edit_course' course.id %}" class="btn mt-2" style="background-color: var(--bc-gold); color: var(--bc-maroon);">Edit Course</a>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Active Assessments Section -->
-    <div class="row mt-4">
-        <div class="col">
-            <h4 style="color: var(--bc-maroon);">Active Assessments:</h4>
-            {% if active_assessments %}
-            <table class="table table-striped table-bordered">
-                <thead style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <tr>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Due Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for assessment in active_assessments %}
-                    <tr>
-                        <td>{{ assessment.title }}</td>
-                        <td>{{ assessment.description|truncatechars:50 }}</td>
-                        <td>{% if assessment.due_date %}{{ assessment.due_date|date:"Y-m-d" }}{% else %}No due date{% endif %}</td>
-                        <td>
-                            <a href="{% url 'view_assessment' assessment.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View Details</a>
-                            {% if not is_creator %}
-                            <a href="{% url 'submit_assessment' assessment.id %}" class="btn" style="background-color: var(--bc-gold); color: var(--bc-maroon);">Submit Assessment</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>No active assessments available for this course.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Past Assessments Section -->
-    <div class="row mt-4">
-        <div class="col">
-            <h4 style="color: var(--bc-maroon);">Past Assessments:</h4>
-            {% if past_assessments %}
-            <table class="table table-striped table-bordered">
-                <thead style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <tr>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Due Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for assessment in past_assessments %}
-                    <tr>
-                        <td>{{ assessment.title }}</td>
-                        <td>{{ assessment.description|truncatechars:50 }}</td>
-                        <td>{{ assessment.due_date|date:"Y-m-d" }}</td>
-                        <td>
-                            <a href="{% url 'view_assessment' assessment.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View Details</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>No past assessments available for this course.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    {% if is_creator %}
-    <!-- Enrolled Students Section -->
-    <div class="row mt-4">
-        <div class="col">
-            <div class="card shadow">
-                <div class="card-header text-center" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                    <h4 class="mb-0">Enrolled Students</h4>
+    <!-- Course Header Card -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-header py-3" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="mb-0">{{ course.course_code }}: {{ course.name }}</h2>
                 </div>
-                <div class="card-body">
-                    {% if students %}
-                        <table class="table table-striped table-bordered">
-                            <thead style="background-color: var(--bc-maroon); color: var(--bc-gold);">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for student in students %}
-                                <tr>
-                                    <td>{{ student.get_full_name|default:"No name provided" }}</td>
-                                    <td>{{ student.email }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p>No students enrolled yet.</p>
+                <div class="col-auto">
+                    <a href="{% url 'dashboard' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="text-muted"><strong>Professor:</strong> {{ course.created_by.get_full_name|default:course.created_by.email }}</p>
+                    <p><strong>Description:</strong> {{ course.description }}</p>
+                    {% if is_creator %}
+                    <div class="alert alert-info">
+                        <p class="mb-0"><strong>Enrollment Code:</strong> {{ course.enrollment_code }}</p>
+                        <small class="text-muted">Share this code with students to join the course</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    {% if is_creator %}
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'create_peer_assessments' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                            <i class="fas fa-plus-circle me-2"></i>Create Assessment
+                        </a>
+                        <a href="{% url 'edit_course' course.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                            <i class="fas fa-edit me-2"></i>Edit Course
+                        </a>
+                        {% if course.students.exists %}
+                        <a href="{% url 'add_teams' course.name course.id %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                            <i class="fas fa-users me-2"></i>Manage Teams
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'invite_students' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                            <i class="fas fa-user-plus me-2"></i>Invite Students
+                        </a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
-    {% endif %}
+
+    <!-- Active Assessments Section -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-header py-3" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+            <h3 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Active Assessments</h3>
+        </div>
+        <div class="card-body">
+            {% if active_assessments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Open Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assessment in active_assessments %}
+                        <tr>
+                            <td>{{ assessment.title }}</td>
+                            <td>{{ assessment.open_date|date:"M d, Y" }}</td>
+                            <td>{{ assessment.due_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge bg-success">Active</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View</a>
+                                    {% if is_creator %}
+                                    <a href="{% url 'edit_assessment_questions' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Edit</a>
+                                    <a href="{% url 'close_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Close</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">No active assessments available for this course.</p>
+                {% if is_creator %}
+                <a href="{% url 'create_peer_assessments' %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Create Assessment</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Past Assessments Section -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-header py-3" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+            <h3 class="mb-0"><i class="fas fa-history me-2"></i>Past Assessments</h3>
+        </div>
+        <div class="card-body">
+            {% if past_assessments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Closed Date</th>
+                            <th>Results</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assessment in past_assessments %}
+                        <tr>
+                            <td>{{ assessment.title }}</td>
+                            <td>{{ assessment.closed_date|date:"M d, Y" }}</td>
+                            <td>
+                                {% if assessment.results_published %}
+                                <span class="badge bg-success">Published</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Not Published</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View</a>
+                                    {% if is_creator %}
+                                        {% if assessment.results_published %}
+                                        <a href="{% url 'view_published_results' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Results</a>
+                                        {% else %}
+                                        <a href="{% url 'publish_assessment_results' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Publish Results</a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">No past assessments available for this course.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Enrolled Students Section -->
+    <div class="card shadow-lg">
+        <div class="card-header py-3" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+            <h3 class="mb-0"><i class="fas fa-users me-2"></i>Enrolled Students</h3>
+        </div>
+        <div class="card-body">
+            {% if course.students.exists %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Team</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in course.students.all %}
+                        <tr>
+                            <td>{{ student.get_full_name|default:student.username }}</td>
+                            <td>{{ student.email }}</td>
+                            <td>
+                                {% for team in course.team_set.all %}
+                                    {% if student in team.members.all %}
+                                        {{ team.name }}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">No students enrolled yet.</p>
+                {% if is_creator %}
+                <a href="{% url 'invite_students' %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Invite Students</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}

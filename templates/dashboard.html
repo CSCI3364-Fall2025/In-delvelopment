@@ -33,6 +33,28 @@
                         <a href="{% url 'set_profile_role' role='student' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Set as Student</a>
                         <a href="{% url 'set_profile_role' role='professor' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Set as Professor</a>
                     </div>
+                    
+                    <!-- Course enrollment section -->
+                    <div class="mt-4">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>Course Enrollment:</h5>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'enroll_in_course' %}" class="btn" style="background-color: var(--bc-maroon); color: var(--bc-gold);">
+                                        <i class="fas fa-graduation-cap me-2"></i>Enroll with Code
+                                    </a>
+                                    {% if user_data.role|lower == "student" %}
+                                    <a href="{% url 'pending_invitations' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-envelope me-2"></i>View Pending Invitations
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                <div class="form-text mt-2">
+                                    Enter a course enrollment code provided by your professor or check your pending invitations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

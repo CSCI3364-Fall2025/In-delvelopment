@@ -134,6 +134,7 @@ class Command(BaseCommand):
         if current_user:
             sample_course.students.add(current_user)
             team1.members.add(current_user)
+            professor = current_user
             self.stdout.write(self.style.SUCCESS(f'Added user {current_user.username} to {team1.name}'))
         
         # Create a sample assessment
@@ -244,3 +245,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('Skipping submission creation due to model incompatibility'))
         
         self.stdout.write(self.style.SUCCESS('Successfully populated test data with teams and submissions!'))
+
+        if not created and professor != sample_course.created_by:
+            sample_course.created_by = professor
+            sample_course.save()

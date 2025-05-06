@@ -16,6 +16,7 @@ from django.db.models import Avg
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from .forms import PeerAssessmentForm
 
 import logging
 logger = logging.getLogger(__name__)
@@ -750,66 +751,71 @@ def create_course(request):
     return render(request, 'create_course.html')
 
 @login_required
-def view_course(request, course_id):
+def view_course(request, course_id, course_name=None):
     """View a specific course and its assessments"""
     try:
-        from django.db.models import Q  # Add this import for Q objects
-        from django.utils import timezone
+        course = get_object_or_404(Course, id=course_id)
         
-        course = Course.objects.get(pk=course_id)
+        # Check if course_name was provided and doesn't match
+        if course_name and course_name != course.name:
+            messages.warning(request, f"Course name in URL doesn't match the actual course name. Redirecting to the correct page.")
+            return redirect('view_course', course_id=course_id)
         
-        # Check if user is enrolled or is the creator
-        is_enrolled = course.students.filter(id=request.user.id).exists()
+        # Check if user is enrolled in this course or is the creator
+        is_enrolled = request.user in course.students.all()
         is_creator = course.created_by == request.user
         
-        # If not enrolled or creator, redirect to dashboard
         if not (is_enrolled or is_creator):
-            # For testing purposes, allow access anyway
-            pass
-            # Uncomment this when ready for production
-            # messages.error(request, "You do not have access to this course.")
-            # return redirect('dashboard')
+            messages.error(request, "You are not enrolled in this course.")
+            return redirect('dashboard')
         
-        # Get and categorize assessments
-        now = timezone.now()
+        # Get assessments for this course
+        assessments = Assessment.objects.filter(course=course)
         
-        # Active assessments: due date is in the future or no due date
-        active_assessments = Assessment.objects.filter(
-            Q(due_date__gt=now) | Q(due_date__isnull=True),  # Use Q directly, not models.Q
-            course=course
-        ).order_by('due_date')
+        # Get teams for this course
+        teams = Team.objects.filter(course=course)
         
-        # Past assessments: due date is in the past
-        past_assessments = Assessment.objects.filter(
-            due_date__lt=now,
-            course=course
-        ).order_by('-due_date')
-        
-        # Get enrolled students
-        students = course.students.all()
+        # Get the user's team for this course
+        user_team = None
+        if hasattr(request.user, 'teams'):
+            user_teams = request.user.teams.filter(course=course)
+            if user_teams.exists():
+                user_team = user_teams.first()
         
         context = {
             'course': course,
-            'active_assessments': active_assessments,
-            'past_assessments': past_assessments,
-            'students': students,
+            'assessments': assessments,
+            'teams': teams,
+            'user_team': user_team,
             'is_enrolled': is_enrolled,
             'is_creator': is_creator,
         }
         
         return render(request, 'view_course.html', context)
-    except Course.DoesNotExist:
-        messages.error(request, "Course not found.")
+    
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
         return redirect('dashboard')
 
 @login_required
 def add_teams(request, course_name, course_id):
+    """View for adding teams to a course"""
+    course = get_object_or_404(Course, id=course_id, name=course_name)
     
-    course = Course.objects.get(pk=course_id)
-
-    return render(request, 'add_teams.html', {
-        "course": course, "teams": course.teams.all()
-    })
+    # Check if user is the course creator
+    if course.created_by != request.user:
+        messages.error(request, "You don't have permission to add teams to this course.")
+        return redirect('view_course', course_id=course_id)
+    
+    # Get existing teams for this course
+    teams = Team.objects.filter(course=course)
+    
+    context = {
+        'course': course,
+        'teams': teams
+    }
+    
+    return render(request, 'add_teams.html', context)
 
 @login_required
 def edit_team(request, course_name, team_pk):
@@ -849,6 +855,12 @@ def invite_students(request):
         messages.error(request, "Only professors can invite students.")
         return redirect('dashboard')
     
+    # Get courses created by this professor
+    courses = Course.objects.filter(created_by=request.user)
+    
+    # Check if a specific course was requested
+    pre_selected_course_id = request.GET.get('course_id')
+    
     if request.method == 'POST':
         # Get email addresses from the form
         email_list = request.POST.get('student_emails', '').strip().split('\n')
@@ -861,14 +873,16 @@ def invite_students(request):
             # Check if the user is the course creator
             if course.created_by != request.user:
                 messages.error(request, "You can only invite students to courses you created.")
-                return redirect('invite_students')
+                return render(request, 'invite_students.html', {'courses': courses, 'pre_selected_course_id': pre_selected_course_id})
         except Course.DoesNotExist:
-            messages.error(request, f"Course '{course.name}' not found.")
-            return redirect('invite_students')
+            messages.error(request, f"Course not found.")
+            return render(request, 'invite_students.html', {'courses': courses, 'pre_selected_course_id': pre_selected_course_id})
         
         # Validate emails
         valid_emails = []
         invalid_emails = []
+        already_invited = []
+        already_enrolled = []
         
         for email in email_list:
             try:
@@ -876,68 +890,80 @@ def invite_students(request):
                 # Check if it's a BC email
                 if not email.endswith('@bc.edu'):
                     invalid_emails.append(f"{email} (not a BC email)")
+                # Check if already enrolled
+                elif User.objects.filter(email=email, courses=course).exists():
+                    already_enrolled.append(email)
+                # Check if already invited
+                elif CourseInvitation.objects.filter(email=email, course=course).exists():
+                    already_invited.append(email)
                 else:
                     valid_emails.append(email)
             except ValidationError:
                 invalid_emails.append(f"{email} (invalid format)")
         
-        # Send invitations to valid emails
-        if valid_emails:
-            emails_sent = 0
-            
-            for email in valid_emails:
-                # Get unique enrollment code
-                course = Course.objects.get(pk=course_id)
-                enrollment_code = course.enrollment_code
-
-                # Create or update invitation record
-                invitation, created = CourseInvitation.objects.update_or_create(
+        # Process valid emails
+        successful_invites = 0
+        for email in valid_emails:
+            try:
+                # Generate a random enrollment code
+                enrollment_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+                
+                # Create invitation
+                invitation = CourseInvitation.objects.create(
                     course=course,
                     email=email,
-                    defaults={
-                        'invited_by': request.user,
-                        'accepted': False,
-                        'enrollment_code': enrollment_code
-                        }
+                    invited_by=request.user,
+                    enrollment_code=enrollment_code
                 )
                 
-                subject = "Invitation to Boston College Peer Assessment System"
-                message = (
-                    f"Dear Student,\n\n"
-                    f"You have been invited by Professor {request.user.get_full_name() or request.user.username} "
-                    f"to join the Boston College Peer Assessment System for {course.name}.\n\n"
-                    f"Your unique enrollment code is: {enrollment_code}\n\n"
-                    f"Please visit {request.build_absolute_uri('/login/')} to log in with your BC credentials.\n\n"
-                    f"After logging in, you will be prompted to enter your enrollment code to accept the invitation.\n\n"
-                    "Best regards,\nPeer Assessment System"
-                )
+                # Send invitation email
+                subject = f"Invitation to join {course.name}"
+                message = f"""
+                Hello,
 
+                You have been invited by {request.user.get_full_name() or request.user.email} to join the course "{course.name}" ({course.course_code}).
+
+                To accept this invitation, please log in to the Peer Assessment System and use the following enrollment code: {enrollment_code}
+
+                Best regards,
+                Peer Assessment System Team
+                """
                 
-                try:
-                    # The send_mail function will now use our custom backend
-                    send_mail(
-                        subject, 
-                        message, 
-                        settings.DEFAULT_FROM_EMAIL,
-                        [email],
-                        fail_silently=False
-                    )
-                    emails_sent += 1
-                except Exception as e:
-                    messages.error(request, f"Error sending to {email}: {str(e)}")
-            
-            if emails_sent > 0:
-                messages.success(request, f"Successfully sent {emails_sent} invitation(s) for course '{course.name}'.")
-            
-        # Report invalid emails
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+                
+                successful_invites += 1
+            except Exception as e:
+                messages.error(request, f"Error inviting {email}: {str(e)}")
+        
+        # Display summary messages
+        if successful_invites > 0:
+            messages.success(request, f"Successfully sent {successful_invites} invitation(s).")
+        
         if invalid_emails:
-            messages.warning(request, f"Could not send to the following emails: {', '.join(invalid_emails)}")
-            
-        return redirect('invite_students')
+            messages.warning(request, f"Invalid emails: {', '.join(invalid_emails)}")
+        
+        if already_invited:
+            messages.info(request, f"Already invited: {', '.join(already_invited)}")
+        
+        if already_enrolled:
+            messages.info(request, f"Already enrolled: {', '.join(already_enrolled)}")
+        
+        # Redirect to course view
+        return redirect('view_course', course_id=course.id)
     
-    # For GET requests, show the form with course selection
-    courses = Course.objects.filter(created_by=request.user, is_active=True)
-    return render(request, 'invite_students.html', {'courses': courses})
+    # For GET requests, render the form
+    context = {
+        'courses': courses,
+        'pre_selected_course_id': pre_selected_course_id
+    }
+    
+    return render(request, 'invite_students.html', context)
 
 
 @login_required
@@ -1646,9 +1672,9 @@ def team_dashboard(request):
     return render(request, 'team_dashboard.html', context)
 
 @login_required
-def edit_course(request, course_name, course_id):
-    """Edit an existing course"""
-    course = get_object_or_404(Course, id=course_id, name=course_name)
+def edit_course(request, course_id):
+    # Get the course using only the ID
+    course = get_object_or_404(Course, pk=course_id)
     
     # Check if user is the course creator
     if course.created_by != request.user:
