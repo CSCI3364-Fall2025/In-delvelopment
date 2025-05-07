@@ -8,8 +8,7 @@
     <!-- Added optional bootstrap functionality -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    {% block extra_css %}{% endblock %}
-    <!-- Can put styling into a separate CSS file but going to leave it here for now -->
+    {% block extra_css %}
     <style>
         :root {
             --bc-maroon: #8b0000;
@@ -62,14 +61,22 @@
             text-align: center;
         }
 
+        /* Force container width */
+        .container {
+            width: 100% !important;
+            max-width: 1200px !important;
+            margin: 40px auto !important;
+        }
+
         .form-container {
             max-width: 600px;
             margin: 3rem auto;
         }
 
         .wide-form-container {
-            max-width: 800px;
-            margin: 3rem auto;
+            width: 100% !important;
+            max-width: 1200px !important;
+            margin: 3rem auto !important;
         }
 
         .bc-form-label {
@@ -84,7 +91,32 @@
             margin-top: 1.5rem;
         }
 
+        @media (min-width: 768px) {
+            .form-container {
+                width: 600px;
+                margin: 3rem auto;
+            }
+        }
+
+        /* Force Bootstrap containers to be wider */
+        .container-fluid {
+            padding-left: 15px !important;
+            padding-right: 15px !important;
+        }
+
+        /* Ensure tables and cards don't overflow */
+        table, .table, .card, .form-control {
+            max-width: 100% !important;
+        }
+        
+        /* Force row to take full width */
+        .row {
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
     </style>
+    {% endblock %}
 </head>
 <body class="d-flex flex-column min-vh-100">
     <!-- Bootstrap JS functionality for alerts -->
@@ -117,7 +149,9 @@
     </header>
     
     <main class="flex-fill">
-        {% block content %}{% endblock %}
+        <div class="container-fluid">
+            {% block content %}{% endblock %}
+        </div>
     </main>
     
     <footer class="mt-auto">

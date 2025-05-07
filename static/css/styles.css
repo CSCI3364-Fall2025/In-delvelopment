@@ -64,8 +64,9 @@ body {
 
 /* Container */
 .container {
-    max-width: 600px;
-    margin: 40px auto;
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin: 40px auto !important;
     background: white;
     padding: 25px;
     border-radius: 10px;
@@ -184,24 +185,23 @@ thead th {
     max-width: 600px;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (min-width: 769px) {
     .navbar {
-        flex-direction: column;
-        text-align: center;
+        flex-direction: row;
+        justify-content: space-between;
     }
-
+    
     .nav-links {
-        flex-direction: column;
-        gap: 10px;
+        flex-direction: row;
     }
-
+    
     .container {
-        width: 90%;
-        padding: 20px;
+        max-width: 1140px;
+        margin: 40px auto;
     }
-
-    table {
-        font-size: 14px;
+    
+    .wide-form-container {
+        max-width: 1200px;
     }
 }
 
@@ -235,4 +235,57 @@ thead th {
 
 .view-btn:active {
     transform: scale(0.98);
+}
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .nav-links {
+        flex-direction: column;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .container {
+        width: 95%;
+        max-width: none;
+        margin: 20px auto;
+        padding: 15px;
+    }
+    
+    .wide-form-container {
+        width: 95%;
+        max-width: none;
+    }
+    
+    button, .btn {
+        width: 100%;
+    }
+    
+    table {
+        font-size: 14px;
+    }
+}
+
+.wide-form-container {
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin: 3rem auto !important;
+}
+
+/* Force Bootstrap containers to be wider */
+.container-fluid {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+/* Force row to take full width */
+.row {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
