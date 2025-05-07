@@ -152,6 +152,12 @@ def view_assessment(request, assessment_id):
     if team:
         team_members = team.members.all()
         teammates = [member for member in team_members if member != request.user]
+    else:
+        # If student is not in a team, add themselves as the only team member
+        # This allows self-assessment even without a team
+        if hasattr(request.user, 'profile') and request.user.profile.role == 'student':
+            team_members = [request.user]
+            teammates = []
     
     # Get all submissions by this user for this assessment
     user_submissions = {}
@@ -299,7 +305,8 @@ def view_assessment(request, assessment_id):
         'team_submission_data': team_submission_data,
         'submission_matrix': submission_matrix,
         'completed_members': completed_members,
-        'completion_percentage': completion_percentage
+        'completion_percentage': completion_percentage,
+        'no_team': team is None and hasattr(request.user, 'profile') and request.user.profile.role == 'student'
     }
     
     # For professors, collect all submissions by team
@@ -1523,7 +1530,7 @@ def view_team_submissions(request, assessment_id):
             # Get all submissions by this member
             submissions = AssessmentSubmission.objects.filter(
                 assessment=assessment,
-                student=evaluator.username
+                student=evaluator
             )
             
             # Check if this member has completed all assessments (excluding self)

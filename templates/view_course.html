@@ -99,7 +99,6 @@
                                     <a href="{% url 'view_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">View</a>
                                     {% if is_creator %}
                                     <a href="{% url 'edit_assessment_questions' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Edit</a>
-                                    <a href="{% url 'close_assessment' assessment.id %}" class="btn btn-sm" style="background-color: var(--bc-maroon); color: var(--bc-gold);">Close</a>
                                     {% endif %}
                                 </div>
                             </td>
