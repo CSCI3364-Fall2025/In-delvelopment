@@ -751,58 +751,67 @@ def create_course(request):
     return render(request, 'create_course.html')
 
 @login_required
-def view_course(request, course_id, course_name=None):
-    """View a specific course."""
-    try:
-        course = Course.objects.get(pk=course_id)
-        
-        # Check if the course name in the URL matches the actual course name
-        if course_name and course_name != course.name:
-            # Redirect to the correct URL if the name doesn't match
-            return redirect('view_course', course_name=course.name, course_id=course_id)
-        
-        # Check if user is enrolled or is the creator
-        is_enrolled = request.user in course.students.all()
-        is_creator = request.user == course.created_by
-        
-        if not (is_enrolled or is_creator):
-            messages.error(request, "You are not enrolled in this course.")
-            return redirect('dashboard')
-        
-        # Get assessments for this course - use the correct related name or query
-        # If there's a related name defined in your model, use that instead
-        try:
-            # Try to get assessments using the related name if it exists
-            assessments = course.assessments.all()
-        except AttributeError:
-            # If the related name doesn't exist, try to query directly
-            from assessments.models import Assessment  # Import the Assessment model
-            assessments = Assessment.objects.filter(course=course)
-        
-        # Get teams for this course
-        teams = Team.objects.filter(course=course)
-        
-        # Check if the user is on a team
-        user_team = None
-        for team in teams:
-            if request.user in team.members.all():
-                user_team = team
-                break
-        
-        context = {
-            'course': course,
-            'assessments': assessments,
-            'is_enrolled': is_enrolled,
-            'is_creator': is_creator,
-            'teams': teams,
-            'user_team': user_team
-        }
-        
-        return render(request, 'view_course.html', context)
-        
-    except Course.DoesNotExist:
-        messages.error(request, "Course not found.")
+def view_course(request, course_name, course_id):
+    # Import Q at the top of the function
+    from django.db.models import Q
+    
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Check if user has permission to view this course
+    if course.created_by != request.user and request.user not in course.students.all():
+        messages.error(request, "You don't have permission to view this course.")
         return redirect('dashboard')
+    
+    # Determine if the current user is the creator of the course
+    is_creator = (course.created_by == request.user)
+    
+    # Get current time for comparison
+    now = timezone.now()
+    
+    # Get active assessments - those with due dates in the future and not closed
+    active_assessments = Assessment.objects.filter(
+        course=course,
+        due_date__gt=now,
+        closed_date__isnull=True  # If closed_date is NULL, it's not closed
+    ).order_by('due_date')
+    
+    # Get past assessments - those with due dates in the past or that are closed
+    past_assessments = Assessment.objects.filter(
+        course=course
+    ).filter(
+        Q(due_date__lte=now) | Q(closed_date__isnull=False)  # If closed_date is not NULL, it's closed
+    ).order_by('-due_date')
+    
+    # Get all teams for this course
+    teams = Team.objects.filter(course=course)
+    
+    # Get all students enrolled in this course
+    enrolled_students = course.students.all()
+    
+    # Check if there's an enrollment code
+    enrollment_code = None
+    try:
+        invitation = CourseInvitation.objects.get(course=course)
+        enrollment_code = invitation.code
+    except CourseInvitation.DoesNotExist:
+        pass
+    
+    context = {
+        'course': course,
+        'active_assessments': active_assessments,
+        'past_assessments': past_assessments,
+        'teams': teams,
+        'enrolled_students': enrolled_students,
+        'is_creator': is_creator,
+        'enrollment_code': enrollment_code,
+    }
+    
+    # Print debug information to server console
+    print(f"Course: {course.name}")
+    print(f"Active assessments count: {active_assessments.count()}")
+    print(f"Past assessments count: {past_assessments.count()}")
+    
+    return render(request, 'view_course.html', context)
 
 @login_required
 def add_teams(request, course_name, course_id):
