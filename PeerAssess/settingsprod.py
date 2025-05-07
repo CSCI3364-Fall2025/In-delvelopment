@@ -35,6 +35,7 @@ ALLOWED_HOSTS = [
     '137.184.29.20',
     'localhost',
     '127.0.0.1',
+    'peerassess.online',
 ]
 
 
