@@ -752,7 +752,6 @@ def create_course(request):
 
 @login_required
 def view_course(request, course_name, course_id):
-    # Import Q at the top of the function
     from django.db.models import Q
     
     course = get_object_or_404(Course, id=course_id)
@@ -792,9 +791,10 @@ def view_course(request, course_name, course_id):
     enrollment_code = None
     try:
         invitation = CourseInvitation.objects.get(course=course)
-        enrollment_code = invitation.code
+        enrollment_code = invitation.enrollment_code
     except CourseInvitation.DoesNotExist:
-        pass
+        # If no invitation exists, use the course's enrollment code
+        enrollment_code = course.enrollment_code
     
     context = {
         'course': course,
