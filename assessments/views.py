@@ -1039,7 +1039,7 @@ def invite_students(request):
     return render(request, 'invite_students.html', context)
 
 
-@login_required
+
 def test_email(request):
     """Send a test email to verify email configuration"""
     if not request.user.is_authenticated:
