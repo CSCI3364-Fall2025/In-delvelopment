@@ -228,3 +228,15 @@ CELERY_TASK_SERIALIZER = 'json'
 INSTALLED_APPS += ['django_celery_beat']
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# HTTPS/SSL Settings
+CSRF_TRUSTED_ORIGINS = [
+    "https://peerassess.online",
+    "https://www.peerassess.online",
+]
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# If you're behind a proxy terminating SSL, let Django know:
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
