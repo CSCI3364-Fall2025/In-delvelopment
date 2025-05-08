@@ -46,4 +46,5 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path('report-issue', auth_views.report_issue, name='report_issue'),
     path('test-email', test_email, name='test_email'),
+    path('test_email', test_email),
 ]
