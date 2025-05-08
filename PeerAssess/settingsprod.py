@@ -199,8 +199,9 @@ SOCIALACCOUNT_PROVIDERS = {
 # Email settings
 EMAIL_BACKEND = 'authentication.smtp_backend.GoogleSMTPBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
 EMAIL_HOST_USER = 'yanaw@bc.edu'
 EMAIL_HOST_PASSWORD = 'niec uqez drxe dnfg'  # Your app password
 DEFAULT_FROM_EMAIL = 'yanaw@bc.edu'  # Should match EMAIL_HOST_USER
