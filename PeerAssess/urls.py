@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from assessments import views
 from authentication import views as auth_views
+from assessments.views import test_email
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -44,4 +45,5 @@ urlpatterns = [
     path('reauth-google/', auth_views.reauth_google, name='reauth_google'),
     path('about/', views.about, name='about'),
     path('report-issue', auth_views.report_issue, name='report_issue'),
+    path('test-email', test_email, name='test_email'),
 ]
