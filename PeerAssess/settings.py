@@ -174,7 +174,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {
             'access_type': 'offline',
             'prompt': 'consent',  # This is critical for refresh tokens
-            'include_granted_scopes': 'true',  # Include previously granted scopes
+            'include_granted_scopes': 'true',
         }
     }
 }

@@ -206,7 +206,9 @@ GOOGLE_OAUTH2_TOKEN_JSON = os.path.join(BASE_DIR, "gmail_tokens.json")
 # Make sure you requested gmail.send when you ran setup_google_oauth
 GMAIL_API_SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.readonly",  # Add this for profile access
     "https://www.googleapis.com/auth/userinfo.email",
+    "openid",
 ]
 
 # Change the email backend
@@ -214,12 +216,12 @@ EMAIL_BACKEND = 'authentication.gmail_api.GmailAPIBackend'
 DEFAULT_FROM_EMAIL = 'yanaw@bc.edu'
 
 # Keep these settings for fallback purposes
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'yanaw@bc.edu'
-EMAIL_HOST_PASSWORD = 'niec uqez drxe dnfg'  # Your app password
+#EMAIL_HOST = 'smtp.gmail.com'
+#EMAIL_PORT = 465
+#EMAIL_USE_TLS = False
+#EMAIL_USE_SSL = True
+#EMAIL_HOST_USER = 'yanaw@bc.edu'
+#EMAIL_HOST_PASSWORD = 'niec uqez drxe dnfg'  # Your app password
 
 # Redis config
 CELERY_BROKER_URL = 'redis://localhost:6379/0'

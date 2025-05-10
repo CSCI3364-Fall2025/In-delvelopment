@@ -61,6 +61,13 @@ class Command(BaseCommand):
             redirect_uri=f'http://localhost:{port}/'
         )
         
+        # Add these parameters to force consent and get a refresh token
+        flow.oauth2session.params = {
+            'access_type': 'offline',
+            'prompt': 'consent',
+            'include_granted_scopes': 'true'
+        }
+        
         # Run the OAuth flow
         self.stdout.write(self.style.SUCCESS(f"Opening browser for OAuth consent..."))
         self.stdout.write(self.style.SUCCESS(f"Using redirect URI: http://localhost:{port}/"))

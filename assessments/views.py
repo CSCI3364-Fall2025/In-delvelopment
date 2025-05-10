@@ -30,6 +30,12 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError
 
+import os
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+import base64
+from email.mime.text import MIMEText
+
 print("views.py loaded")
 
 def home(request):
@@ -1040,52 +1046,57 @@ def invite_students(request):
 
 
 
+@login_required
 def test_email(request):
-    """Send a test email to verify email configuration"""
-    if not request.user.is_authenticated:
-        return HttpResponse("Please log in first")
-    
+    """Test email sending using the application-level Gmail token"""
     try:
-        # Check if the user has the professor role
-        is_professor = (
-            hasattr(request.user, 'profile') and request.user.profile.role == 'professor'
-        ) or request.session.get('user_role') == 'professor'
+        # Get the recipient email (use the logged-in user's email)
+        recipient = request.user.email
         
-        if is_professor:
-            # Import the Gmail API function
-            from authentication.gmail_api import send_email_via_gmail
-            
-            # Try to send directly via Gmail API
-            success = send_email_via_gmail(
-                user=request.user,
-                to=request.user.email,
-                subject='Test Email from Peer Assessment System (via Gmail API)',
-                body=f'This is a test email sent to {request.user.email} using the Gmail API.\n\nIf you received this, your Gmail API configuration is working!'
-            )
-            
-            if success:
-                return HttpResponse(f"Test email sent to {request.user.email} via Gmail API. Check your inbox.")
-            else:
-                # Fall back to regular send_mail
-                send_mail(
-                    'Test Email from Peer Assessment System (Fallback)',
-                    f'This is a test email sent to {request.user.email} using the fallback email backend.\n\nIf you received this, your fallback email configuration is working!',
-                    settings.DEFAULT_FROM_EMAIL,
-                    [request.user.email],
-                    fail_silently=False,
-                )
-                return HttpResponse(f"Gmail API failed, but fallback email sent to {request.user.email}. Check your console output or email inbox.")
-        else:
-            # For non-professors, just use the standard email backend
-            send_mail(
-                'Test Email from Peer Assessment System',
-                f'This is a test email sent to {request.user.email}.\n\nIf you received this, your email configuration is working!',
-                settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],
-                fail_silently=False,
-            )
-            return HttpResponse(f"Test email sent to {request.user.email}. Check your console output or email inbox depending on your backend configuration.")
+        # Load credentials from the token file
+        token_file = settings.GOOGLE_OAUTH2_TOKEN_JSON
+        
+        if not os.path.exists(token_file):
+            return HttpResponse("Gmail token file not found. Please run 'python manage.py debug_gmail_setup' first.")
+        
+        with open(token_file, 'r') as f:
+            token_data = json.load(f)
+        
+        # Create credentials object
+        credentials = Credentials(
+            token=token_data.get('token'),
+            refresh_token=token_data.get('refresh_token'),
+            token_uri=token_data.get('token_uri', 'https://oauth2.googleapis.com/token'),
+            client_id=token_data.get('client_id'),
+            client_secret=token_data.get('client_secret'),
+            scopes=token_data.get('scopes')
+        )
+        
+        # Build the Gmail service
+        service = build('gmail', 'v1', credentials=credentials)
+        
+        # Create the email
+        subject = "Test Email from Peer Assessment System"
+        body = f"This is a test email sent to {recipient} from the Peer Assessment System.\n\nIf you received this, your Gmail API configuration is working!"
+        
+        message = MIMEText(body)
+        message['to'] = recipient
+        message['subject'] = subject
+        message['from'] = settings.DEFAULT_FROM_EMAIL
+        
+        # Encode the message
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+        
+        # Send the message
+        sent_message = service.users().messages().send(
+            userId='me', 
+            body={'raw': raw_message}
+        ).execute()
+        
+        return HttpResponse(f"Test email sent to {recipient}. Check your inbox! Message ID: {sent_message.get('id')}")
+        
     except Exception as e:
+        logger.error(f"Error sending test email: {str(e)}")
         return HttpResponse(f"Error sending email: {str(e)}")
     
 def debug_user_role(request):
