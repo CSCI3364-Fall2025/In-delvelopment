@@ -180,7 +180,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # Email settings
-EMAIL_BACKEND = 'authentication.smtp_backend.GoogleSMTPBackend'
+EMAIL_BACKEND = 'authentication.gmail_api.GmailAPIBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -189,7 +189,22 @@ EMAIL_HOST_PASSWORD = 'niec uqez drxe dnfg'  # Your app password
 DEFAULT_FROM_EMAIL = 'yanaw@bc.edu'  # Should match EMAIL_HOST_USER
 
 # Disable Gmail API
-USE_GMAIL_API = False
+USE_GMAIL_API = True
+
+# Point to your OAuth2 client JSON
+GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = BASE_DIR / "google_oauth_client.json"
+# Where django will read/write your refresh tokens
+GOOGLE_OAUTH2_TOKEN_JSON = BASE_DIR / "gmail_tokens.json"
+# Make sure you requested gmail.send when you ran setup_google_oauth
+GMAIL_API_SCOPES = [
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.readonly",  # Add this for profile access
+    "https://www.googleapis.com/auth/userinfo.email",
+    "openid",
+]
+
+# Change the email backend if you want to test Gmail API in development
+# EMAIL_BACKEND = 'authentication.gmail_api.GmailAPIBackend'
 
 # For production, you would use something like:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

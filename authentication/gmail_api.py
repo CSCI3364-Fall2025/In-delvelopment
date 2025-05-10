@@ -4,6 +4,10 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from allauth.socialaccount.models import SocialToken, SocialAccount
 import logging
+from django.core.mail.backends.base import BaseEmailBackend
+from django.conf import settings
+import os
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -102,4 +106,111 @@ def send_email_via_gmail(user, to, subject, body):
     
     except Exception as e:
         logger.error(f"Error sending email via Gmail API: {str(e)}")
-        return False 
+        return False
+
+class GmailAPIBackend(BaseEmailBackend):
+    """
+    A Django email backend that uses the Gmail API.
+    """
+    
+    def __init__(self, fail_silently=False, **kwargs):
+        super().__init__(fail_silently=fail_silently)
+        self.fail_silently = fail_silently
+        
+    def send_messages(self, email_messages):
+        """
+        Send email messages using the Gmail API.
+        """
+        if not email_messages:
+            return 0
+            
+        count = 0
+        
+        try:
+            # Get credentials from token file
+            token_file = settings.GOOGLE_OAUTH2_TOKEN_JSON
+            client_secrets_file = settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON
+            
+            if not os.path.exists(token_file):
+                logger.error(f"Token file not found: {token_file}")
+                if not self.fail_silently:
+                    raise FileNotFoundError(f"Token file not found: {token_file}")
+                return 0
+                
+            if not os.path.exists(client_secrets_file):
+                logger.error(f"Client secrets file not found: {client_secrets_file}")
+                if not self.fail_silently:
+                    raise FileNotFoundError(f"Client secrets file not found: {client_secrets_file}")
+                return 0
+            
+            # Load client secrets
+            with open(client_secrets_file, 'r') as f:
+                client_config = json.load(f)
+                
+            client_id = client_config['web']['client_id']
+            client_secret = client_config['web']['client_secret']
+            
+            # Load token
+            with open(token_file, 'r') as f:
+                token_data = json.load(f)
+            
+            # Create credentials
+            credentials = Credentials(
+                token=token_data.get('token'),
+                refresh_token=token_data.get('refresh_token'),
+                token_uri='https://oauth2.googleapis.com/token',
+                client_id=client_id,
+                client_secret=client_secret,
+                scopes=settings.GMAIL_API_SCOPES
+            )
+            
+            # Build the Gmail service
+            service = build('gmail', 'v1', credentials=credentials)
+            
+            # Send each message
+            for message in email_messages:
+                try:
+                    # Create the email
+                    email = MIMEText(message.body)
+                    email['to'] = ', '.join(message.to)
+                    email['subject'] = message.subject
+                    email['from'] = message.from_email or settings.DEFAULT_FROM_EMAIL
+                    
+                    # Add CC recipients if any
+                    if message.cc:
+                        email['cc'] = ', '.join(message.cc)
+                    
+                    # Add BCC recipients if any
+                    if message.bcc:
+                        email['bcc'] = ', '.join(message.bcc)
+                    
+                    # Encode the message
+                    raw_message = base64.urlsafe_b64encode(email.as_bytes()).decode('utf-8')
+                    
+                    # Send the message
+                    sent_message = service.users().messages().send(
+                        userId='me', 
+                        body={'raw': raw_message}
+                    ).execute()
+                    
+                    logger.info(f"Email sent via Gmail API, message ID: {sent_message.get('id')}")
+                    count += 1
+                    
+                    # Update token file with new access token if refreshed
+                    if credentials.token != token_data.get('token'):
+                        token_data['token'] = credentials.token
+                        with open(token_file, 'w') as f:
+                            json.dump(token_data, f)
+                        
+                except Exception as e:
+                    logger.error(f"Error sending email via Gmail API: {str(e)}")
+                    if not self.fail_silently:
+                        raise
+            
+            return count
+            
+        except Exception as e:
+            logger.error(f"Error initializing Gmail API: {str(e)}")
+            if not self.fail_silently:
+                raise
+            return 0 

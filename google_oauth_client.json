@@ -1,0 +1,14 @@
+{
+  "web": {
+    "client_id": "583548039994-u848qtlu661loq7759f7r6q9m1j8269a.apps.googleusercontent.com",
+    "project_id": "PeerAssess",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "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",
+    "redirect_uris": [
+      "http://localhost:8000/",
+      "http://localhost:8000/accounts/google/login/callback/"
+    ]
+  }
+}
