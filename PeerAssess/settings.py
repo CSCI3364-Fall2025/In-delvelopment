@@ -38,17 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
     'assessments',
     'authentication',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
 ]
-
-SITE_ID = 1
-SOCIALACCOUNT_LOGIN_ON_GET = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,7 +50,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
     'authentication.middleware.BCEmailMiddleware',
 ]
 
@@ -136,83 +127,16 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend', # For testing login
-    'allauth.account.auth_backends.AuthenticationBackend', # For actual login
-]
-
-# Allauth settings
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*']  # Only require email for signup
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_UNIQUE_EMAIL = True  # Keep this setting
-
-# These settings should bypass the signup page
-SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
-SOCIALACCOUNT_EMAIL_REQUIRED = True
-SOCIALACCOUNT_QUERY_EMAIL = True
-
-# Force auto-connect of social accounts
-SOCIALACCOUNT_ADAPTER = 'authentication.adapters.BCEmailAdapter'
-
-# Redirect URLs
-LOGIN_REDIRECT_URL = 'dashboard' 
+# Authentication redirects
+LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'
 
-# Custom adapter
-SOCIALACCOUNT_ADAPTER = 'authentication.adapters.BCEmailAdapter'
+# Email settings for development
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@peerassess.local'
 
-# Google OAuth settings
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-            'https://www.googleapis.com/auth/gmail.send',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'offline',
-            'prompt': 'consent',  # This is critical for refresh tokens
-            'include_granted_scopes': 'true',
-        }
-    }
-}
-
-# Email settings
-EMAIL_BACKEND = 'authentication.gmail_api.GmailAPIBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'yanaw@bc.edu'
-EMAIL_HOST_PASSWORD = 'niec uqez drxe dnfg'  # Your app password
-DEFAULT_FROM_EMAIL = 'yanaw@bc.edu'  # Should match EMAIL_HOST_USER
-
-# Disable Gmail API
-USE_GMAIL_API = True
-
-# Point to your OAuth2 client JSON
-GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = BASE_DIR / "google_oauth_client.json"
-# Where django will read/write your refresh tokens
-GOOGLE_OAUTH2_TOKEN_JSON = BASE_DIR / "gmail_tokens.json"
-# Make sure you requested gmail.send when you ran setup_google_oauth
-GMAIL_API_SCOPES = [
-    "https://www.googleapis.com/auth/gmail.send",
-    "https://www.googleapis.com/auth/gmail.readonly",  # Add this for profile access
-    "https://www.googleapis.com/auth/userinfo.email",
-    "openid",
-]
-
-# Change the email backend if you want to test Gmail API in development
-# EMAIL_BACKEND = 'authentication.gmail_api.GmailAPIBackend'
-
-# For production, you would use something like:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.your-email-provider.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@example.com'
-# EMAIL_HOST_PASSWORD = 'your-email-password'
+# Base site URL used in outbound messages
+SITE_URL = 'http://localhost:8000'
 
 # Redis config
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
