@@ -1,17 +1,15 @@
 {% extends 'base.html' %}
 
-{% block title %}Login | Peer Assessment System{% endblock %}
+{% block title %}Create Account | Peer Assessment System{% endblock %}
 
 {% block content %}
 <div class="form-container">
     <div class="bc-card">
         <div class="bc-card-header">
-            <h3>Sign In</h3>
+            <h3>Create an Account</h3>
         </div>
         <div class="bc-card-body">
-            <div class="text-center mb-4">
-                <p>Please sign in with your Boston College email and password.</p>
-            </div>
+            <p class="text-muted text-center mb-4">Use your Boston College email to get started.</p>
 
             {% if form.errors %}
             <div class="alert alert-danger" role="alert">
@@ -26,33 +24,32 @@
             </div>
             {% endif %}
 
-            {% if messages %}
-            <div class="mb-3">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
             <form method="post" novalidate>
                 {% csrf_token %}
                 <div class="mb-3">
-                    <label for="id_email" class="form-label">Email</label>
+                    <label for="id_email" class="form-label">Boston College Email</label>
                     {{ form.email }}
+                    <div class="form-text">Only addresses ending in @bc.edu are allowed.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="id_password1" class="form-label">Password</label>
+                    {{ form.password1 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_password2" class="form-label">Confirm Password</label>
+                    {{ form.password2 }}
                 </div>
                 <div class="mb-4">
-                    <label for="id_password" class="form-label">Password</label>
-                    {{ form.password }}
+                    <span class="form-label d-block mb-2">I am a:</span>
+                    {{ form.role }}
                 </div>
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn gold-btn btn-lg">Sign In</button>
+                    <button type="submit" class="btn gold-btn btn-lg">Create Account</button>
                 </div>
             </form>
 
             <div class="mt-4 text-center">
-                <p class="text-muted">Don't have an account?
-                    <a href="{% url 'signup' %}">Create one now</a>.
-                </p>
+                <p class="text-muted">Already have an account? <a href="{% url 'login' %}">Sign in</a>.</p>
             </div>
         </div>
         <div class="bc-card-footer">

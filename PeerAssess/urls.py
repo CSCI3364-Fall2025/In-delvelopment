@@ -1,50 +1,29 @@
-"""
-URL configuration for PeerAssess project.
+"""URL configuration for PeerAssess project."""
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
-from assessments import views
+
+from assessments import views as assessment_views
 from authentication import views as auth_views
-from assessments.views import test_email
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.home, name='home'),
-    path('dashboard/', views.dashboard, name='dashboard'),
+    path('', assessment_views.home, name='home'),
+    path('dashboard/', assessment_views.dashboard, name='dashboard'),
     path('login/', auth_views.login_view, name='login'),
-    path('set-role/', auth_views.set_role, name='set_role'),
-    path('google-login/', auth_views.google_login, name='google_login'),
-    path('update-role/', auth_views.update_role, name='update_role'),
+    path('signup/', auth_views.signup_view, name='signup'),
+    path('logout/', auth_views.logout_view, name='logout'),
     path('save_progress', auth_views.save_progress, name='save_progress'),
     path('load_progress', auth_views.load_progress, name='load_progress'),
-    path('accounts/', include('allauth.urls')),
-    path('custom-google-callback/', auth_views.custom_google_callback, name='custom_google_callback'),
-    path('assessment/<int:assessment_id>/', views.view_assessment, name='view_assessment'),
-    path('published-results/', views.view_all_published_results, name='view_all_published_results'),
-    path('logout/', auth_views.logout_view, name='logout'),
+    path('verify-submission/', auth_views.verify_submission, name='verify_submission'),
     path('login-error/', auth_views.login_error, name='login_error'),
     path('assessments/', include('assessments.urls')),
     path('debug/', include([
         path('auth/', auth_views.debug_auth, name='debug_auth'),
         path('test_login', auth_views.test_login, name='test_login'),
-        #add more debug views here in the future
     ])),
-    path('reauth-google/', auth_views.reauth_google, name='reauth_google'),
-    path('about/', views.about, name='about'),
+    path('about/', assessment_views.about, name='about'),
     path('report-issue', auth_views.report_issue, name='report_issue'),
-    path('test-email', test_email, name='test_email'),
-    path('test_email', test_email),
+    path('test-email', assessment_views.test_email, name='test_email'),
+    path('test_email', assessment_views.test_email),
 ]

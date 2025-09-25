@@ -20,9 +20,9 @@
     <div class="row py-2">
         <h3 class="text-uppercase" style="color: var(--bc-maroon);">Summary of Functionality</h3>
         <p>
-            &emsp; Developing our peer-review application, we fully met every critical requirement laid out by the course. 
-            User authentication employs Google OAuth and restricts logins to @bc.edu addresses; once signed in, individuals 
-            are designated as either professors or students. Professors can create courses, specifying year, semester, and any 
+            &emsp; Developing our peer-review application, we fully met every critical requirement laid out by the course.
+            User authentication employs a simple email-and-password flow restricted to @bc.edu addresses; once signed in, individuals
+            are designated as either professors or students. Professors can create courses, specifying year, semester, and any
             number of groups or teams, and then invite students via time-limited email links. Within each course, instructors 
             may define multiple peer assessments per semester, each with configurable publication and closing dates and a custom mix 
             of Likert-scale and open-ended questions. A flag controls whether students evaluate themselves as well as teammates. 
@@ -35,8 +35,7 @@
             <br>
             &emsp; On the non-functional side, we adhered strictly to the prescribed technology stack, 
             Django for the backend and plain HTML, CSS, and Bootstrap for the frontend, without introducing any additional frameworks. 
-            We also used Google OAuth implementation as requested, adhering to the requirement of needing a BC email. This can be scaled 
-            to other schools through the same methodology. 
+            We designed the authentication layer to enforce BC-only access while remaining flexible enough to adapt to other institutions.
         </p>
     </div>
     <div class="ro py-2">
