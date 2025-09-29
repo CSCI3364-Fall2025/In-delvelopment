@@ -8,6 +8,11 @@ from assessments.models import Course, Assessment
 
 @pytest.mark.django_db
 def test_user_profile_str_uses_email_and_role():
+
+    '''reasoning: the UserProfile.__str__ should return the user's email and role
+    (e.g. "alice@example.com - Student"), so we create a predictable user here to
+    assert that behavior.'''
+    
     user = get_user_model().objects.create_user(
         username="alice",
         email="alice@example.com",
@@ -19,6 +24,11 @@ def test_user_profile_str_uses_email_and_role():
 
 @pytest.mark.django_db
 def test_assessment_progress_str_joins_student_and_assessment():
+
+    '''reasoning: the AssessmentProgress.__str__ should join the student's username
+    and the assessment title (e.g. "charlie - Project 1 Progress"), so we create a
+    predictable user here to assert that behavior.'''
+
     user = get_user_model().objects.create_user(
         username="charlie",
         email="charlie@example.com",
