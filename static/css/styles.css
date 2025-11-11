@@ -1,7 +1,8 @@
 :root {
-    --bc-gold: #bfa76f;
-    --bc-gold-a11y: #d6c37a; /* passes AA with dark text */
-    --maroon: #8b0000;
+    --bc-maroon: #840000;
+    --bc-gold: #8b733b;
+    --bc-cream: #f7f0d9;
+    --bc-gold-accent: #bfa76f;
     --light-maroon: #a52a2a;
     --bc-light-gray: #f8f9fa;
     --bc-dark-gray: #343a40;
@@ -17,8 +18,8 @@ body {
 
 /* Navbar */
 .navbar {
-    background-color: var(--maroon);
-    color: #fff; /* fixed contrast */
+    background-color: var(--bc-maroon);
+    color: var(--bc-cream);
     display: flex;
     justify-content: space-between;
     padding: 15px 20px;
@@ -28,7 +29,6 @@ body {
 .navbar h1 {
     margin: 0;
     font-size: 22px;
-    color: #fff; /* ensure AA */
 }
 
 .nav-links {
@@ -40,7 +40,7 @@ body {
 }
 
 .nav-links button {
-    color: #fff; /* fixed contrast */
+    color: var(--bc-cream);
     background: none;
     border: none;
     cursor: pointer;
@@ -49,22 +49,13 @@ body {
 }
 
 .nav-links button:hover {
-    color: #fff;
-    text-decoration: underline;
-}
-
-.nav-links button:focus-visible,
-.view-btn:focus-visible,
-button:focus-visible,
-a:focus-visible {
-    outline: 3px solid #ffd966;
-    outline-offset: 2px;
+    color: white;
 }
 
 /* Footer */
 .footer {
-    background-color: var(--maroon);
-    color: #fff; /* fixed contrast */
+    background-color: var(--bc-maroon);
+    color: var(--bc-cream);
     text-align: center;
     padding: 12px;
     position: relative;
@@ -90,12 +81,7 @@ label {
     margin-top: 10px;
 }
 
-select,
-textarea,
 input {
-    display: block;
-    width: 100%;
-    margin-top: 8px;
     padding: 10px;
     border: 1px solid var(--bc-dark-gray);
     border-radius: 5px;
@@ -112,7 +98,7 @@ button {
     padding: 12px;
     width: 100%;
     background-color: var(--light-maroon);
-    color: #fff;
+    color: white;
     font-size: 16px;
     border: none;
     border-radius: 5px;
@@ -121,7 +107,7 @@ button {
 }
 
 button:hover {
-    background-color: var(--maroon);
+    background-color: var(--bc-maroon);
 }
 
 /* Grade Section */
@@ -169,8 +155,8 @@ td {
 thead th {
     position: sticky;
     top: 0;
-    background-color: var(--maroon);
-    color: #fff; /* fixed contrast */
+    background-color: var(--bc-maroon);
+    color: var(--bc-cream);
 }
 
 /* Hero Section */
@@ -186,7 +172,7 @@ thead th {
 
 .hero h1 {
     font-size: 32px;
-    color: var(--maroon);
+    color: var(--bc-maroon);
     margin-bottom: 15px;
 }
 
@@ -220,14 +206,45 @@ thead th {
     transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
+.gold-btn {
+    background-color: var(--bc-gold-accent);
+    color: #2b1900 !important;
+    border: 1px solid #2b1900;
+}
+
+.gold-btn:hover,
+.gold-btn:focus {
+    background-color: #a98f5d;
+    color: #2b1900 !important;
+}
+
 .gold-btn:active, .maroon-btn:active {
     transform: scale(0.98);
 }
 
-/* View button */
+.maroon-btn {
+    background-color: var(--bc-maroon);
+    color: var(--bc-cream) !important;
+}
+
+.maroon-btn:hover,
+.maroon-btn:focus {
+    background-color: var(--light-maroon);
+    color: var(--bc-cream) !important;
+}
+
+.text-cream {
+    color: var(--bc-cream) !important;
+}
+
+.text-gold {
+    color: var(--bc-gold) !important;
+}
+
+/* Update the view-btn class to ensure it's properly styled */
 .view-btn {
-    background-color: var(--bc-gold-a11y); /* accessible gold */
-    color: var(--bc-dark-gray) !important; /* fixed contrast */
+    background-color: var(--bc-gold-accent);
+    color: #2b1900 !important;
     padding: 6px 12px;
     border-radius: 4px;
     text-decoration: none;
@@ -239,8 +256,8 @@ thead th {
 }
 
 .view-btn:hover {
-    background-color: #cbb56f;
-    color: var(--bc-dark-gray) !important;
+    background-color: #9b885a;
+    color: #2b1900 !important;
     text-decoration: none;
 }
 
@@ -267,7 +284,9 @@ thead th {
         margin: 20px auto;
         padding: 15px;
     }
-    
+}
+
+/*
     .wide-form-container {
         width: 95%;
         max-width: none;
@@ -281,7 +300,6 @@ thead th {
         font-size: 14px;
     }
 }
-
 .wide-form-container {
     width: 100% !important;
     max-width: 1200px !important;
@@ -298,3 +316,4 @@ thead th {
     margin-left: 0 !important;
     margin-right: 0 !important;
 }
+*/

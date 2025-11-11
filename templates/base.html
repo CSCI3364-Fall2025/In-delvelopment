@@ -11,28 +11,41 @@
     {% block extra_css %}
     <style>
         :root {
-            --bc-maroon: #8b0000;
-            --bc-gold: #bfa76f; 
+            --bc-maroon: #840000;
+            --bc-gold: #8b733b;
+            --bc-cream: #f7f0d9;
+            --bc-gold-accent: #bfa76f;
         }
 
         .gold-btn {
-            background-color: #bfa76f;
-            color: white;
+            background-color: var(--bc-gold-accent);
+            color: #2b1900 !important;
+            border: 1px solid #2b1900;
         }
 
-        .gold-btn:hover {
-            background: #9b885a;
-            color: white;
+        .gold-btn:hover,
+        .gold-btn:focus {
+            background: #a98f5d;
+            color: #2b1900 !important;
         }
 
         .maroon-btn {
             background-color: var(--bc-maroon);
-            color: white;
+            color: var(--bc-cream) !important;
         }
 
-        .maroon-btn:hover {
+        .maroon-btn:hover,
+        .maroon-btn:focus {
             background: #6c0000;
-            color: white;
+            color: var(--bc-cream) !important;
+        }
+
+        .text-cream {
+            color: var(--bc-cream) !important;
+        }
+
+        .text-gold {
+            color: var(--bc-gold) !important;
         }
 
         .bc-card {
@@ -43,7 +56,7 @@
 
         .bc-card-header {
             background-color: var(--bc-maroon);
-            color: var(--bc-gold);
+            color: var(--bc-cream);
             padding: 1rem;
             text-align: center;
             font-weight: bold;
@@ -56,7 +69,7 @@
 
         .bc-card-footer {
             background-color: var(--bc-maroon);
-            color: var(--bc-gold);
+            color: var(--bc-cream);
             padding: 0.75rem;
             text-align: center;
         }
@@ -82,23 +95,7 @@
         .bc-form-label {
             font-weight: 600;
             margin-bottom: 0.5rem;
-            color: var(--bc-dark-gray);
         }
-
-        .bc-btn-group {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1.5rem;
-        }
-
-        @media (min-width: 768px) {
-            .form-container {
-                width: 600px;
-                margin: 3rem auto;
-            }
-        }
-
-        /* Force Bootstrap containers to be wider */
         .container-fluid {
             padding-left: 15px !important;
             padding-right: 15px !important;
@@ -124,13 +121,13 @@
     <header>
         <nav class="navbar navbar-expand-md p-3" style="background-color: var(--bc-maroon)">
             <div class="container-fluid">
-                <a class="navbar-brand" href="{% url 'home' %}" style="color: var(--bc-gold);">Peer Assessment System</a>
+                <a class="navbar-brand text-cream" href="{% url 'home' %}">Peer Assessment System</a>
                 <ul class="navbar-nav">
                     <li class="nav-item m-2">
-                        <a href="{% url 'home' %}" class="nav-link active" style="color: var(--bc-gold);">Home</a>
+                        <a href="{% url 'home' %}" class="nav-link active text-cream">Home</a>
                     </li>
                     <li class="nav-item m-2">
-                        <a href="{% url 'dashboard' %}" class="nav-link active" style="color: var(--bc-gold);">Dashboard</a>
+                        <a href="{% url 'dashboard' %}" class="nav-link active text-cream">Dashboard</a>
                     </li>
                     <li class="nav-item m-2">
                         {% if request.user.is_authenticated %}
@@ -160,9 +157,9 @@
     <footer class="mt-auto">
         <nav class="navbar" style="background-color: var(--bc-maroon);">
             <div class="container-fluid">
-                <img class="navbar-brand" src="https://cdn.glitch.global/9e3885b8-8790-4d39-9ef6-fe5e1b4e9eec/logo.png?v=1745746980682" alt="Ctrl Alt Elite Logo" style="height: 100px; color: var(--bc-gold);">
+                <img class="navbar-brand" src="https://cdn.glitch.global/9e3885b8-8790-4d39-9ef6-fe5e1b4e9eec/logo.png?v=1745746980682" alt="Ctrl Alt Elite Logo" style="height: 100px;">
 
-                <p class="nav-item m-2" style="color: var(--bc-gold);">© 2025 Ctrl Alt Elite Peer Assessment System</p>
+                <p class="nav-item m-2 text-cream">© 2025 Ctrl Alt Elite Peer Assessment System</p>
             </div>
         </nav>
     </footer>
