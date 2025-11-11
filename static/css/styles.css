@@ -1,5 +1,6 @@
 :root {
     --bc-gold: #bfa76f;
+    --bc-gold-a11y: #d6c37a; /* passes AA with dark text */
     --maroon: #8b0000;
     --light-maroon: #a52a2a;
     --bc-light-gray: #f8f9fa;
@@ -17,7 +18,7 @@ body {
 /* Navbar */
 .navbar {
     background-color: var(--maroon);
-    color: var(--bc-gold);
+    color: #fff; /* fixed contrast */
     display: flex;
     justify-content: space-between;
     padding: 15px 20px;
@@ -27,6 +28,7 @@ body {
 .navbar h1 {
     margin: 0;
     font-size: 22px;
+    color: #fff; /* ensure AA */
 }
 
 .nav-links {
@@ -38,7 +40,7 @@ body {
 }
 
 .nav-links button {
-    color: var(--bc-gold);
+    color: #fff; /* fixed contrast */
     background: none;
     border: none;
     cursor: pointer;
@@ -47,13 +49,22 @@ body {
 }
 
 .nav-links button:hover {
-    color: white;
+    color: #fff;
+    text-decoration: underline;
+}
+
+.nav-links button:focus-visible,
+.view-btn:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 3px solid #ffd966;
+    outline-offset: 2px;
 }
 
 /* Footer */
 .footer {
     background-color: var(--maroon);
-    color: var(--bc-gold);
+    color: #fff; /* fixed contrast */
     text-align: center;
     padding: 12px;
     position: relative;
@@ -101,7 +112,7 @@ button {
     padding: 12px;
     width: 100%;
     background-color: var(--light-maroon);
-    color: white;
+    color: #fff;
     font-size: 16px;
     border: none;
     border-radius: 5px;
@@ -159,7 +170,7 @@ thead th {
     position: sticky;
     top: 0;
     background-color: var(--maroon);
-    color: var(--bc-gold);
+    color: #fff; /* fixed contrast */
 }
 
 /* Hero Section */
@@ -213,10 +224,10 @@ thead th {
     transform: scale(0.98);
 }
 
-/* Update the view-btn class to ensure it's properly styled */
+/* View button */
 .view-btn {
-    background-color: var(--bc-gold);
-    color: white !important; /* !important to override any default link styling */
+    background-color: var(--bc-gold-a11y); /* accessible gold */
+    color: var(--bc-dark-gray) !important; /* fixed contrast */
     padding: 6px 12px;
     border-radius: 4px;
     text-decoration: none;
@@ -228,8 +239,8 @@ thead th {
 }
 
 .view-btn:hover {
-    background-color: #9b885a;
-    color: white !important;
+    background-color: #cbb56f;
+    color: var(--bc-dark-gray) !important;
     text-decoration: none;
 }
 
@@ -277,13 +288,11 @@ thead th {
     margin: 3rem auto !important;
 }
 
-/* Force Bootstrap containers to be wider */
 .container-fluid {
     padding-left: 15px !important;
     padding-right: 15px !important;
 }
 
-/* Force row to take full width */
 .row {
     width: 100% !important;
     margin-left: 0 !important;

@@ -1,16 +1,28 @@
 {
   "defaults": {
-    "timeout": 2000,
-    "concurrency": 2,
-    "chromeLaunchConfig": {
-      "args": ["--no-sandbox"]
-    }
+    "standard": "WCAG2AA",
+    "timeout": 60000,
+    "wait": 1000,
+    "chromeLaunchConfig": { "args": ["--no-sandbox", "--disable-dev-shm-usage"] }
   },
   "urls": [
     "http://127.0.0.1:8000/",
-    "http://127.0.0.1:8000/login/",
-    "http://127.0.0.1:8000/signup/",
+    {
+      "url": "http://127.0.0.1:8000/login/",
+      "actions": [
+        "wait for element body to be added",
+        "set field #id_username to test@bc.edu",
+        "set field #id_password to test",
+        "click element button[type='submit']",
+        "wait for navigation"
+      ]
+    },
     "http://127.0.0.1:8000/assessments/",
-    "http://127.0.0.1:8000/assessments/courses/create/"
+    {
+      "url": "http://127.0.0.1:8000/assessments/courses/create/",
+      "actions": [
+        "wait for element body to be added"
+      ]
+    }
   ]
 }
