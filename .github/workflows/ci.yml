@@ -8,7 +8,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -24,7 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Django checks & tests
+      - name: Django checks and tests
         env:
           DJANGO_SETTINGS_MODULE: PeerAssess.settings
         run: |
@@ -35,7 +34,6 @@ jobs:
   accessibility:
     runs-on: ubuntu-latest
     needs: test
-
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -51,11 +49,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # keep Node only to run Pa11y, remove npm cache since no lockfile
       - name: Setup Node for Pa11y
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install Pa11y CI
         run: npm install --global pa11y-ci
@@ -80,4 +78,9 @@ jobs:
 
       - name: Stop Django server
         if: always()
-        run: kill $(cat django_server.pid)
+        run: |
+          if [ -f django_server.pid ]; then
+            kill "$(cat django_server.pid)" || true
+          else
+            echo "No PID file, server was not started"
+          fi
