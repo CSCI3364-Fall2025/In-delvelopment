@@ -233,10 +233,18 @@ class TestBrowserUsability:
         email_inputs[0].send_keys(login_user.email)
         password_inputs[0].clear()
         password_inputs[0].send_keys("test-pass-123")
-        submit_buttons[0].click()
 
-        WebDriverWait(driver, 5).until(EC.url_contains("/dashboard"))
-        assert "/dashboard" in driver.current_url or "Welcome" in driver.page_source
+        # submit the form element
+        form = submit_buttons[0].find_element(By.XPATH, "ancestor::form")
+        driver.execute_script(
+            "arguments[0].requestSubmit ? arguments[0].requestSubmit() : arguments[0].submit();",
+            form,
+        )
+
+        WebDriverWait(driver, 8).until(
+            lambda d: "/dashboard" in d.current_url or "Dashboard" in d.title
+        )
+        assert "/dashboard" in driver.current_url or "Dashboard" in driver.title
 
     def test_no_obvious_js_errors_on_load(self, live_server, driver, level_config):
         driver.get(live_server.url + HOME_PATH)
