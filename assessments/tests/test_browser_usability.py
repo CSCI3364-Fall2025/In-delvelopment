@@ -104,7 +104,7 @@ def level_config(level_name):
     }
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def login_user(db):
     user, created = User.objects.get_or_create(
         username="browser-tester@bc.edu",
