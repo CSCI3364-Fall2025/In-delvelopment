@@ -43,3 +43,6 @@ psycopg2-binary>=2.9.10,<3.0
 python-dotenv>=0.21.0
 gunicorn==21.2.0
 pytest-django
+pytest>=8.3.0
+selenium>=4.26.0
+playwright>=1.50.0
