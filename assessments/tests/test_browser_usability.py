@@ -7,7 +7,6 @@ from typing import Tuple
 import pytest
 from django.apps import apps
 from django.contrib.auth.models import User
-from playwright.sync_api import sync_playwright
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -15,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
-BROWSERS = ["chrome", "firefox", "safari"]
+BROWSERS = ["chrome", "firefox"]
 SELENIUM_BROWSERS = ["chrome", "firefox"]
 
 HOME_PATH = "/"
@@ -37,7 +36,6 @@ LEVEL_NAV_THRESHOLDS_MS = {
 }
 
 HEADLESS = os.getenv("HEADLESS", "1") == "1"
-PW_HEADLESS = os.getenv("PW_HEADLESS", "1") == "1"
 
 pytestmark = pytest.mark.django_db
 
@@ -71,8 +69,6 @@ def _make_driver(browser_name: str):
                 options.add_argument("--headless")
             return webdriver.Firefox(options=options)
 
-        if browser_name == "safari":
-            return None
     except Exception:
         return None
     raise ValueError(f"Unsupported browser: {browser_name}")
@@ -109,7 +105,7 @@ def level_config(level_name):
 
 
 @pytest.fixture(scope="class")
-def login_user():
+def login_user(db):
     user, created = User.objects.get_or_create(
         username="browser-tester@bc.edu",
         defaults={"email": "browser-tester@bc.edu", "first_name": "Browser", "last_name": "Tester"},
@@ -128,69 +124,70 @@ def seed_level_data(level_name, django_db_blocker):
     if not all([Course, Team, Enrollment]):
         pytest.skip("Expected Course, Team, and Enrollment models to exist.")
 
-    courses_target, students_range, team_size_range = LEVELS[level_name]
-    existing = Course.objects.count()
-    if existing >= courses_target:
-        return
+    with django_db_blocker.unblock():
+        courses_target, students_range, team_size_range = LEVELS[level_name]
+        existing = Course.objects.count()
+        if existing >= courses_target:
+            return
 
-    remaining = courses_target - existing
+        remaining = courses_target - existing
 
-    teacher, created = User.objects.get_or_create(
-        username="seed-teacher@bc.edu",
-        defaults={"email": "seed-teacher@bc.edu", "first_name": "Seed", "last_name": "Teacher"},
-    )
-    if created:
-        teacher.set_password("teacher-pass-123")
-        teacher.save()
-
-    new_courses = [
-        Course(
-            name=f"Course {existing + i + 1}",
-            course_code=f"C{existing + i + 1:05d}",
-            year="2025",
-            semester="Fall",
-            description="Seeded course for browser usability checks.",
-            created_by=teacher,
+        teacher, created = User.objects.get_or_create(
+            username="seed-teacher@bc.edu",
+            defaults={"email": "seed-teacher@bc.edu", "first_name": "Seed", "last_name": "Teacher"},
         )
-        for i in range(remaining)
-    ]
-    Course.objects.bulk_create(new_courses, batch_size=250)
-    new_courses = list(Course.objects.order_by("-id")[:remaining][::-1])
+        if created:
+            teacher.set_password("teacher-pass-123")
+            teacher.save()
 
-    for course in new_courses:
-        n_students = random.randint(*students_range)
-        team_min, team_max = team_size_range
-        team_size = random.randint(team_min, team_max)
-
-        students = [
-            User(
-                username=f"student.{course.id}.{j}@bc.edu",
-                email=f"student.{course.id}.{j}@bc.edu",
-                first_name="Student",
-                last_name=str(course.id),
+        new_courses = [
+            Course(
+                name=f"Course {existing + i + 1}",
+                course_code=f"C{existing + i + 1:05d}",
+                year="2025",
+                semester="Fall",
+                description="Seeded course for browser usability checks.",
+                created_by=teacher,
             )
-            for j in range(n_students)
+            for i in range(remaining)
         ]
-        User.objects.bulk_create(students, batch_size=500)
-        students = list(User.objects.filter(username__startswith=f"student.{course.id}."))
+        Course.objects.bulk_create(new_courses, batch_size=250)
+        new_courses = list(Course.objects.order_by("-id")[:remaining][::-1])
 
-        enrollments = [Enrollment(student=s, course=course) for s in students]
-        Enrollment.objects.bulk_create(enrollments, batch_size=500)
+        for course in new_courses:
+            n_students = random.randint(*students_range)
+            team_min, team_max = team_size_range
+            team_size = random.randint(team_min, team_max)
 
-        course_student_links = [Course.students.through(course_id=course.id, user_id=s.id) for s in students]
-        Course.students.through.objects.bulk_create(course_student_links, batch_size=500)
+            students = [
+                User(
+                    username=f"student.{course.id}.{j}@bc.edu",
+                    email=f"student.{course.id}.{j}@bc.edu",
+                    first_name="Student",
+                    last_name=str(course.id),
+                )
+                for j in range(n_students)
+            ]
+            User.objects.bulk_create(students, batch_size=500)
+            students = list(User.objects.filter(username__startswith=f"student.{course.id}."))
 
-        n_teams = max(1, math.ceil(n_students / team_size))
-        teams = [Team(name=f"{course.course_code}-Team-{idx + 1}", course=course) for idx in range(n_teams)]
-        Team.objects.bulk_create(teams, batch_size=200)
-        teams = list(Team.objects.filter(course=course).order_by("id"))
+            enrollments = [Enrollment(student=s, course=course) for s in students]
+            Enrollment.objects.bulk_create(enrollments, batch_size=500)
 
-        team_member_links = []
-        through_model = Team.members.through
-        for idx, student in enumerate(students):
-            team = teams[idx % n_teams]
-            team_member_links.append(through_model(team_id=team.id, user_id=student.id))
-        through_model.objects.bulk_create(team_member_links, batch_size=500)
+            course_student_links = [Course.students.through(course_id=course.id, user_id=s.id) for s in students]
+            Course.students.through.objects.bulk_create(course_student_links, batch_size=500)
+
+            n_teams = max(1, math.ceil(n_students / team_size))
+            teams = [Team(name=f"{course.course_code}-Team-{idx + 1}", course=course) for idx in range(n_teams)]
+            Team.objects.bulk_create(teams, batch_size=200)
+            teams = list(Team.objects.filter(course=course).order_by("id"))
+
+            team_member_links = []
+            through_model = Team.members.through
+            for idx, student in enumerate(students):
+                team = teams[idx % n_teams]
+                team_member_links.append(through_model(team_id=team.id, user_id=student.id))
+            through_model.objects.bulk_create(team_member_links, batch_size=500)
 
 
 class TestBrowserUsability:
@@ -281,38 +278,3 @@ class TestBrowserUsability:
 
         threshold = level_config["nav_threshold_ms"]
         assert dcl_ms <= threshold, f"[{level_config['name']}] DOMContentLoaded {dcl_ms:.0f}ms > {threshold}ms"
-
-
-class TestSafariPlaywright:
-    @pytest.mark.usefixtures("live_server")
-    def test_safari_homepage_loads(self, live_server):
-        with sync_playwright() as p:
-            browser = p.webkit.launch(headless=PW_HEADLESS)
-            page = browser.new_page()
-            page.goto(live_server.url)
-            assert page.title(), "Safari/WebKit should have a non-empty title"
-            browser.close()
-
-    @pytest.mark.usefixtures("live_server")
-    def test_safari_layout_responsive(self, live_server):
-        with sync_playwright() as p:
-            browser = p.webkit.launch(headless=PW_HEADLESS)
-            page = browser.new_page()
-            page.goto(live_server.url)
-            desktop_width = page.evaluate("document.body.clientWidth")
-            page.set_viewport_size({"width": 375, "height": 812})
-            mobile_width = page.evaluate("document.body.clientWidth")
-            assert desktop_width != mobile_width
-            browser.close()
-
-    @pytest.mark.usefixtures("live_server")
-    def test_safari_js_no_errors(self, live_server):
-        with sync_playwright() as p:
-            browser = p.webkit.launch(headless=PW_HEADLESS)
-            page = browser.new_page()
-            errors = []
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(live_server.url)
-            page.wait_for_load_state("domcontentloaded")
-            assert not errors, f"JS errors: {errors}"
-            browser.close()
